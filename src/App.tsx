@@ -6,6 +6,7 @@ import { useSmoothScroll } from './hooks/useSmoothScroll'
 import { Header } from './components/Header'
 import { ScrollProgress } from './components/ScrollProgress'
 import { Scene3D } from './components/Scene3D'
+import { CustomCursor } from './components/CustomCursor'
 import { Hero } from './sections/Hero'
 import { About } from './sections/About'
 import { Works } from './sections/Works'
@@ -28,6 +29,11 @@ export default function App() {
 
   return (
     <>
+      {/* Custom cursor (desktop only) */}
+      <div className="hidden md:block">
+        <CustomCursor />
+      </div>
+
       {/* Scroll progress indicator */}
       <ScrollProgress />
 
