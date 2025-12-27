@@ -75,108 +75,6 @@ function FerreroPreview({ stages, scroll }: { stages: AnimationStage[]; scroll: 
   return <primitive ref={ref} object={scene.clone()} />
 }
 
-// Navigation Button Component
-function NavButton({
-  icon: Icon,
-  label,
-  active,
-  onClick,
-}: {
-  icon: React.ElementType
-  label: string
-  active?: boolean
-  onClick?: () => void
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`
-        w-full flex items-center gap-3 px-4 py-3 rounded-lg
-        text-left text-sm font-medium transition-all duration-200
-        ${active
-          ? 'bg-amber-500/10 text-amber-500'
-          : 'text-zinc-400 hover:text-white hover:bg-white/5'
-        }
-      `}
-    >
-      <Icon size={18} className={active ? 'text-amber-500' : 'text-zinc-500'} />
-      <span className="flex-1">{label}</span>
-      {active && <ChevronRight size={14} className="text-amber-500/50" />}
-    </button>
-  )
-}
-
-// Slider Input Component
-function SliderInput({
-  label,
-  value,
-  onChange,
-  min,
-  max,
-  step = 0.01,
-}: {
-  label: string
-  value: number
-  onChange: (v: number) => void
-  min: number
-  max: number
-  step?: number
-}) {
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <label className="text-xs text-zinc-500 uppercase tracking-wider font-medium">
-          {label}
-        </label>
-        <input
-          type="number"
-          value={value.toFixed(2)}
-          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-          step={step}
-          className="w-20 px-2 py-1.5 bg-zinc-800/50 border border-zinc-700/50 rounded-md
-                     text-xs text-zinc-300 font-mono text-right
-                     focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20"
-        />
-      </div>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
-        className="w-full h-1.5 bg-zinc-800 rounded-full appearance-none cursor-pointer
-          [&::-webkit-slider-thumb]:appearance-none
-          [&::-webkit-slider-thumb]:w-4
-          [&::-webkit-slider-thumb]:h-4
-          [&::-webkit-slider-thumb]:rounded-full
-          [&::-webkit-slider-thumb]:bg-amber-500
-          [&::-webkit-slider-thumb]:cursor-pointer
-          [&::-webkit-slider-thumb]:transition-transform
-          [&::-webkit-slider-thumb]:hover:scale-110
-          [&::-webkit-slider-thumb]:shadow-lg
-          [&::-webkit-slider-thumb]:shadow-amber-500/30"
-      />
-    </div>
-  )
-}
-
-// Section Header Component
-function SectionHeader({ title }: { title: string }) {
-  return (
-    <div className="px-4 py-3">
-      <h3 className="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">
-        {title}
-      </h3>
-    </div>
-  )
-}
-
-// Divider Component
-function Divider() {
-  return <div className="h-px bg-zinc-800/80 mx-4 my-2" />
-}
-
 export function DebugPage() {
   const [stages, setStages] = useState(defaultStages)
   const [cards, setCards] = useState(defaultCards)
@@ -205,108 +103,254 @@ export function DebugPage() {
   }
 
   return (
-    <div className="h-screen bg-zinc-950 flex overflow-hidden">
+    <div style={{
+      height: '100vh',
+      backgroundColor: '#0c0c0c',
+      display: 'flex',
+      overflow: 'hidden',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    }}>
 
       {/* Left Sidebar */}
-      <aside className="w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col">
+      <aside style={{
+        width: 280,
+        backgroundColor: '#141414',
+        borderRight: '1px solid rgba(255,255,255,0.06)',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
 
         {/* Header */}
-        <div className="p-4 border-b border-zinc-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
-              <span className="text-zinc-900 font-bold text-lg">F</span>
-            </div>
-            <div>
-              <h1 className="text-sm font-semibold text-white">Animation Editor</h1>
-              <p className="text-xs text-zinc-500">Ferrero Rocher</p>
-            </div>
+        <div style={{
+          padding: 20,
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 14
+        }}>
+          <div style={{
+            width: 44,
+            height: 44,
+            borderRadius: 12,
+            background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)'
+          }}>
+            <span style={{ color: '#000', fontWeight: 700, fontSize: 18 }}>F</span>
+          </div>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>Animation Editor</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>Ferrero Rocher</div>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 py-4 overflow-y-auto">
+        <nav style={{ flex: 1, padding: 16, overflowY: 'auto' }}>
 
-          <SectionHeader title="Editor" />
-          <div className="px-2 space-y-1">
-            <NavButton
-              icon={Layers}
-              label="Animation Stages"
-              active={panel === 'stages'}
+          {/* Editor Section */}
+          <div style={{ marginBottom: 24 }}>
+            <div style={{
+              fontSize: 10,
+              color: 'rgba(255,255,255,0.3)',
+              textTransform: 'uppercase',
+              letterSpacing: 1.5,
+              fontWeight: 600,
+              padding: '0 12px',
+              marginBottom: 12
+            }}>
+              Editor
+            </div>
+
+            <button
               onClick={() => setPanel('stages')}
-            />
-            <NavButton
-              icon={CreditCard}
-              label="Info Cards"
-              active={panel === 'cards'}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                padding: '12px 14px',
+                borderRadius: 10,
+                border: 'none',
+                background: panel === 'stages' ? 'rgba(245, 158, 11, 0.12)' : 'transparent',
+                color: panel === 'stages' ? '#f59e0b' : 'rgba(255,255,255,0.5)',
+                fontSize: 14,
+                fontWeight: 500,
+                cursor: 'pointer',
+                textAlign: 'left',
+                marginBottom: 4,
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <Layers size={18} style={{ opacity: panel === 'stages' ? 1 : 0.5 }} />
+              <span style={{ flex: 1 }}>Animation Stages</span>
+              {panel === 'stages' && <ChevronRight size={14} style={{ opacity: 0.5 }} />}
+            </button>
+
+            <button
               onClick={() => setPanel('cards')}
-            />
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                padding: '12px 14px',
+                borderRadius: 10,
+                border: 'none',
+                background: panel === 'cards' ? 'rgba(245, 158, 11, 0.12)' : 'transparent',
+                color: panel === 'cards' ? '#f59e0b' : 'rgba(255,255,255,0.5)',
+                fontSize: 14,
+                fontWeight: 500,
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <CreditCard size={18} style={{ opacity: panel === 'cards' ? 1 : 0.5 }} />
+              <span style={{ flex: 1 }}>Info Cards</span>
+              {panel === 'cards' && <ChevronRight size={14} style={{ opacity: 0.5 }} />}
+            </button>
           </div>
 
-          <Divider />
+          {/* Divider */}
+          <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '8px 12px 20px' }} />
 
-          <SectionHeader title="Transform" />
-          <div className="px-2 space-y-1">
-            <NavButton
-              icon={RotateCcw}
-              label="Rotation"
-              active={panel === 'rotation'}
-              onClick={() => setPanel('rotation')}
-            />
-            <NavButton
-              icon={Move}
-              label="Position"
-              active={panel === 'position'}
-              onClick={() => setPanel('position')}
-            />
-            <NavButton
-              icon={Maximize2}
-              label="Scale"
-              active={panel === 'scale'}
-              onClick={() => setPanel('scale')}
-            />
+          {/* Transform Section */}
+          <div style={{ marginBottom: 24 }}>
+            <div style={{
+              fontSize: 10,
+              color: 'rgba(255,255,255,0.3)',
+              textTransform: 'uppercase',
+              letterSpacing: 1.5,
+              fontWeight: 600,
+              padding: '0 12px',
+              marginBottom: 12
+            }}>
+              Transform
+            </div>
+
+            {[
+              { id: 'rotation', icon: RotateCcw, label: 'Rotation' },
+              { id: 'position', icon: Move, label: 'Position' },
+              { id: 'scale', icon: Maximize2, label: 'Scale' },
+            ].map(item => (
+              <button
+                key={item.id}
+                onClick={() => setPanel(item.id as typeof panel)}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: '12px 14px',
+                  borderRadius: 10,
+                  border: 'none',
+                  background: panel === item.id ? 'rgba(245, 158, 11, 0.12)' : 'transparent',
+                  color: panel === item.id ? '#f59e0b' : 'rgba(255,255,255,0.5)',
+                  fontSize: 14,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  marginBottom: 4,
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <item.icon size={18} style={{ opacity: panel === item.id ? 1 : 0.5 }} />
+                <span style={{ flex: 1 }}>{item.label}</span>
+                {panel === item.id && <ChevronRight size={14} style={{ opacity: 0.5 }} />}
+              </button>
+            ))}
           </div>
 
-          <Divider />
+          {/* Divider */}
+          <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '8px 12px 20px' }} />
 
-          <SectionHeader title="Active Stage" />
-          <div className="px-2 space-y-1">
+          {/* Active Stage Section */}
+          <div>
+            <div style={{
+              fontSize: 10,
+              color: 'rgba(255,255,255,0.3)',
+              textTransform: 'uppercase',
+              letterSpacing: 1.5,
+              fontWeight: 600,
+              padding: '0 12px',
+              marginBottom: 12
+            }}>
+              Active Stage
+            </div>
+
             {stages.map((s, i) => (
               <button
                 key={i}
                 onClick={() => { setActiveStage(i); setScroll((s.scrollStart + s.scrollEnd) / 2) }}
-                className={`
-                  w-full flex items-center justify-between px-4 py-2.5 rounded-lg
-                  text-left text-sm transition-all duration-200
-                  ${activeStage === i
-                    ? 'bg-amber-500/10 text-amber-500 ring-1 ring-amber-500/20'
-                    : 'text-zinc-400 hover:text-white hover:bg-white/5'
-                  }
-                `}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '12px 14px',
+                  borderRadius: 10,
+                  border: activeStage === i ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid transparent',
+                  background: activeStage === i ? 'rgba(245, 158, 11, 0.1)' : 'transparent',
+                  color: activeStage === i ? '#f59e0b' : 'rgba(255,255,255,0.5)',
+                  fontSize: 14,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  marginBottom: 6,
+                  transition: 'all 0.15s ease'
+                }}
               >
-                <span className="font-medium">{s.name}</span>
-                <span className="text-[10px] text-zinc-500 font-mono">
+                <span>{s.name}</span>
+                <span style={{ fontSize: 11, opacity: 0.6, fontFamily: 'monospace' }}>
                   {(s.scrollStart * 100).toFixed(0)}-{(s.scrollEnd * 100).toFixed(0)}%
                 </span>
               </button>
             ))}
           </div>
-
         </nav>
 
         {/* Footer Actions */}
-        <div className="p-4 border-t border-zinc-800 space-y-2">
+        <div style={{
+          padding: 16,
+          borderTop: '1px solid rgba(255,255,255,0.06)'
+        }}>
           <a
             href="/"
-            className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm text-zinc-400
-                       hover:text-white hover:bg-white/5 transition-all"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              padding: '12px 14px',
+              borderRadius: 10,
+              color: 'rgba(255,255,255,0.5)',
+              fontSize: 14,
+              textDecoration: 'none',
+              marginBottom: 6,
+              transition: 'all 0.15s ease'
+            }}
           >
             <Home size={16} />
             <span>Back to Home</span>
           </a>
           <button
             onClick={handleExport}
-            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm
-                       text-zinc-400 hover:text-white hover:bg-white/5 transition-all"
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              padding: '12px 14px',
+              borderRadius: 10,
+              border: 'none',
+              background: 'transparent',
+              color: 'rgba(255,255,255,0.5)',
+              fontSize: 14,
+              cursor: 'pointer',
+              textAlign: 'left',
+              transition: 'all 0.15s ease'
+            }}
           >
             <Download size={16} />
             <span>Export Config</span>
@@ -316,248 +360,580 @@ export function DebugPage() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col">
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
 
         {/* Top Bar */}
-        <header className="h-16 bg-zinc-900/50 border-b border-zinc-800 flex items-center px-6 gap-6">
+        <header style={{
+          height: 64,
+          backgroundColor: 'rgba(20, 20, 20, 0.8)',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 24px',
+          gap: 24
+        }}>
 
           {/* Play Controls */}
-          <div className="flex items-center gap-2">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <button
               onClick={() => setIsPlaying(!isPlaying)}
-              className={`
-                w-10 h-10 rounded-xl flex items-center justify-center transition-all
-                ${isPlaying
-                  ? 'bg-amber-500 text-zinc-900 shadow-lg shadow-amber-500/30'
-                  : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'
-                }
-              `}
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 12,
+                border: 'none',
+                background: isPlaying ? '#f59e0b' : 'rgba(255,255,255,0.08)',
+                color: isPlaying ? '#000' : 'rgba(255,255,255,0.6)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: isPlaying ? '0 4px 12px rgba(245, 158, 11, 0.4)' : 'none',
+                transition: 'all 0.2s ease'
+              }}
             >
               {isPlaying ? <Pause size={18} /> : <Play size={18} />}
             </button>
             <button
               onClick={() => setScroll(0)}
-              className="h-10 px-4 rounded-xl bg-zinc-800 text-zinc-400 hover:bg-zinc-700
-                         hover:text-white text-xs font-medium transition-all"
+              style={{
+                height: 44,
+                padding: '0 18px',
+                borderRadius: 12,
+                border: 'none',
+                background: 'rgba(255,255,255,0.08)',
+                color: 'rgba(255,255,255,0.6)',
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
             >
               Reset
             </button>
           </div>
 
           {/* Timeline */}
-          <div className="flex-1 flex items-center gap-4">
-            <div className="flex-1 relative">
-              {/* Stage markers */}
-              <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-2 flex">
-                {stages.map((s, i) => (
-                  <div
-                    key={i}
-                    className="h-full bg-zinc-700/30 first:rounded-l last:rounded-r"
-                    style={{
-                      width: `${(s.scrollEnd - s.scrollStart) * 100}%`,
-                      marginLeft: i === 0 ? `${s.scrollStart * 100}%` : 0
-                    }}
-                  />
-                ))}
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                step={0.1}
-                value={scroll * 100}
-                onChange={(e) => setScroll(parseFloat(e.target.value) / 100)}
-                className="relative w-full h-2 bg-transparent rounded-full appearance-none cursor-pointer z-10
-                  [&::-webkit-slider-thumb]:appearance-none
-                  [&::-webkit-slider-thumb]:w-5
-                  [&::-webkit-slider-thumb]:h-5
-                  [&::-webkit-slider-thumb]:rounded-full
-                  [&::-webkit-slider-thumb]:bg-amber-500
-                  [&::-webkit-slider-thumb]:cursor-pointer
-                  [&::-webkit-slider-thumb]:shadow-lg
-                  [&::-webkit-slider-thumb]:shadow-amber-500/40
-                  [&::-webkit-slider-thumb]:border-2
-                  [&::-webkit-slider-thumb]:border-amber-400"
-              />
-            </div>
-            <div className="text-base font-mono text-amber-500 w-14 text-right font-semibold">
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={0.1}
+              value={scroll * 100}
+              onChange={(e) => setScroll(parseFloat(e.target.value) / 100)}
+              style={{
+                flex: 1,
+                height: 6,
+                borderRadius: 3,
+                appearance: 'none',
+                background: 'rgba(255,255,255,0.1)',
+                cursor: 'pointer',
+                accentColor: '#f59e0b'
+              }}
+            />
+            <div style={{
+              fontSize: 15,
+              fontFamily: 'monospace',
+              color: '#f59e0b',
+              fontWeight: 600,
+              minWidth: 50,
+              textAlign: 'right'
+            }}>
               {(scroll * 100).toFixed(0)}%
             </div>
           </div>
 
           {/* Current Stage Badge */}
-          <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-zinc-800/50 border border-zinc-700/50">
-            <Eye size={14} className="text-zinc-500" />
-            <span className="text-sm text-zinc-300 font-medium">{current.name}</span>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            padding: '10px 16px',
+            borderRadius: 12,
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(255,255,255,0.08)'
+          }}>
+            <Eye size={14} style={{ color: 'rgba(255,255,255,0.4)' }} />
+            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
+              {current.name}
+            </span>
           </div>
 
         </header>
 
         {/* Content Area */}
-        <div className="flex-1 flex overflow-hidden">
+        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
           {/* Properties Panel */}
-          <div className="w-80 bg-zinc-900/50 border-r border-zinc-800 overflow-y-auto">
-            <div className="p-6 space-y-6">
+          <div style={{
+            width: 340,
+            backgroundColor: 'rgba(17, 17, 17, 0.9)',
+            borderRight: '1px solid rgba(255,255,255,0.06)',
+            overflowY: 'auto',
+            padding: 24
+          }}>
 
-              {/* Stages Panel */}
-              {panel === 'stages' && (
-                <>
-                  <div>
-                    <h2 className="text-lg font-semibold text-white mb-2">Animation Stages</h2>
-                    <p className="text-sm text-zinc-500 leading-relaxed">
-                      Configura le transizioni 3D per ogni sezione dello scroll.
-                    </p>
+            {/* Stages Panel */}
+            {panel === 'stages' && (
+              <div>
+                <h2 style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 8 }}>
+                  Animation Stages
+                </h2>
+                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, marginBottom: 28 }}>
+                  Configura le transizioni 3D per ogni sezione dello scroll.
+                </p>
+
+                {/* Quick Views */}
+                <div style={{
+                  padding: 20,
+                  borderRadius: 14,
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  marginBottom: 20
+                }}>
+                  <div style={{
+                    fontSize: 11,
+                    color: 'rgba(255,255,255,0.4)',
+                    textTransform: 'uppercase',
+                    letterSpacing: 1,
+                    fontWeight: 600,
+                    marginBottom: 14
+                  }}>
+                    Quick Views
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    {[
+                      { n: 'Front', r: [0, 0, 0] },
+                      { n: 'Top', r: [-1.57, 0, 0] },
+                      { n: 'Side', r: [0, 1.57, 0] },
+                      { n: 'Back', r: [0, 3.14, 0] },
+                    ].map(p => (
+                      <button
+                        key={p.n}
+                        onClick={() => setStages(prev => prev.map((s, i) =>
+                          i === activeStage ? { ...s, rotX: p.r[0], rotY: p.r[1], rotZ: p.r[2] } : s
+                        ))}
+                        style={{
+                          padding: '12px 16px',
+                          borderRadius: 10,
+                          border: '1px solid rgba(255,255,255,0.08)',
+                          background: 'rgba(255,255,255,0.04)',
+                          color: 'rgba(255,255,255,0.6)',
+                          fontSize: 13,
+                          fontWeight: 500,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        {p.n}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Scroll Range */}
+                <div style={{
+                  padding: 20,
+                  borderRadius: 14,
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.06)'
+                }}>
+                  <div style={{
+                    fontSize: 11,
+                    color: 'rgba(255,255,255,0.4)',
+                    textTransform: 'uppercase',
+                    letterSpacing: 1,
+                    fontWeight: 600,
+                    marginBottom: 20
+                  }}>
+                    Scroll Range
                   </div>
 
-                  <div className="p-4 rounded-xl bg-zinc-800/30 border border-zinc-700/30 space-y-4">
-                    <h3 className="text-xs text-zinc-400 uppercase tracking-wider font-semibold">Quick Views</h3>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        { n: 'Front', r: [0, 0, 0] },
-                        { n: 'Top', r: [-1.57, 0, 0] },
-                        { n: 'Side', r: [0, 1.57, 0] },
-                        { n: 'Back', r: [0, 3.14, 0] },
-                      ].map(p => (
+                  {/* Start */}
+                  <div style={{ marginBottom: 20 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                      <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Start</label>
+                      <input
+                        type="number"
+                        value={current.scrollStart.toFixed(2)}
+                        onChange={(e) => update('scrollStart', parseFloat(e.target.value) || 0)}
+                        step={0.01}
+                        style={{
+                          width: 70,
+                          padding: '8px 12px',
+                          borderRadius: 8,
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          background: 'rgba(255,255,255,0.05)',
+                          color: 'rgba(255,255,255,0.8)',
+                          fontSize: 13,
+                          fontFamily: 'monospace',
+                          textAlign: 'center'
+                        }}
+                      />
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={1}
+                      step={0.01}
+                      value={current.scrollStart}
+                      onChange={(e) => update('scrollStart', parseFloat(e.target.value))}
+                      style={{ width: '100%', accentColor: '#f59e0b' }}
+                    />
+                  </div>
+
+                  {/* End */}
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                      <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.5 }}>End</label>
+                      <input
+                        type="number"
+                        value={current.scrollEnd.toFixed(2)}
+                        onChange={(e) => update('scrollEnd', parseFloat(e.target.value) || 0)}
+                        step={0.01}
+                        style={{
+                          width: 70,
+                          padding: '8px 12px',
+                          borderRadius: 8,
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          background: 'rgba(255,255,255,0.05)',
+                          color: 'rgba(255,255,255,0.8)',
+                          fontSize: 13,
+                          fontFamily: 'monospace',
+                          textAlign: 'center'
+                        }}
+                      />
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={1}
+                      step={0.01}
+                      value={current.scrollEnd}
+                      onChange={(e) => update('scrollEnd', parseFloat(e.target.value))}
+                      style={{ width: '100%', accentColor: '#f59e0b' }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Rotation Panel */}
+            {panel === 'rotation' && (
+              <div>
+                <h2 style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 8 }}>
+                  Rotation
+                </h2>
+                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, marginBottom: 28 }}>
+                  Controlla la rotazione del modello su ogni asse.
+                </p>
+
+                <div style={{
+                  padding: 20,
+                  borderRadius: 14,
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.06)'
+                }}>
+                  {['X', 'Y', 'Z'].map((axis, idx) => {
+                    const key = `rot${axis}` as 'rotX' | 'rotY' | 'rotZ'
+                    const max = axis === 'Y' ? 6.28 : 3.14
+                    return (
+                      <div key={axis} style={{ marginBottom: idx < 2 ? 24 : 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                          <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{axis} Axis</label>
+                          <input
+                            type="number"
+                            value={current[key].toFixed(2)}
+                            onChange={(e) => update(key, parseFloat(e.target.value) || 0)}
+                            step={0.01}
+                            style={{
+                              width: 70,
+                              padding: '8px 12px',
+                              borderRadius: 8,
+                              border: '1px solid rgba(255,255,255,0.1)',
+                              background: 'rgba(255,255,255,0.05)',
+                              color: 'rgba(255,255,255,0.8)',
+                              fontSize: 13,
+                              fontFamily: 'monospace',
+                              textAlign: 'center'
+                            }}
+                          />
+                        </div>
+                        <input
+                          type="range"
+                          min={-max}
+                          max={max}
+                          step={0.01}
+                          value={current[key]}
+                          onChange={(e) => update(key, parseFloat(e.target.value))}
+                          style={{ width: '100%', accentColor: '#f59e0b' }}
+                        />
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Position Panel */}
+            {panel === 'position' && (
+              <div>
+                <h2 style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 8 }}>
+                  Position
+                </h2>
+                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, marginBottom: 28 }}>
+                  Sposta il modello nello spazio 3D.
+                </p>
+
+                <div style={{
+                  padding: 20,
+                  borderRadius: 14,
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.06)'
+                }}>
+                  {['X', 'Y', 'Z'].map((axis, idx) => {
+                    const key = `pos${axis}` as 'posX' | 'posY' | 'posZ'
+                    return (
+                      <div key={axis} style={{ marginBottom: idx < 2 ? 24 : 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                          <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{axis} Axis</label>
+                          <input
+                            type="number"
+                            value={current[key].toFixed(2)}
+                            onChange={(e) => update(key, parseFloat(e.target.value) || 0)}
+                            step={0.1}
+                            style={{
+                              width: 70,
+                              padding: '8px 12px',
+                              borderRadius: 8,
+                              border: '1px solid rgba(255,255,255,0.1)',
+                              background: 'rgba(255,255,255,0.05)',
+                              color: 'rgba(255,255,255,0.8)',
+                              fontSize: 13,
+                              fontFamily: 'monospace',
+                              textAlign: 'center'
+                            }}
+                          />
+                        </div>
+                        <input
+                          type="range"
+                          min={-5}
+                          max={5}
+                          step={0.1}
+                          value={current[key]}
+                          onChange={(e) => update(key, parseFloat(e.target.value))}
+                          style={{ width: '100%', accentColor: '#f59e0b' }}
+                        />
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Scale Panel */}
+            {panel === 'scale' && (
+              <div>
+                <h2 style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 8 }}>
+                  Scale
+                </h2>
+                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, marginBottom: 28 }}>
+                  Ridimensiona il modello uniformemente.
+                </p>
+
+                <div style={{
+                  padding: 20,
+                  borderRadius: 14,
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.06)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Size</label>
+                    <input
+                      type="number"
+                      value={current.scale.toFixed(2)}
+                      onChange={(e) => update('scale', parseFloat(e.target.value) || 0)}
+                      step={0.1}
+                      style={{
+                        width: 70,
+                        padding: '8px 12px',
+                        borderRadius: 8,
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        background: 'rgba(255,255,255,0.05)',
+                        color: 'rgba(255,255,255,0.8)',
+                        fontSize: 13,
+                        fontFamily: 'monospace',
+                        textAlign: 'center'
+                      }}
+                    />
+                  </div>
+                  <input
+                    type="range"
+                    min={0.5}
+                    max={5}
+                    step={0.1}
+                    value={current.scale}
+                    onChange={(e) => update('scale', parseFloat(e.target.value))}
+                    style={{ width: '100%', accentColor: '#f59e0b' }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Cards Panel */}
+            {panel === 'cards' && (
+              <div>
+                <h2 style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 8 }}>
+                  Info Cards
+                </h2>
+                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, marginBottom: 28 }}>
+                  Modifica i contenuti e i timing delle info card.
+                </p>
+
+                {cards.map((card, i) => (
+                  <div key={card.id} style={{
+                    padding: 20,
+                    borderRadius: 14,
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                    marginBottom: 16
+                  }}>
+                    <input
+                      type="text"
+                      value={card.title}
+                      onChange={(e) => setCards(p => p.map((c, j) => j === i ? { ...c, title: e.target.value } : c))}
+                      placeholder="Card Title"
+                      style={{
+                        width: '100%',
+                        padding: 0,
+                        marginBottom: 14,
+                        border: 'none',
+                        background: 'transparent',
+                        color: '#fff',
+                        fontSize: 16,
+                        fontWeight: 600,
+                        outline: 'none'
+                      }}
+                    />
+                    <textarea
+                      value={card.description}
+                      onChange={(e) => setCards(p => p.map((c, j) => j === i ? { ...c, description: e.target.value } : c))}
+                      placeholder="Description..."
+                      style={{
+                        width: '100%',
+                        padding: '12px 14px',
+                        marginBottom: 14,
+                        borderRadius: 10,
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        background: 'rgba(255,255,255,0.04)',
+                        color: 'rgba(255,255,255,0.8)',
+                        fontSize: 13,
+                        resize: 'none',
+                        height: 80,
+                        outline: 'none',
+                        fontFamily: 'inherit'
+                      }}
+                    />
+
+                    <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+                      {(['left', 'right'] as const).map(pos => (
                         <button
-                          key={p.n}
-                          onClick={() => setStages(prev => prev.map((s, i) =>
-                            i === activeStage ? { ...s, rotX: p.r[0], rotY: p.r[1], rotZ: p.r[2] } : s
-                          ))}
-                          className="py-2.5 rounded-lg text-sm font-medium bg-zinc-800/50 text-zinc-400
-                                     hover:bg-zinc-700 hover:text-white transition-all border border-zinc-700/50"
+                          key={pos}
+                          onClick={() => setCards(p => p.map((c, j) => j === i ? { ...c, position: pos } : c))}
+                          style={{
+                            flex: 1,
+                            padding: '12px 16px',
+                            borderRadius: 10,
+                            border: card.position === pos ? '1px solid rgba(245, 158, 11, 0.4)' : '1px solid rgba(255,255,255,0.08)',
+                            background: card.position === pos ? 'rgba(245, 158, 11, 0.1)' : 'rgba(255,255,255,0.04)',
+                            color: card.position === pos ? '#f59e0b' : 'rgba(255,255,255,0.5)',
+                            fontSize: 13,
+                            fontWeight: 500,
+                            cursor: 'pointer'
+                          }}
                         >
-                          {p.n}
+                          {pos === 'left' ? '← Left' : 'Right →'}
                         </button>
                       ))}
                     </div>
-                  </div>
 
-                  <div className="p-4 rounded-xl bg-zinc-800/30 border border-zinc-700/30 space-y-4">
-                    <h3 className="text-xs text-zinc-400 uppercase tracking-wider font-semibold">Scroll Range</h3>
-                    <SliderInput label="Start" value={current.scrollStart} onChange={v => update('scrollStart', v)} min={0} max={1} />
-                    <SliderInput label="End" value={current.scrollEnd} onChange={v => update('scrollEnd', v)} min={0} max={1} />
-                  </div>
-                </>
-              )}
-
-              {/* Rotation Panel */}
-              {panel === 'rotation' && (
-                <>
-                  <div>
-                    <h2 className="text-lg font-semibold text-white mb-2">Rotation</h2>
-                    <p className="text-sm text-zinc-500 leading-relaxed">
-                      Controlla la rotazione del modello su ogni asse.
-                    </p>
-                  </div>
-                  <div className="p-4 rounded-xl bg-zinc-800/30 border border-zinc-700/30 space-y-4">
-                    <SliderInput label="X Axis" value={current.rotX} onChange={v => update('rotX', v)} min={-3.14} max={3.14} />
-                    <SliderInput label="Y Axis" value={current.rotY} onChange={v => update('rotY', v)} min={-6.28} max={6.28} />
-                    <SliderInput label="Z Axis" value={current.rotZ} onChange={v => update('rotZ', v)} min={-3.14} max={3.14} />
-                  </div>
-                </>
-              )}
-
-              {/* Position Panel */}
-              {panel === 'position' && (
-                <>
-                  <div>
-                    <h2 className="text-lg font-semibold text-white mb-2">Position</h2>
-                    <p className="text-sm text-zinc-500 leading-relaxed">
-                      Sposta il modello nello spazio 3D.
-                    </p>
-                  </div>
-                  <div className="p-4 rounded-xl bg-zinc-800/30 border border-zinc-700/30 space-y-4">
-                    <SliderInput label="X Axis" value={current.posX} onChange={v => update('posX', v)} min={-5} max={5} step={0.1} />
-                    <SliderInput label="Y Axis" value={current.posY} onChange={v => update('posY', v)} min={-5} max={5} step={0.1} />
-                    <SliderInput label="Z Axis" value={current.posZ} onChange={v => update('posZ', v)} min={-5} max={5} step={0.1} />
-                  </div>
-                </>
-              )}
-
-              {/* Scale Panel */}
-              {panel === 'scale' && (
-                <>
-                  <div>
-                    <h2 className="text-lg font-semibold text-white mb-2">Scale</h2>
-                    <p className="text-sm text-zinc-500 leading-relaxed">
-                      Ridimensiona il modello uniformemente.
-                    </p>
-                  </div>
-                  <div className="p-4 rounded-xl bg-zinc-800/30 border border-zinc-700/30">
-                    <SliderInput label="Size" value={current.scale} onChange={v => update('scale', v)} min={0.5} max={5} step={0.1} />
-                  </div>
-                </>
-              )}
-
-              {/* Cards Panel */}
-              {panel === 'cards' && (
-                <>
-                  <div>
-                    <h2 className="text-lg font-semibold text-white mb-2">Info Cards</h2>
-                    <p className="text-sm text-zinc-500 leading-relaxed">
-                      Modifica i contenuti e i timing delle info card.
-                    </p>
-                  </div>
-
-                  {cards.map((card, i) => (
-                    <div key={card.id} className="p-4 rounded-xl bg-zinc-800/30 border border-zinc-700/30 space-y-4">
-                      <input
-                        type="text"
-                        value={card.title}
-                        onChange={(e) => setCards(p => p.map((c, j) => j === i ? { ...c, title: e.target.value } : c))}
-                        className="w-full bg-transparent text-base font-semibold text-white border-none outline-none placeholder:text-zinc-600"
-                        placeholder="Card Title"
-                      />
-                      <textarea
-                        value={card.description}
-                        onChange={(e) => setCards(p => p.map((c, j) => j === i ? { ...c, description: e.target.value } : c))}
-                        className="w-full bg-zinc-800/50 rounded-lg px-3 py-2.5 text-sm text-zinc-300
-                                   border border-zinc-700/50 outline-none resize-none h-20
-                                   focus:border-amber-500/30 focus:ring-1 focus:ring-amber-500/20"
-                        placeholder="Description..."
-                      />
-
-                      <div className="flex gap-2">
-                        {(['left', 'right'] as const).map(pos => (
-                          <button
-                            key={pos}
-                            onClick={() => setCards(p => p.map((c, j) => j === i ? { ...c, position: pos } : c))}
-                            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all border ${
-                              card.position === pos
-                                ? 'bg-amber-500/10 text-amber-500 border-amber-500/30'
-                                : 'bg-zinc-800/50 text-zinc-500 border-zinc-700/50 hover:text-white hover:border-zinc-600'
-                            }`}
-                          >
-                            {pos === 'left' ? '← Left' : 'Right →'}
-                          </button>
-                        ))}
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 20 }}>
+                      {/* Fade In */}
+                      <div style={{ marginBottom: 20 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                          <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Fade In</label>
+                          <input
+                            type="number"
+                            value={card.startScroll.toFixed(2)}
+                            onChange={(e) => setCards(p => p.map((c, j) => j === i ? { ...c, startScroll: parseFloat(e.target.value) || 0 } : c))}
+                            step={0.01}
+                            style={{
+                              width: 70,
+                              padding: '8px 12px',
+                              borderRadius: 8,
+                              border: '1px solid rgba(255,255,255,0.1)',
+                              background: 'rgba(255,255,255,0.05)',
+                              color: 'rgba(255,255,255,0.8)',
+                              fontSize: 13,
+                              fontFamily: 'monospace',
+                              textAlign: 'center'
+                            }}
+                          />
+                        </div>
+                        <input
+                          type="range"
+                          min={0}
+                          max={1}
+                          step={0.01}
+                          value={card.startScroll}
+                          onChange={(e) => setCards(p => p.map((c, j) => j === i ? { ...c, startScroll: parseFloat(e.target.value) } : c))}
+                          style={{ width: '100%', accentColor: '#f59e0b' }}
+                        />
                       </div>
 
-                      <div className="pt-4 border-t border-zinc-700/30 space-y-4">
-                        <SliderInput
-                          label="Fade In"
-                          value={card.startScroll}
-                          onChange={v => setCards(p => p.map((c, j) => j === i ? { ...c, startScroll: v } : c))}
-                          min={0} max={1}
-                        />
-                        <SliderInput
-                          label="Fade Out"
+                      {/* Fade Out */}
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                          <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Fade Out</label>
+                          <input
+                            type="number"
+                            value={card.endScroll.toFixed(2)}
+                            onChange={(e) => setCards(p => p.map((c, j) => j === i ? { ...c, endScroll: parseFloat(e.target.value) || 0 } : c))}
+                            step={0.01}
+                            style={{
+                              width: 70,
+                              padding: '8px 12px',
+                              borderRadius: 8,
+                              border: '1px solid rgba(255,255,255,0.1)',
+                              background: 'rgba(255,255,255,0.05)',
+                              color: 'rgba(255,255,255,0.8)',
+                              fontSize: 13,
+                              fontFamily: 'monospace',
+                              textAlign: 'center'
+                            }}
+                          />
+                        </div>
+                        <input
+                          type="range"
+                          min={0}
+                          max={1}
+                          step={0.01}
                           value={card.endScroll}
-                          onChange={v => setCards(p => p.map((c, j) => j === i ? { ...c, endScroll: v } : c))}
-                          min={0} max={1}
+                          onChange={(e) => setCards(p => p.map((c, j) => j === i ? { ...c, endScroll: parseFloat(e.target.value) } : c))}
+                          style={{ width: '100%', accentColor: '#f59e0b' }}
                         />
                       </div>
                     </div>
-                  ))}
-                </>
-              )}
+                  </div>
+                ))}
+              </div>
+            )}
 
-            </div>
           </div>
 
           {/* 3D Viewport */}
-          <div className="flex-1 relative bg-zinc-950">
+          <div style={{ flex: 1, position: 'relative', backgroundColor: '#09090b' }}>
             <Canvas camera={{ position: [0, 0, 10], fov: 35 }} dpr={[1, 2]}>
               <color attach="background" args={['#09090b']} />
               <ambientLight intensity={0.15} />
@@ -575,16 +951,30 @@ export function DebugPage() {
             {/* Intro Title Overlay */}
             {scroll < 0.15 && (
               <div
-                className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                style={{ opacity: Math.max(0, 1 - scroll * 7) }}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  pointerEvents: 'none',
+                  opacity: Math.max(0, 1 - scroll * 7)
+                }}
               >
-                <div className="text-center">
-                  <span className="block text-amber-500/60 uppercase tracking-[0.4em] text-xs mb-3">
+                <div style={{ textAlign: 'center' }}>
+                  <span style={{
+                    display: 'block',
+                    color: 'rgba(245, 158, 11, 0.6)',
+                    textTransform: 'uppercase',
+                    letterSpacing: 6,
+                    fontSize: 11,
+                    marginBottom: 12
+                  }}>
                     L'arte del cioccolato
                   </span>
-                  <h1 className="text-4xl font-light tracking-wide">
-                    <span className="block text-white">FERRERO</span>
-                    <span className="block text-amber-500 mt-1">ROCHER</span>
+                  <h1 style={{ fontSize: 42, fontWeight: 300, letterSpacing: 4 }}>
+                    <span style={{ display: 'block', color: '#fff' }}>FERRERO</span>
+                    <span style={{ display: 'block', color: '#f59e0b', marginTop: 4 }}>ROCHER</span>
                   </h1>
                 </div>
               </div>
@@ -602,22 +992,52 @@ export function DebugPage() {
               return (
                 <div
                   key={card.id}
-                  className={`absolute top-1/2 -translate-y-1/2 ${card.position === 'right' ? 'right-10' : 'left-10'}`}
-                  style={{ opacity }}
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    [card.position === 'right' ? 'right' : 'left']: 40,
+                    opacity
+                  }}
                 >
-                  <div className="backdrop-blur-2xl bg-zinc-900/60 border border-zinc-700/50 rounded-2xl p-6 max-w-xs shadow-2xl">
-                    <div className="w-12 h-1 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full mb-4" />
-                    <h3 className="text-xl font-semibold text-white mb-2">{card.title}</h3>
-                    <p className="text-zinc-400 text-sm leading-relaxed">{card.description}</p>
+                  <div style={{
+                    backdropFilter: 'blur(24px)',
+                    backgroundColor: 'rgba(20, 20, 20, 0.7)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 20,
+                    padding: 28,
+                    maxWidth: 280,
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.4)'
+                  }}>
+                    <div style={{
+                      width: 48,
+                      height: 4,
+                      background: 'linear-gradient(90deg, #f59e0b, #d97706)',
+                      borderRadius: 2,
+                      marginBottom: 18
+                    }} />
+                    <h3 style={{ fontSize: 22, fontWeight: 600, color: '#fff', marginBottom: 10 }}>{card.title}</h3>
+                    <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6 }}>{card.description}</p>
                   </div>
                 </div>
               )
             })}
 
             {/* Viewport Info */}
-            <div className="absolute bottom-4 left-4 flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-900/80 border border-zinc-800">
-              <Settings size={12} className="text-zinc-500" />
-              <span className="text-xs text-zinc-500">Scroll to orbit • Drag to rotate</span>
+            <div style={{
+              position: 'absolute',
+              bottom: 16,
+              left: 16,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '10px 14px',
+              borderRadius: 10,
+              backgroundColor: 'rgba(20, 20, 20, 0.9)',
+              border: '1px solid rgba(255,255,255,0.08)'
+            }}>
+              <Settings size={12} style={{ color: 'rgba(255,255,255,0.4)' }} />
+              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>Scroll to orbit • Drag to rotate</span>
             </div>
           </div>
 
