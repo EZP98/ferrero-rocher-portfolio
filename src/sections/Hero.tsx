@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { ImpulseString } from '../components/ImpulseString'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -187,6 +188,11 @@ export function Hero() {
         <span className="text-white/10 text-xs uppercase tracking-[0.5em] transform rotate-90 origin-center whitespace-nowrap">
           Milano, Italia
         </span>
+      </div>
+
+      {/* Impulse String - StringTune style */}
+      <div className="absolute bottom-[25vh] left-0 right-0 z-10">
+        <ImpulseString className="w-full" color="var(--color-gold)" />
       </div>
 
       <style>{`

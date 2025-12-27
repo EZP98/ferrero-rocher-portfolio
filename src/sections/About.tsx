@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { ImpulseString } from '../components/ImpulseString'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -230,6 +231,11 @@ export function About() {
       </div>
       <div className="absolute bottom-0 left-0 w-64 h-64 opacity-5">
         <div className="w-full h-full border-l-2 border-b-2 border-[var(--color-gold)]" />
+      </div>
+
+      {/* Impulse String divider - StringTune style */}
+      <div className="absolute bottom-0 left-0 right-0 z-20">
+        <ImpulseString className="w-full" color="var(--color-gold)" />
       </div>
     </section>
   )
