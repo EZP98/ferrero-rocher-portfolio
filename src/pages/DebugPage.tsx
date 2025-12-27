@@ -28,11 +28,13 @@ const s = {
   } as CSSProperties,
 
   sidebar: {
-    width: 280,
+    width: '280px',
+    minWidth: '280px',
     backgroundColor: '#141414',
     borderRight: '1px solid rgba(255,255,255,0.06)',
     display: 'flex',
     flexDirection: 'column',
+    boxSizing: 'border-box',
   } as CSSProperties,
 
   sidebarHeader: {
@@ -76,12 +78,15 @@ const s = {
 
   nav: {
     flex: 1,
-    padding: 16,
+    padding: '16px',
     overflowY: 'auto',
+    boxSizing: 'border-box',
+    width: '100%',
   } as CSSProperties,
 
   section: {
-    marginBottom: 24,
+    marginBottom: '24px',
+    width: '100%',
   } as CSSProperties,
 
   sectionTitle: {
@@ -102,19 +107,20 @@ const s = {
 
   navBtn: {
     width: '100%',
+    boxSizing: 'border-box',
     display: 'flex',
     alignItems: 'center',
-    gap: 12,
+    gap: '12px',
     padding: '12px 14px',
-    borderRadius: 10,
+    borderRadius: '10px',
     border: 'none',
     background: 'transparent',
     color: 'rgba(255,255,255,0.5)',
-    fontSize: 14,
+    fontSize: '14px',
     fontWeight: 500,
     cursor: 'pointer',
     textAlign: 'left',
-    marginBottom: 4,
+    marginBottom: '4px',
   } as CSSProperties,
 
   navBtnActive: {
@@ -124,19 +130,20 @@ const s = {
 
   stageBtn: {
     width: '100%',
+    boxSizing: 'border-box',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: '12px 14px',
-    borderRadius: 10,
+    borderRadius: '10px',
     border: '1px solid transparent',
     background: 'transparent',
     color: 'rgba(255,255,255,0.5)',
-    fontSize: 14,
+    fontSize: '14px',
     fontWeight: 500,
     cursor: 'pointer',
     textAlign: 'left',
-    marginBottom: 6,
+    marginBottom: '6px',
   } as CSSProperties,
 
   stageBtnActive: {
@@ -158,19 +165,20 @@ const s = {
 
   footerBtn: {
     width: '100%',
+    boxSizing: 'border-box',
     display: 'flex',
     alignItems: 'center',
-    gap: 12,
+    gap: '12px',
     padding: '12px 14px',
-    borderRadius: 10,
+    borderRadius: '10px',
     border: 'none',
     background: 'transparent',
     color: 'rgba(255,255,255,0.5)',
-    fontSize: 14,
+    fontSize: '14px',
     cursor: 'pointer',
     textAlign: 'left',
     textDecoration: 'none',
-    marginBottom: 6,
+    marginBottom: '6px',
   } as CSSProperties,
 
   main: {
