@@ -85,7 +85,7 @@ export function Header() {
         </motion.span>
 
         {/* Navigation */}
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden md:flex items-center gap-6">
           {navItems.map((item, i) => (
             <motion.a
               key={item.href}
