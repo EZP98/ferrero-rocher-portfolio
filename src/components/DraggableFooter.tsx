@@ -125,7 +125,7 @@ export function DraggableFooter() {
   }
 
   return (
-    <footer className="relative bg-[#0d0906] py-8">
+    <footer className="relative z-30 bg-[#0d0906] py-8">
       {/* Draggable Ferrero area */}
       <div
         ref={containerRef}
