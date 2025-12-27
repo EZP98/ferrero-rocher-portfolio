@@ -109,9 +109,9 @@ export function Transition() {
   return (
     <section
       ref={sectionRef}
-      className="relative h-[600vh] flex items-center justify-center overflow-hidden bg-[var(--color-darker)]"
+      className="relative z-10 h-[600vh] flex items-center justify-center overflow-hidden bg-[var(--color-darker)]"
     >
-      <div className="sticky top-0 h-screen w-full flex items-center justify-center">
+      <div className="sticky top-0 h-screen w-full flex items-center justify-center z-10">
         <div className="text-center perspective-1000">
           {phrases.map((phrase, index) => (
             <span
@@ -128,17 +128,6 @@ export function Transition() {
         </div>
       </div>
 
-      {/* Progress line */}
-      <div className="fixed left-1/2 bottom-20 -translate-x-1/2 w-px h-24 bg-white/10 overflow-hidden z-20">
-        <div
-          className="w-full bg-[var(--color-gold)]"
-          style={{
-            height: '100%',
-            transform: 'scaleY(var(--progress, 0))',
-            transformOrigin: 'top',
-          }}
-        />
-      </div>
     </section>
   )
 }

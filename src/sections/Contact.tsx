@@ -61,7 +61,7 @@ export function Contact() {
     <section
       id="contact"
       ref={sectionRef}
-      className="relative min-h-screen py-32 overflow-hidden"
+      className="relative z-20 min-h-screen py-32 overflow-hidden"
       style={{
         background: 'linear-gradient(180deg, var(--color-darker) 0%, var(--color-dark) 50%, #0d0906 100%)',
       }}

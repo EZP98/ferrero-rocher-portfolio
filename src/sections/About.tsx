@@ -126,7 +126,7 @@ export function About() {
     <section
       id="about"
       ref={sectionRef}
-      className="relative min-h-screen py-32 overflow-hidden bg-[var(--color-dark)]"
+      className="relative z-20 min-h-screen py-32 overflow-hidden bg-[var(--color-dark)]"
     >
       {/* Horizontal scrolling background text */}
       <div
