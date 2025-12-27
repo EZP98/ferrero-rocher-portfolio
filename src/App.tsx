@@ -12,6 +12,7 @@ import { Transition } from './sections/Transition'
 import { About } from './sections/About'
 import { Works } from './sections/Works'
 import { Contact } from './sections/Contact'
+import { DraggableFooter } from './components/DraggableFooter'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -55,6 +56,9 @@ export default function App() {
         <Works />
         <Contact />
       </main>
+
+      {/* Footer with draggable Ferrero Rochers */}
+      <DraggableFooter />
 
       {/* Noise overlay */}
       <div className="noise-overlay" />

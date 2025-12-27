@@ -1,37 +1,37 @@
 import { useRef, useEffect, useState } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { ExternalLink, Github, ArrowUpRight } from 'lucide-react'
+import { ArrowUpRight } from 'lucide-react'
 
 gsap.registerPlugin(ScrollTrigger)
 
-const projects = [
+const products = [
   {
     id: 1,
-    title: 'Ferrero Experience',
-    category: '3D / WebGL',
-    description: 'Immersive 3D product showcase with scroll-linked animations and interactive elements. Built with Three.js and GSAP.',
-    tech: ['Three.js', 'React', 'GSAP', 'WebGL'],
+    title: 'Ferrero Rocher Classic',
+    category: 'La Sfera Dorata',
+    description: 'L\'originale: nocciola intera, crema gianduia, cialda croccante e cioccolato al latte con granella di nocciole.',
+    details: ['Nocciola Intera', 'Crema Gianduia', 'Wafer Croccante', 'Cioccolato al Latte'],
     color: '#D4A853',
-    year: '2024',
+    year: '1982',
   },
   {
     id: 2,
-    title: 'Design Editor',
-    category: 'Web Application',
-    description: 'Full-featured design editor with real-time collaboration, template system, and export capabilities.',
-    tech: ['React', 'TypeScript', 'Supabase', 'Tailwind'],
-    color: '#E8C878',
-    year: '2024',
+    title: 'Ferrero Rocher Dark',
+    category: 'Cioccolato Fondente',
+    description: 'Per gli amanti del cioccolato intenso: la stessa magia avvolta in pregiato cioccolato fondente.',
+    details: ['Nocciola Intera', 'Crema Fondente', 'Wafer Croccante', 'Cioccolato Fondente'],
+    color: '#5A3A28',
+    year: '2020',
   },
   {
     id: 3,
-    title: 'Cocktail AI',
-    category: 'AI / Full Stack',
-    description: 'AI-powered cocktail recommendation and bar management system with voice commands and stock tracking.',
-    tech: ['OpenAI', 'React', 'Node.js', 'PostgreSQL'],
-    color: '#B8923F',
-    year: '2024',
+    title: 'Grand Ferrero Rocher',
+    category: 'Edizione Speciale',
+    description: 'Il formato regalo per eccellenza: due Ferrero Rocher racchiusi in un guscio di cioccolato e nocciole.',
+    details: ['Doppia Nocciola', 'Guscio Premium', 'Ideale Regalo', 'Limited Edition'],
+    color: '#E8C878',
+    year: '2015',
   },
 ]
 
@@ -113,7 +113,7 @@ export function Works() {
         className="absolute top-1/3 -translate-y-1/2 -left-1/4 whitespace-nowrap pointer-events-none select-none z-0"
       >
         <span className="horizontal-scroll-text">
-          SELECTED WORKS • FEATURED PROJECTS • SELECTED WORKS • FEATURED PROJECTS •
+          LA COLLEZIONE • PRODOTTI PREMIUM • LA COLLEZIONE • PRODOTTI PREMIUM •
         </span>
       </div>
 
@@ -121,29 +121,29 @@ export function Works() {
         {/* Section heading */}
         <div ref={headingRef} className="mb-24">
           <span className="text-[var(--color-gold)] uppercase tracking-[0.3em] text-xs mb-4 block">
-            {splitChars('Selected Works')}
+            {splitChars('La Collezione')}
           </span>
           <h2 className="luxury-title text-5xl md:text-7xl lg:text-8xl">
             <div className="overflow-hidden">
-              <span className="block">{splitChars('Featured')}</span>
+              <span className="block">{splitChars('I Nostri')}</span>
             </div>
             <div className="overflow-hidden">
-              <span className="block gradient-text">{splitChars('Projects')}</span>
+              <span className="block gradient-text">{splitChars('Prodotti')}</span>
             </div>
           </h2>
         </div>
 
-        {/* Projects grid */}
+        {/* Products grid */}
         <div ref={projectsRef} className="space-y-16">
-          {projects.map((project, index) => (
+          {products.map((product, index) => (
             <div
-              key={project.id}
+              key={product.id}
               className="project-card group relative"
-              onMouseEnter={() => setHoveredProject(project.id)}
+              onMouseEnter={() => setHoveredProject(product.id)}
               onMouseLeave={() => setHoveredProject(null)}
             >
               <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
-                {/* Project image/preview */}
+                {/* Product image/preview */}
                 <div
                   className={`relative aspect-[16/10] overflow-hidden ${
                     index % 2 === 1 ? 'lg:order-2' : ''
@@ -152,37 +152,22 @@ export function Works() {
                   <div
                     className="absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-105"
                     style={{
-                      background: `linear-gradient(135deg, ${project.color}30, ${project.color}05)`,
+                      background: `linear-gradient(135deg, ${product.color}30, ${product.color}05)`,
                     }}
                   >
-                    {/* Project number */}
+                    {/* Product number */}
                     <div className="absolute top-6 left-6 text-8xl font-bold text-white/5 leading-none">
                       0{index + 1}
                     </div>
 
-                    {/* Hover overlay */}
-                    <div
-                      className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                      style={{
-                        background: `linear-gradient(135deg, ${project.color}40, ${project.color}20)`,
-                      }}
-                    >
-                      <div className="flex gap-4">
-                        <a
-                          href="#"
-                          className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-colors"
-                          data-cursor="hover"
-                        >
-                          <ExternalLink size={22} />
-                        </a>
-                        <a
-                          href="#"
-                          className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-colors"
-                          data-cursor="hover"
-                        >
-                          <Github size={22} />
-                        </a>
-                      </div>
+                    {/* Golden sphere indicator */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div
+                        className="w-32 h-32 rounded-full opacity-20 group-hover:opacity-40 transition-opacity duration-500"
+                        style={{
+                          background: `radial-gradient(circle, ${product.color} 0%, transparent 70%)`
+                        }}
+                      />
                     </div>
                   </div>
 
@@ -190,41 +175,41 @@ export function Works() {
                   <div
                     className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
                     style={{
-                      boxShadow: `inset 0 0 0 1px ${project.color}60, 0 0 40px ${project.color}20`,
+                      boxShadow: `inset 0 0 0 1px ${product.color}60, 0 0 40px ${product.color}20`,
                     }}
                   />
                 </div>
 
-                {/* Project info */}
+                {/* Product info */}
                 <div className={index % 2 === 1 ? 'lg:order-1 lg:text-right' : ''}>
                   <div className="flex items-center gap-4 mb-4">
                     <span className="text-[var(--color-gold)] text-sm uppercase tracking-wider">
-                      {project.category}
+                      {product.category}
                     </span>
-                    <span className="text-white/30 text-sm">{project.year}</span>
+                    <span className="text-white/30 text-sm">{product.year}</span>
                   </div>
 
                   <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 transition-colors duration-300 group-hover:text-[var(--color-gold)]">
-                    {project.title}
+                    {product.title}
                   </h3>
 
                   <p className="text-white/60 text-lg mb-6 max-w-md">
-                    {project.description}
+                    {product.description}
                   </p>
 
-                  {/* Tech stack */}
+                  {/* Details */}
                   <div className={`flex flex-wrap gap-2 mb-8 ${index % 2 === 1 ? 'lg:justify-end' : ''}`}>
-                    {project.tech.map((tech) => (
+                    {product.details.map((detail) => (
                       <span
-                        key={tech}
+                        key={detail}
                         className="px-3 py-1 text-xs uppercase tracking-wider text-white/40 border border-white/10 rounded-full"
                       >
-                        {tech}
+                        {detail}
                       </span>
                     ))}
                   </div>
 
-                  {/* View project link */}
+                  {/* View product link */}
                   <a
                     href="#"
                     className={`inline-flex items-center gap-2 text-white/70 hover:text-[var(--color-gold)] transition-colors group/link ${
@@ -232,7 +217,7 @@ export function Works() {
                     }`}
                     data-cursor="hover"
                   >
-                    <span className="text-sm uppercase tracking-wider">View Project</span>
+                    <span className="text-sm uppercase tracking-wider">Scopri</span>
                     <ArrowUpRight
                       size={18}
                       className="transform transition-transform group-hover/link:translate-x-1 group-hover/link:-translate-y-1"
@@ -242,7 +227,7 @@ export function Works() {
               </div>
 
               {/* Separator line */}
-              {index < projects.length - 1 && (
+              {index < products.length - 1 && (
                 <div className="mt-16 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
               )}
             </div>
@@ -256,7 +241,7 @@ export function Works() {
             className="group inline-flex items-center gap-4 px-8 py-4 border border-[var(--color-gold)] text-[var(--color-gold)] hover:bg-[var(--color-gold)] hover:text-[var(--color-dark)] transition-all duration-300"
             data-cursor="hover"
           >
-            <span className="uppercase tracking-wider text-sm">View All Projects</span>
+            <span className="uppercase tracking-wider text-sm">Esplora la Collezione</span>
             <ArrowUpRight size={18} className="transform transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
           </a>
         </div>

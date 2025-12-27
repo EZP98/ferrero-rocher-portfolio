@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 
 const navItems = [
-  { label: 'About', href: '#about' },
-  { label: 'Works', href: '#works' },
-  { label: 'Contact', href: '#contact' },
+  { label: 'Storia', href: '#about' },
+  { label: 'Prodotti', href: '#works' },
+  { label: 'Dove Siamo', href: '#contact' },
 ]
 
 export function Header() {
@@ -70,7 +70,7 @@ export function Header() {
                 isMinimal ? 'opacity-0 w-0' : 'opacity-100'
               }`}
             >
-              <span className="gradient-text text-lg">Ezio</span>
+              <span className="gradient-text text-lg">Ferrero Rocher</span>
             </span>
           </div>
         </motion.a>
@@ -110,7 +110,7 @@ export function Header() {
             className="ml-4 px-5 py-2 bg-[var(--color-gold)]/10 border border-[var(--color-gold)]/30 text-[var(--color-gold)] text-xs uppercase tracking-[0.15em] rounded-full hover:bg-[var(--color-gold)] hover:text-[var(--color-dark)] transition-all"
             data-cursor="hover"
           >
-            Let's Talk
+            Scopri
           </motion.a>
         </nav>
 

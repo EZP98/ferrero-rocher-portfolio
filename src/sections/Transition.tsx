@@ -5,9 +5,9 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 gsap.registerPlugin(ScrollTrigger)
 
 const phrases = [
-  { text: 'Concentrate', highlight: false },
-  { text: 'Keep Scrolling', highlight: false },
-  { text: 'The Experience Awaits', highlight: true },
+  { text: 'Irresistibile', highlight: false },
+  { text: 'Ogni Morso Unico', highlight: false },
+  { text: 'Puro Piacere Italiano', highlight: true },
 ]
 
 export function Transition() {

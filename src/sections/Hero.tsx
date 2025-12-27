@@ -135,7 +135,7 @@ export function Hero() {
         style={{ transform: `translateY(${parallaxY * 0.2}px)` }}
       >
         <span className="text-[var(--color-gold)] uppercase tracking-[0.5em] text-xs md:text-sm font-medium">
-          {splitText('Creative Developer & Designer')}
+          {splitText('The Art of Italian Chocolate')}
         </span>
       </div>
 
@@ -147,10 +147,10 @@ export function Hero() {
       >
         <h1 className="luxury-title text-[12vw] md:text-[10vw] lg:text-[8vw] leading-[0.85] mb-6">
           <div className="overflow-hidden">
-            <span className="word inline-block text-white/90">EZIO</span>
+            <span className="word inline-block text-white/90">FERRERO</span>
           </div>
           <div className="overflow-hidden">
-            <span className="word inline-block gradient-text">PAPPALARDO</span>
+            <span className="word inline-block gradient-text">ROCHER</span>
           </div>
         </h1>
 
@@ -163,15 +163,15 @@ export function Hero() {
 
         {/* Tagline */}
         <p className="text-white/50 text-lg md:text-xl max-w-xl mx-auto font-light tracking-wide">
-          Transforming ideas into immersive digital experiences
+          Un'esperienza di gusto unica avvolta in
           <br />
-          <span className="text-[var(--color-gold)]">with code and creativity</span>
+          <span className="text-[var(--color-gold)]">oro e cioccolato</span>
         </p>
       </div>
 
       {/* Scroll indicator */}
       <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-3">
-        <span className="text-white/30 text-[10px] uppercase tracking-[0.3em]">Scroll to explore</span>
+        <span className="text-white/30 text-[10px] uppercase tracking-[0.3em]">Scorri per scoprire</span>
         <div className="w-px h-16 bg-gradient-to-b from-[var(--color-gold)] to-transparent relative overflow-hidden">
           <div className="absolute inset-0 bg-[var(--color-gold)] animate-[scrollDown_2s_ease-in-out_infinite]" />
         </div>
@@ -180,13 +180,13 @@ export function Hero() {
       {/* Side text decoration */}
       <div className="fixed left-8 top-1/2 -translate-y-1/2 z-10 hidden lg:block">
         <span className="text-white/10 text-xs uppercase tracking-[0.5em] transform -rotate-90 origin-center whitespace-nowrap">
-          Portfolio 2024
+          Dal 1982
         </span>
       </div>
 
       <div className="fixed right-8 top-1/2 -translate-y-1/2 z-10 hidden lg:block">
         <span className="text-white/10 text-xs uppercase tracking-[0.5em] transform rotate-90 origin-center whitespace-nowrap">
-          Milano, Italia
+          Alba, Italia
         </span>
       </div>
 

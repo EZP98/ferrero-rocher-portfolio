@@ -5,20 +5,19 @@ import { ImpulseString } from '../components/ImpulseString'
 
 gsap.registerPlugin(ScrollTrigger)
 
-const skills = [
-  { name: 'React / Next.js', level: 95 },
-  { name: 'Three.js / WebGL', level: 88 },
-  { name: 'TypeScript', level: 92 },
-  { name: 'GSAP Animations', level: 90 },
-  { name: 'UI/UX Design', level: 85 },
-  { name: 'Node.js', level: 82 },
+const ingredients = [
+  { name: 'Cioccolato Fondente', level: 100 },
+  { name: 'Nocciola Piemonte IGP', level: 95 },
+  { name: 'Crema Gianduia', level: 90 },
+  { name: 'Cialda Croccante', level: 85 },
+  { name: 'Nocciola Intera', level: 80 },
 ]
 
 const stats = [
-  { value: '5+', label: 'Years Experience' },
-  { value: '50+', label: 'Projects Delivered' },
-  { value: '30+', label: 'Happy Clients' },
-  { value: '∞', label: 'Lines of Code' },
+  { value: '1982', label: 'Anno di Nascita' },
+  { value: '170+', label: 'Paesi nel Mondo' },
+  { value: '3B+', label: 'Pezzi Venduti/Anno' },
+  { value: '24', label: 'Nocciole per Pezzo' },
 ]
 
 export function About() {
@@ -135,7 +134,7 @@ export function About() {
         className="absolute top-1/2 -translate-y-1/2 left-0 whitespace-nowrap pointer-events-none select-none z-0"
       >
         <span className="horizontal-scroll-text">
-          ABOUT ME • CREATIVE DEVELOPER • ABOUT ME • CREATIVE DEVELOPER •
+          FERRERO ROCHER • TRADIZIONE ITALIANA • FERRERO ROCHER • TRADIZIONE ITALIANA •
         </span>
       </div>
 
@@ -143,34 +142,33 @@ export function About() {
         {/* Section heading */}
         <div ref={headingRef} className="mb-20">
           <span className="text-[var(--color-gold)] uppercase tracking-[0.3em] text-xs mb-4 block">
-            {splitChars('About Me')}
+            {splitChars('La Nostra Storia')}
           </span>
           <h2 className="luxury-title text-5xl md:text-7xl lg:text-8xl">
             <div className="overflow-hidden">
-              <span className="block">{splitChars('Crafting')}</span>
+              <span className="block">{splitChars('Perfezione')}</span>
             </div>
             <div className="overflow-hidden">
-              <span className="block gradient-text">{splitChars('Digital Art')}</span>
+              <span className="block gradient-text">{splitChars('Artigianale')}</span>
             </div>
           </h2>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-16 lg:gap-24">
-          {/* Left column - Bio */}
+          {/* Left column - Story */}
           <div ref={textRef} className="space-y-8">
             <p className="text-xl md:text-2xl text-white/80 leading-relaxed font-light">
-              I'm a creative developer based in Milano, specialized in building
-              <span className="text-[var(--color-gold)]"> immersive digital experiences</span> that
-              blend cutting-edge technology with artistic vision.
+              Nato ad Alba, nel cuore del Piemonte, Ferrero Rocher rappresenta
+              <span className="text-[var(--color-gold)]"> l'eccellenza della cioccolateria italiana</span> dal 1982.
             </p>
             <p className="text-lg text-white/60 leading-relaxed">
-              With over 5 years of experience, I've worked with brands and agencies worldwide
-              to create memorable web experiences. My approach combines technical excellence
-              with a keen eye for design, resulting in products that are both beautiful and performant.
+              Ogni sfera dorata racchiude strati di pura magia: una nocciola intera avvolta
+              in vellutata crema gianduia, racchiusa in una croccante cialda di wafer
+              e ricoperta di finissimo cioccolato al latte con granella di nocciole.
             </p>
             <p className="text-lg text-white/60 leading-relaxed">
-              When I'm not coding, you'll find me exploring new animation techniques,
-              experimenting with 3D graphics, or savoring the perfect espresso.
+              Perfetto per ogni occasione speciale, Ferrero Rocher è diventato
+              il simbolo del regalo raffinato in oltre 170 paesi nel mondo.
             </p>
 
             {/* CTA */}
@@ -180,26 +178,26 @@ export function About() {
                 className="group inline-flex items-center gap-4 text-[var(--color-gold)] hover:text-[var(--color-gold-light)] transition-colors"
                 data-cursor="hover"
               >
-                <span className="text-lg">Let's work together</span>
+                <span className="text-lg">Scopri di più</span>
                 <span className="w-12 h-px bg-[var(--color-gold)] group-hover:w-20 transition-all duration-300" />
               </a>
             </div>
           </div>
 
-          {/* Right column - Skills */}
+          {/* Right column - Ingredients */}
           <div ref={skillsRef} className="space-y-8">
-            <h3 className="text-white/40 uppercase tracking-widest text-sm mb-8">Core Skills</h3>
+            <h3 className="text-white/40 uppercase tracking-widest text-sm mb-8">I Nostri Ingredienti</h3>
 
-            {skills.map((skill, index) => (
+            {ingredients.map((ingredient, index) => (
               <div key={index} className="skill-bar">
                 <div className="flex justify-between mb-2">
-                  <span className="text-white/80">{skill.name}</span>
-                  <span className="text-[var(--color-gold)]">{skill.level}%</span>
+                  <span className="text-white/80">{ingredient.name}</span>
+                  <span className="text-[var(--color-gold)]">{ingredient.level}%</span>
                 </div>
                 <div className="h-1 bg-white/10 overflow-hidden">
                   <div
                     className="skill-fill h-full bg-gradient-to-r from-[var(--color-gold)] to-[var(--color-gold-light)]"
-                    style={{ width: `${skill.level}%` }}
+                    style={{ width: `${ingredient.level}%` }}
                   />
                 </div>
               </div>
