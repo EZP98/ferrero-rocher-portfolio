@@ -7,6 +7,11 @@ gsap.registerPlugin(ScrollTrigger)
 const phrases = [
   { text: 'Irresistibile', highlight: false },
   { text: 'Ogni Morso Unico', highlight: false },
+  { text: 'Nocciola Piemonte', highlight: true },
+  { text: 'Croccante Fuori', highlight: false },
+  { text: 'Cremoso Dentro', highlight: false },
+  { text: 'Avvolto in Oro', highlight: true },
+  { text: 'Dal 1982', highlight: false },
   { text: 'Puro Piacere Italiano', highlight: true },
 ]
 
@@ -16,11 +21,20 @@ export function Transition() {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
+      const totalPhrases = phrases.length
+      const segmentSize = 100 / (totalPhrases + 1) // Distribute evenly
+
       phrases.forEach((_, index) => {
         const phrase = phrasesRef.current[index]
         if (!phrase) return
 
         const chars = phrase.querySelectorAll('.char')
+
+        // Calculate positions for each phrase
+        const startIn = index * segmentSize
+        const endIn = startIn + segmentSize * 0.6
+        const startOut = endIn + segmentSize * 0.2
+        const endOut = startOut + segmentSize * 0.5
 
         // Animate in
         gsap.fromTo(
@@ -39,26 +53,41 @@ export function Transition() {
             ease: 'power3.out',
             scrollTrigger: {
               trigger: sectionRef.current,
-              start: `${15 + index * 30}% center`,
-              end: `${35 + index * 30}% center`,
+              start: `${startIn}% center`,
+              end: `${endIn}% center`,
               scrub: 1,
             },
           }
         )
 
-        // Animate out
-        gsap.to(chars, {
-          y: -100,
-          opacity: 0,
-          rotationX: 90,
-          stagger: 0.01,
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: `${40 + index * 25}% center`,
-            end: `${60 + index * 25}% center`,
-            scrub: 1,
-          },
-        })
+        // Animate out (except last phrase which stays longer)
+        if (index < totalPhrases - 1) {
+          gsap.to(chars, {
+            y: -100,
+            opacity: 0,
+            rotationX: 90,
+            stagger: 0.01,
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: `${startOut}% center`,
+              end: `${endOut}% center`,
+              scrub: 1,
+            },
+          })
+        } else {
+          // Last phrase fades out at the very end
+          gsap.to(chars, {
+            y: -50,
+            opacity: 0,
+            stagger: 0.01,
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: '90% center',
+              end: '100% center',
+              scrub: 1,
+            },
+          })
+        }
       })
     }, sectionRef)
 
@@ -80,7 +109,7 @@ export function Transition() {
   return (
     <section
       ref={sectionRef}
-      className="relative h-[300vh] flex items-center justify-center overflow-hidden bg-[var(--color-darker)]"
+      className="relative h-[600vh] flex items-center justify-center overflow-hidden bg-[var(--color-darker)]"
     >
       <div className="sticky top-0 h-screen w-full flex items-center justify-center">
         <div className="text-center perspective-1000">

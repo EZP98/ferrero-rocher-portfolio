@@ -18,17 +18,17 @@ export function DraggableFooter() {
   // Generate initial Ferrero positions
   useEffect(() => {
     const generateFerreros = () => {
-      const count = 12
+      const count = 10
       const newFerreros: Ferrero[] = []
       const containerWidth = containerRef.current?.offsetWidth || window.innerWidth
 
       for (let i = 0; i < count; i++) {
         newFerreros.push({
           id: i,
-          x: (containerWidth / count) * i + Math.random() * 50,
-          y: 50 + Math.random() * 80,
+          x: (containerWidth / count) * i + Math.random() * 40,
+          y: 30 + Math.random() * 140,
           rotation: Math.random() * 360,
-          scale: 0.8 + Math.random() * 0.4,
+          scale: 0.9 + Math.random() * 0.3,
         })
       }
       setFerreros(newFerreros)
@@ -130,7 +130,7 @@ export function DraggableFooter() {
       {/* Draggable Ferrero area */}
       <div
         ref={containerRef}
-        className="relative h-48 overflow-hidden cursor-grab active:cursor-grabbing"
+        className="relative h-64 overflow-hidden cursor-grab active:cursor-grabbing"
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
@@ -149,7 +149,7 @@ export function DraggableFooter() {
           <div
             key={ferrero.id}
             id={`ferrero-${ferrero.id}`}
-            className={`absolute w-14 h-14 cursor-grab active:cursor-grabbing transition-shadow ${
+            className={`absolute w-20 h-20 cursor-grab active:cursor-grabbing transition-shadow ${
               dragging === ferrero.id ? 'z-50 shadow-2xl' : 'z-10'
             }`}
             style={{
@@ -160,81 +160,86 @@ export function DraggableFooter() {
             onMouseDown={(e) => handleMouseDown(e, ferrero.id)}
             onTouchStart={(e) => handleTouchStart(e, ferrero.id)}
           >
-            {/* Ferrero Rocher SVG representation */}
-            <svg viewBox="0 0 60 60" className="w-full h-full drop-shadow-lg">
-              {/* Golden wrapper */}
+            {/* Ferrero Rocher realistic SVG */}
+            <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-2xl">
               <defs>
-                <radialGradient id={`gold-${ferrero.id}`} cx="30%" cy="30%" r="70%">
-                  <stop offset="0%" stopColor="#F5D78E" />
-                  <stop offset="50%" stopColor="#D4A853" />
-                  <stop offset="100%" stopColor="#8B6914" />
+                {/* Main gold gradient */}
+                <radialGradient id={`gold-main-${ferrero.id}`} cx="35%" cy="25%" r="65%">
+                  <stop offset="0%" stopColor="#FFE5A0" />
+                  <stop offset="30%" stopColor="#D4A853" />
+                  <stop offset="70%" stopColor="#B8923F" />
+                  <stop offset="100%" stopColor="#7A5C1E" />
                 </radialGradient>
-                <radialGradient id={`shine-${ferrero.id}`} cx="20%" cy="20%" r="50%">
-                  <stop offset="0%" stopColor="white" stopOpacity="0.6" />
+
+                {/* Highlight */}
+                <radialGradient id={`highlight-${ferrero.id}`} cx="30%" cy="25%" r="40%">
+                  <stop offset="0%" stopColor="white" stopOpacity="0.7" />
                   <stop offset="100%" stopColor="white" stopOpacity="0" />
+                </radialGradient>
+
+                {/* Shadow */}
+                <radialGradient id={`shadow-${ferrero.id}`} cx="50%" cy="80%" r="50%">
+                  <stop offset="0%" stopColor="#3D2B0F" stopOpacity="0.5" />
+                  <stop offset="100%" stopColor="#3D2B0F" stopOpacity="0" />
+                </radialGradient>
+
+                {/* Bump gradient */}
+                <radialGradient id={`bump-${ferrero.id}`} cx="40%" cy="30%" r="60%">
+                  <stop offset="0%" stopColor="#E8C878" />
+                  <stop offset="100%" stopColor="#8B6914" />
                 </radialGradient>
               </defs>
 
-              {/* Main sphere */}
-              <circle
-                cx="30"
-                cy="30"
-                r="28"
-                fill={`url(#gold-${ferrero.id})`}
-              />
+              {/* Shadow underneath */}
+              <ellipse cx="50" cy="90" rx="25" ry="8" fill={`url(#shadow-${ferrero.id})`} />
 
-              {/* Texture bumps */}
+              {/* Main golden sphere */}
+              <circle cx="50" cy="50" r="42" fill={`url(#gold-main-${ferrero.id})`} />
+
+              {/* Hazelnut bumps - outer ring */}
+              {[...Array(12)].map((_, i) => {
+                const angle = (i / 12) * Math.PI * 2
+                const x = 50 + Math.cos(angle) * 30
+                const y = 50 + Math.sin(angle) * 30
+                return (
+                  <circle
+                    key={`outer-${i}`}
+                    cx={x}
+                    cy={y}
+                    r="6"
+                    fill={`url(#bump-${ferrero.id})`}
+                  />
+                )
+              })}
+
+              {/* Hazelnut bumps - middle ring */}
               {[...Array(8)].map((_, i) => {
-                const angle = (i / 8) * Math.PI * 2
-                const x = 30 + Math.cos(angle) * 18
-                const y = 30 + Math.sin(angle) * 18
+                const angle = (i / 8) * Math.PI * 2 + 0.2
+                const x = 50 + Math.cos(angle) * 18
+                const y = 50 + Math.sin(angle) * 18
                 return (
                   <circle
-                    key={i}
+                    key={`middle-${i}`}
                     cx={x}
                     cy={y}
-                    r="4"
-                    fill="#B8923F"
-                    opacity="0.6"
+                    r="5"
+                    fill={`url(#bump-${ferrero.id})`}
                   />
                 )
               })}
 
-              {/* Inner bumps */}
-              {[...Array(6)].map((_, i) => {
-                const angle = (i / 6) * Math.PI * 2 + 0.3
-                const x = 30 + Math.cos(angle) * 10
-                const y = 30 + Math.sin(angle) * 10
-                return (
-                  <circle
-                    key={i}
-                    cx={x}
-                    cy={y}
-                    r="3"
-                    fill="#C9A44A"
-                    opacity="0.5"
-                  />
-                )
-              })}
+              {/* Center bump */}
+              <circle cx="50" cy="50" r="8" fill={`url(#bump-${ferrero.id})`} />
 
-              {/* Shine */}
-              <circle
-                cx="22"
-                cy="22"
-                r="12"
-                fill={`url(#shine-${ferrero.id})`}
-              />
+              {/* Main highlight */}
+              <ellipse cx="38" cy="35" rx="18" ry="15" fill={`url(#highlight-${ferrero.id})`} />
 
-              {/* Border */}
-              <circle
-                cx="30"
-                cy="30"
-                r="28"
-                fill="none"
-                stroke="#8B6914"
-                strokeWidth="1"
-                opacity="0.5"
-              />
+              {/* Small sparkle highlights */}
+              <circle cx="35" cy="32" r="3" fill="white" opacity="0.8" />
+              <circle cx="42" cy="38" r="1.5" fill="white" opacity="0.6" />
+
+              {/* Golden border */}
+              <circle cx="50" cy="50" r="42" fill="none" stroke="#8B6914" strokeWidth="0.5" opacity="0.3" />
             </svg>
           </div>
         ))}
