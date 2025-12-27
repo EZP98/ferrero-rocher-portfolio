@@ -1,11 +1,10 @@
 import { useRef, useEffect } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { RotatingCards } from '../components/RotatingCards'
 
 gsap.registerPlugin(ScrollTrigger)
 
-const principles = [
+const features = [
   {
     icon: '🌰',
     name: 'Nocciola Intera',
@@ -35,21 +34,6 @@ const principles = [
     name: 'Granella Dorata',
     tagline: 'Finitura artigianale.',
     description: 'Frammenti di nocciola tostata che decorano l\'esterno dorato.',
-  },
-]
-
-const audienceCards = [
-  {
-    title: 'Per i Golosi',
-    description: 'Un momento di puro piacere. Lasciati avvolgere dalla dolcezza.',
-  },
-  {
-    title: 'Per gli Intenditori',
-    description: 'Ingredienti pregiati. Nocciole Piemonte IGP. Qualità senza compromessi.',
-  },
-  {
-    title: 'Per le Occasioni',
-    description: 'Il regalo perfetto. Eleganza dorata per momenti indimenticabili.',
   },
 ]
 
@@ -138,74 +122,60 @@ export function Features() {
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-12">
-        {/* Top audience cards - like StringTune's "Experienced Developers", etc */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-24">
-          {audienceCards.map((card, index) => (
-            <div
-              key={index}
-              className="feature-card group p-6 rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.04] hover:border-[var(--color-gold)]/30 transition-all duration-500"
-            >
-              <h4 className="text-[var(--color-gold)] text-lg font-semibold mb-2">
-                {card.title}
-              </h4>
-              <p className="text-white/50 text-sm leading-relaxed">
-                {card.description}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {/* Main Title - StringTune style */}
-        <div ref={titleRef} className="text-center mb-24" style={{ perspective: '1000px' }}>
-          <h2 className="luxury-title text-5xl md:text-7xl lg:text-8xl mb-4">
-            <span className="block text-white">{splitChars('Ferrero Rocher')}</span>
-          </h2>
+        {/* Title */}
+        <div ref={titleRef} className="text-center mb-20" style={{ perspective: '1000px' }}>
+          <span className="text-[var(--color-gold)] uppercase tracking-[0.3em] text-xs mb-4 block">
+            {splitChars('L\'Arte del Gusto')}
+          </span>
           <h2 className="luxury-title text-4xl md:text-6xl lg:text-7xl">
-            <span className="block gradient-text">{splitChars('Principi')}</span>
+            <span className="block text-white">{splitChars('Ferrero Rocher')}</span>
+            <span className="block gradient-text mt-2">{splitChars('Principi')}</span>
           </h2>
         </div>
 
-        {/* Principles grid - 5 columns like StringTune */}
-        <div ref={cardsRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-6 mb-16">
-          {principles.map((principle, index) => (
+        {/* Features grid */}
+        <div ref={cardsRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 lg:gap-4 mb-16">
+          {features.map((feature, index) => (
             <div
               key={index}
-              className="feature-card group text-center"
+              className="feature-card group relative p-6 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-[var(--color-gold)]/20 transition-all duration-500"
             >
               {/* Icon */}
-              <div className="text-5xl mb-6 group-hover:scale-110 transition-transform duration-300">
-                {principle.icon}
+              <div className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                {feature.icon}
               </div>
 
               {/* Name */}
-              <h3 className="text-white font-semibold text-xl mb-3 group-hover:text-[var(--color-gold)] transition-colors">
-                {principle.name}
+              <h3 className="text-white font-semibold text-lg mb-2 group-hover:text-[var(--color-gold)] transition-colors">
+                {feature.name}
               </h3>
 
               {/* Tagline */}
-              <p className="text-[var(--color-gold)]/80 text-sm mb-3">
-                {principle.tagline}
+              <p className="text-[var(--color-gold)]/80 text-sm mb-3 italic">
+                {feature.tagline}
               </p>
 
               {/* Description */}
-              <p className="text-white/40 text-sm leading-relaxed">
-                {principle.description}
+              <p className="text-white/50 text-sm leading-relaxed">
+                {feature.description}
               </p>
+
+              {/* Hover glow */}
+              <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                style={{
+                  background: 'radial-gradient(circle at 50% 0%, rgba(212,168,83,0.1) 0%, transparent 50%)',
+                }}
+              />
             </div>
           ))}
         </div>
 
-        {/* Bottom tagline - StringTune style */}
-        <div className="tagline text-center mt-20">
-          <p className="text-white/30 text-sm uppercase tracking-[0.3em]">
+        {/* Bottom tagline */}
+        <div className="tagline text-center">
+          <p className="text-white/30 text-sm uppercase tracking-[0.2em]">
             Minimalista, Espressivo, Indimenticabile.
           </p>
         </div>
-      </div>
-
-      {/* Rotating Cards Section - separate section with proper spacing */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-12 mt-40 pb-16">
-        <RotatingCards />
       </div>
 
       {/* Decorative elements */}

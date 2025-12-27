@@ -3,14 +3,11 @@ import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 import { useSmoothScroll } from './hooks/useSmoothScroll'
-import { Header } from './components/Header'
 import { ScrollProgress } from './components/ScrollProgress'
+import { Scene3D } from './components/Scene3D'
 import { CustomCursor } from './components/CustomCursor'
 import { Hero } from './sections/Hero'
-import { Features } from './sections/Features'
-import { About } from './sections/About'
-import { Works } from './sections/Works'
-import { Contact } from './sections/Contact'
+import { Transition } from './sections/Transition'
 import { DraggableFooter } from './components/DraggableFooter'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -41,19 +38,19 @@ export default function App() {
       {/* Scroll progress indicator */}
       <ScrollProgress />
 
-      {/* Navigation */}
-      <Header />
+      {/* 3D Scene (fixed background) */}
+      <Scene3D />
+
+      {/* Navigation - temporarily hidden */}
+      {/* <Header /> */}
 
       {/* Main content */}
       <main>
         <Hero />
-        <Features />
-        <About />
-        <Works />
-        <Contact />
+        <Transition />
       </main>
 
-      {/* Footer */}
+      {/* Footer with draggable Ferrero Rochers */}
       <DraggableFooter />
 
       {/* Noise overlay */}
