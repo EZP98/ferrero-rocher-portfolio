@@ -1,34 +1,137 @@
-import { useRef, useState, useEffect } from 'react'
-import { gsap } from 'gsap'
+import { useRef, useState, useEffect, Suspense } from 'react'
+import { Canvas, useThree, useFrame } from '@react-three/fiber'
+import { useGLTF, Environment } from '@react-three/drei'
+import * as THREE from 'three'
 
-interface Ferrero {
+interface FerreroPiece {
   id: number
-  x: number
-  y: number
+  position: [number, number, number]
   rotation: number
   scale: number
 }
 
+// Single Ferrero instance
+function FerreroInstance({
+  position,
+  rotation,
+  scale,
+  isDragging
+}: {
+  position: [number, number, number]
+  rotation: number
+  scale: number
+  isDragging: boolean
+}) {
+  const meshRef = useRef<THREE.Group>(null)
+
+  let scene = null
+  try {
+    const gltf = useGLTF('/models/ferrero.glb')
+    scene = gltf.scene
+  } catch {
+    return null
+  }
+
+  useFrame(() => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y += 0.005
+      if (isDragging) {
+        meshRef.current.rotation.y += 0.02
+      }
+    }
+  })
+
+  if (!scene) return null
+
+  return (
+    <primitive
+      ref={meshRef}
+      object={scene.clone()}
+      position={position}
+      rotation={[0, rotation, 0]}
+      scale={scale}
+    />
+  )
+}
+
+// Scene with all Ferreros
+function FerrerosScene({
+  ferreros,
+  draggingId,
+  containerWidth,
+  containerHeight
+}: {
+  ferreros: FerreroPiece[]
+  draggingId: number | null
+  containerWidth: number
+  containerHeight: number
+}) {
+  const { camera } = useThree()
+
+  useEffect(() => {
+    // Adjust camera to fit container
+    if (camera instanceof THREE.PerspectiveCamera) {
+      camera.position.z = 8
+      camera.updateProjectionMatrix()
+    }
+  }, [camera])
+
+  // Convert screen coordinates to 3D world coordinates
+  const screenToWorld = (x: number, y: number): [number, number, number] => {
+    const worldX = ((x / containerWidth) - 0.5) * 12
+    const worldY = -((y / containerHeight) - 0.5) * 4
+    return [worldX, worldY, 0]
+  }
+
+  return (
+    <>
+      <ambientLight intensity={0.4} />
+      <spotLight position={[5, 5, 5]} intensity={1.5} color="#D4A853" />
+      <pointLight position={[-5, -5, 5]} intensity={0.8} color="#E8C878" />
+
+      <Suspense fallback={null}>
+        {ferreros.map((ferrero) => (
+          <FerreroInstance
+            key={ferrero.id}
+            position={screenToWorld(ferrero.position[0], ferrero.position[1])}
+            rotation={ferrero.rotation}
+            scale={ferrero.scale * 0.8}
+            isDragging={draggingId === ferrero.id}
+          />
+        ))}
+        <Environment preset="studio" />
+      </Suspense>
+    </>
+  )
+}
+
 export function DraggableFooter() {
   const containerRef = useRef<HTMLDivElement>(null)
-  const [ferreros, setFerreros] = useState<Ferrero[]>([])
+  const [ferreros, setFerreros] = useState<FerreroPiece[]>([])
   const [dragging, setDragging] = useState<number | null>(null)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+  const [containerSize, setContainerSize] = useState({ width: 1000, height: 200 })
 
   // Generate initial Ferrero positions
   useEffect(() => {
     const generateFerreros = () => {
-      const count = 12
-      const newFerreros: Ferrero[] = []
-      const containerWidth = containerRef.current?.offsetWidth || window.innerWidth
+      const count = 10
+      const newFerreros: FerreroPiece[] = []
+      const width = containerRef.current?.offsetWidth || window.innerWidth
+      const height = containerRef.current?.offsetHeight || 200
+
+      setContainerSize({ width, height })
 
       for (let i = 0; i < count; i++) {
         newFerreros.push({
           id: i,
-          x: (containerWidth / count) * i + Math.random() * 50,
-          y: 30 + Math.random() * 80,
-          rotation: Math.random() * 40 - 20,
-          scale: 0.8 + Math.random() * 0.4,
+          position: [
+            (width / count) * i + Math.random() * 60 + 30,
+            40 + Math.random() * 100,
+            0
+          ],
+          rotation: Math.random() * Math.PI * 2,
+          scale: 0.9 + Math.random() * 0.3,
         })
       }
       setFerreros(newFerreros)
@@ -39,34 +142,49 @@ export function DraggableFooter() {
     return () => window.removeEventListener('resize', generateFerreros)
   }, [])
 
-  const handleMouseDown = (e: React.MouseEvent, id: number) => {
-    const ferrero = ferreros.find(f => f.id === id)
-    if (!ferrero) return
+  const handleMouseDown = (e: React.MouseEvent) => {
+    const rect = containerRef.current?.getBoundingClientRect()
+    if (!rect) return
 
-    setDragging(id)
-    setDragOffset({
-      x: e.clientX - ferrero.x,
-      y: e.clientY - ferrero.y,
+    const mouseX = e.clientX - rect.left
+    const mouseY = e.clientY - rect.top
+
+    // Find clicked Ferrero
+    const clickedFerrero = ferreros.find(f => {
+      const dx = mouseX - f.position[0]
+      const dy = mouseY - f.position[1]
+      return Math.sqrt(dx * dx + dy * dy) < 50
     })
+
+    if (clickedFerrero) {
+      setDragging(clickedFerrero.id)
+      setDragOffset({
+        x: mouseX - clickedFerrero.position[0],
+        y: mouseY - clickedFerrero.position[1],
+      })
+    }
   }
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (dragging === null) return
 
-    const containerRect = containerRef.current?.getBoundingClientRect()
-    if (!containerRect) return
+    const rect = containerRef.current?.getBoundingClientRect()
+    if (!rect) return
 
-    const newX = e.clientX - dragOffset.x
-    const newY = e.clientY - dragOffset.y
+    const mouseX = e.clientX - rect.left
+    const mouseY = e.clientY - rect.top
 
     setFerreros(prev =>
       prev.map(f =>
         f.id === dragging
           ? {
               ...f,
-              x: Math.max(0, Math.min(containerRect.width - 60, newX)),
-              y: Math.max(0, Math.min(containerRect.height - 60, newY)),
-              rotation: f.rotation + (e.movementX * 0.5),
+              position: [
+                Math.max(30, Math.min(rect.width - 30, mouseX - dragOffset.x)),
+                Math.max(30, Math.min(rect.height - 30, mouseY - dragOffset.y)),
+                0
+              ] as [number, number, number],
+              rotation: f.rotation + 0.1,
             }
           : f
       )
@@ -74,50 +192,52 @@ export function DraggableFooter() {
   }
 
   const handleMouseUp = () => {
-    if (dragging !== null) {
-      const element = document.getElementById(`ferrero-${dragging}`)
-      if (element) {
-        gsap.to(element, {
-          scale: 1.15,
-          duration: 0.1,
-          yoyo: true,
-          repeat: 1,
-          ease: 'power2.out',
-        })
-      }
-    }
     setDragging(null)
   }
 
-  const handleTouchStart = (e: React.TouchEvent, id: number) => {
+  const handleTouchStart = (e: React.TouchEvent) => {
     const touch = e.touches[0]
-    const ferrero = ferreros.find(f => f.id === id)
-    if (!ferrero) return
+    const rect = containerRef.current?.getBoundingClientRect()
+    if (!rect) return
 
-    setDragging(id)
-    setDragOffset({
-      x: touch.clientX - ferrero.x,
-      y: touch.clientY - ferrero.y,
+    const touchX = touch.clientX - rect.left
+    const touchY = touch.clientY - rect.top
+
+    const clickedFerrero = ferreros.find(f => {
+      const dx = touchX - f.position[0]
+      const dy = touchY - f.position[1]
+      return Math.sqrt(dx * dx + dy * dy) < 50
     })
+
+    if (clickedFerrero) {
+      setDragging(clickedFerrero.id)
+      setDragOffset({
+        x: touchX - clickedFerrero.position[0],
+        y: touchY - clickedFerrero.position[1],
+      })
+    }
   }
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (dragging === null) return
 
     const touch = e.touches[0]
-    const containerRect = containerRef.current?.getBoundingClientRect()
-    if (!containerRect) return
+    const rect = containerRef.current?.getBoundingClientRect()
+    if (!rect) return
 
-    const newX = touch.clientX - dragOffset.x
-    const newY = touch.clientY - dragOffset.y
+    const touchX = touch.clientX - rect.left
+    const touchY = touch.clientY - rect.top
 
     setFerreros(prev =>
       prev.map(f =>
         f.id === dragging
           ? {
               ...f,
-              x: Math.max(0, Math.min(containerRect.width - 60, newX)),
-              y: Math.max(0, Math.min(containerRect.height - 60, newY)),
+              position: [
+                Math.max(30, Math.min(rect.width - 30, touchX - dragOffset.x)),
+                Math.max(30, Math.min(rect.height - 30, touchY - dragOffset.y)),
+                0
+              ] as [number, number, number],
             }
           : f
       )
@@ -126,86 +246,59 @@ export function DraggableFooter() {
 
   return (
     <footer className="relative z-30 bg-[#0d0906] py-8">
-      {/* Draggable Ferrero area */}
+      {/* Draggable Ferrero area with single Canvas */}
       <div
         ref={containerRef}
-        className="relative h-48 overflow-hidden cursor-grab active:cursor-grabbing"
+        className="relative h-56 overflow-hidden cursor-grab active:cursor-grabbing"
+        onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
+        onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleMouseUp}
       >
         {/* Background text */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
           <span className="text-white/5 text-3xl md:text-5xl font-bold uppercase tracking-widest">
             Trascina i Rocher
           </span>
         </div>
 
-        {/* Draggable Ferreros as CSS spheres */}
+        {/* Single Canvas with all Ferreros */}
+        <Canvas
+          camera={{ position: [0, 0, 8], fov: 45 }}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none'
+          }}
+          gl={{ alpha: true, antialias: true }}
+        >
+          <FerrerosScene
+            ferreros={ferreros}
+            draggingId={dragging}
+            containerWidth={containerSize.width}
+            containerHeight={containerSize.height}
+          />
+        </Canvas>
+
+        {/* Invisible hit areas for dragging */}
         {ferreros.map((ferrero) => (
           <div
             key={ferrero.id}
-            id={`ferrero-${ferrero.id}`}
-            className={`absolute cursor-grab active:cursor-grabbing transition-shadow duration-200 ${
-              dragging === ferrero.id ? 'z-50 shadow-2xl' : 'z-10'
+            className={`absolute w-16 h-16 rounded-full cursor-grab active:cursor-grabbing ${
+              dragging === ferrero.id ? 'z-50' : 'z-10'
             }`}
             style={{
-              left: ferrero.x,
-              top: ferrero.y,
-              transform: `scale(${ferrero.scale}) rotate(${ferrero.rotation}deg)`,
-              width: '60px',
-              height: '60px',
+              left: ferrero.position[0] - 32,
+              top: ferrero.position[1] - 32,
+              pointerEvents: 'auto',
             }}
-            onMouseDown={(e) => handleMouseDown(e, ferrero.id)}
-            onTouchStart={(e) => handleTouchStart(e, ferrero.id)}
-          >
-            {/* Ferrero Rocher sphere with CSS */}
-            <div
-              className="w-full h-full rounded-full relative"
-              style={{
-                background: `
-                  radial-gradient(circle at 30% 30%, #E8C878 0%, transparent 40%),
-                  radial-gradient(circle at 70% 60%, #8B6914 0%, transparent 30%),
-                  radial-gradient(circle at 50% 50%, #D4A853 0%, #A67C00 50%, #5A3A1A 100%)
-                `,
-                boxShadow: `
-                  inset -8px -8px 20px rgba(0,0,0,0.4),
-                  inset 5px 5px 15px rgba(255,215,0,0.3),
-                  0 8px 20px rgba(0,0,0,0.5),
-                  0 0 30px rgba(212,168,83,0.2)
-                `,
-              }}
-            >
-              {/* Texture dots for hazelnut effect */}
-              {[...Array(8)].map((_, i) => (
-                <div
-                  key={i}
-                  className="absolute rounded-full"
-                  style={{
-                    width: '8px',
-                    height: '8px',
-                    background: 'radial-gradient(circle, #C4983F 0%, #8B6914 100%)',
-                    boxShadow: 'inset -1px -1px 2px rgba(0,0,0,0.3)',
-                    left: `${20 + Math.cos(i * Math.PI / 4) * 18}px`,
-                    top: `${20 + Math.sin(i * Math.PI / 4) * 18}px`,
-                  }}
-                />
-              ))}
-              {/* Center highlight */}
-              <div
-                className="absolute rounded-full"
-                style={{
-                  width: '15px',
-                  height: '15px',
-                  background: 'radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%)',
-                  left: '15px',
-                  top: '12px',
-                }}
-              />
-            </div>
-          </div>
+          />
         ))}
       </div>
 
@@ -230,3 +323,6 @@ export function DraggableFooter() {
     </footer>
   )
 }
+
+// Preload the model
+useGLTF.preload('/models/ferrero.glb')
