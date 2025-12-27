@@ -17,74 +17,65 @@ const phrases = [
 
 export function Transition() {
   const sectionRef = useRef<HTMLElement>(null)
-  const phrasesRef = useRef<(HTMLSpanElement | null)[]>([])
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      const totalPhrases = phrases.length
-      const segmentSize = 100 / (totalPhrases + 1) // Distribute evenly
+      const phraseElements = containerRef.current?.querySelectorAll('.phrase')
+      if (!phraseElements) return
 
-      phrases.forEach((_, index) => {
-        const phrase = phrasesRef.current[index]
-        if (!phrase) return
-
+      // Each phrase gets its own section of the scroll
+      phraseElements.forEach((phrase, index) => {
         const chars = phrase.querySelectorAll('.char')
 
-        // Calculate positions for each phrase
-        const startIn = index * segmentSize
-        const endIn = startIn + segmentSize * 0.6
-        const startOut = endIn + segmentSize * 0.2
-        const endOut = startOut + segmentSize * 0.5
+        // Calculate scroll positions
+        const sectionPercent = 100 / phrases.length
+        const start = index * sectionPercent
+        const mid = start + sectionPercent * 0.5
+        const end = start + sectionPercent
+
+        // Set initial state - hidden
+        gsap.set(chars, { opacity: 0, y: 80, rotationX: -45 })
 
         // Animate in
-        gsap.fromTo(
-          chars,
-          {
-            y: 100,
-            opacity: 0,
-            rotationX: -90,
+        gsap.to(chars, {
+          opacity: 1,
+          y: 0,
+          rotationX: 0,
+          stagger: 0.03,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: `${start}% top`,
+            end: `${start + sectionPercent * 0.3}% top`,
+            scrub: 0.5,
           },
-          {
-            y: 0,
-            opacity: 1,
-            rotationX: 0,
-            stagger: 0.02,
-            duration: 0.8,
-            ease: 'power3.out',
-            scrollTrigger: {
-              trigger: sectionRef.current,
-              start: `${startIn}% center`,
-              end: `${endIn}% center`,
-              scrub: 1,
-            },
-          }
-        )
+        })
 
-        // Animate out (except last phrase which stays longer)
-        if (index < totalPhrases - 1) {
+        // Animate out (except last)
+        if (index < phrases.length - 1) {
           gsap.to(chars, {
-            y: -100,
             opacity: 0,
-            rotationX: 90,
-            stagger: 0.01,
+            y: -80,
+            rotationX: 45,
+            stagger: 0.02,
             scrollTrigger: {
               trigger: sectionRef.current,
-              start: `${startOut}% center`,
-              end: `${endOut}% center`,
-              scrub: 1,
+              start: `${mid}% top`,
+              end: `${end}% top`,
+              scrub: 0.5,
             },
           })
         } else {
-          // Last phrase fades out at the very end
+          // Last phrase stays longer, fades at very end
           gsap.to(chars, {
-            y: -50,
             opacity: 0,
-            stagger: 0.01,
+            y: -40,
             scrollTrigger: {
               trigger: sectionRef.current,
-              start: '90% center',
-              end: '100% center',
-              scrub: 1,
+              start: '92% top',
+              end: '100% top',
+              scrub: 0.5,
             },
           })
         }
@@ -94,40 +85,58 @@ export function Transition() {
     return () => ctx.revert()
   }, [])
 
-  const splitChars = (text: string) => {
-    return text.split('').map((char, i) => (
-      <span
-        key={i}
-        className="char inline-block"
-        style={{ transformStyle: 'preserve-3d' }}
-      >
-        {char === ' ' ? '\u00A0' : char}
-      </span>
-    ))
-  }
-
   return (
     <section
       ref={sectionRef}
-      className="relative z-10 h-[600vh] flex items-center justify-center overflow-hidden bg-[var(--color-darker)]"
+      className="relative z-10 h-[500vh]"
+      style={{ background: 'linear-gradient(180deg, var(--color-dark) 0%, var(--color-darker) 100%)' }}
     >
-      <div className="sticky top-0 h-screen w-full flex items-center justify-center z-10">
-        <div className="text-center perspective-1000">
+      {/* Sticky container */}
+      <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
+        {/* Background glow */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div
+            className="w-[600px] h-[600px] rounded-full opacity-10"
+            style={{
+              background: 'radial-gradient(circle, var(--color-gold) 0%, transparent 70%)',
+            }}
+          />
+        </div>
+
+        {/* Phrases container */}
+        <div ref={containerRef} className="relative w-full px-4">
           {phrases.map((phrase, index) => (
-            <span
+            <div
               key={index}
-              ref={(el) => { phrasesRef.current[index] = el }}
-              className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 luxury-title text-5xl md:text-7xl lg:text-8xl whitespace-nowrap ${
-                phrase.highlight ? 'gradient-text' : 'text-white/90'
-              }`}
-              style={{ transformStyle: 'preserve-3d' }}
+              className="phrase absolute inset-0 flex items-center justify-center"
+              style={{ perspective: '1000px' }}
             >
-              {splitChars(phrase.text)}
-            </span>
+              <span
+                className={`luxury-title text-4xl sm:text-5xl md:text-7xl lg:text-8xl xl:text-9xl text-center leading-tight ${
+                  phrase.highlight ? 'gradient-text' : 'text-white'
+                }`}
+                style={{ transformStyle: 'preserve-3d' }}
+              >
+                {phrase.text.split('').map((char, i) => (
+                  <span
+                    key={i}
+                    className="char inline-block"
+                    style={{ transformStyle: 'preserve-3d' }}
+                  >
+                    {char === ' ' ? '\u00A0' : char}
+                  </span>
+                ))}
+              </span>
+            </div>
           ))}
         </div>
-      </div>
 
+        {/* Scroll indicator */}
+        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/30">
+          <span className="text-xs uppercase tracking-[0.3em]">Scorri</span>
+          <div className="w-px h-12 bg-gradient-to-b from-white/30 to-transparent" />
+        </div>
+      </div>
     </section>
   )
 }
