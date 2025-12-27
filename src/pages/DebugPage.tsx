@@ -1,4 +1,4 @@
-import { useState, useRef, Suspense, useEffect } from 'react'
+import { useState, useRef, Suspense, useEffect, CSSProperties } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { useGLTF, Environment, OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
@@ -16,7 +16,513 @@ import {
   Settings,
   Eye
 } from 'lucide-react'
-import './DebugPage.css'
+
+// Inline styles - cannot be overridden by CSS
+const s = {
+  page: {
+    height: '100vh',
+    backgroundColor: '#0c0c0c',
+    display: 'flex',
+    overflow: 'hidden',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  } as CSSProperties,
+
+  sidebar: {
+    width: 280,
+    backgroundColor: '#141414',
+    borderRight: '1px solid rgba(255,255,255,0.06)',
+    display: 'flex',
+    flexDirection: 'column',
+  } as CSSProperties,
+
+  sidebarHeader: {
+    padding: 20,
+    borderBottom: '1px solid rgba(255,255,255,0.06)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 14,
+  } as CSSProperties,
+
+  logo: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
+    flexShrink: 0,
+  } as CSSProperties,
+
+  logoText: {
+    color: '#000',
+    fontWeight: 700,
+    fontSize: 18,
+  } as CSSProperties,
+
+  title: {
+    fontSize: 14,
+    fontWeight: 600,
+    color: '#fff',
+    margin: 0,
+  } as CSSProperties,
+
+  subtitle: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.4)',
+    marginTop: 2,
+  } as CSSProperties,
+
+  nav: {
+    flex: 1,
+    padding: 16,
+    overflowY: 'auto',
+  } as CSSProperties,
+
+  section: {
+    marginBottom: 24,
+  } as CSSProperties,
+
+  sectionTitle: {
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.3)',
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    fontWeight: 600,
+    padding: '0 12px',
+    marginBottom: 12,
+  } as CSSProperties,
+
+  divider: {
+    height: 1,
+    background: 'rgba(255,255,255,0.06)',
+    margin: '8px 12px 20px',
+  } as CSSProperties,
+
+  navBtn: {
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    padding: '12px 14px',
+    borderRadius: 10,
+    border: 'none',
+    background: 'transparent',
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 14,
+    fontWeight: 500,
+    cursor: 'pointer',
+    textAlign: 'left',
+    marginBottom: 4,
+  } as CSSProperties,
+
+  navBtnActive: {
+    background: 'rgba(245, 158, 11, 0.12)',
+    color: '#f59e0b',
+  } as CSSProperties,
+
+  stageBtn: {
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '12px 14px',
+    borderRadius: 10,
+    border: '1px solid transparent',
+    background: 'transparent',
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 14,
+    fontWeight: 500,
+    cursor: 'pointer',
+    textAlign: 'left',
+    marginBottom: 6,
+  } as CSSProperties,
+
+  stageBtnActive: {
+    background: 'rgba(245, 158, 11, 0.1)',
+    borderColor: 'rgba(245, 158, 11, 0.3)',
+    color: '#f59e0b',
+  } as CSSProperties,
+
+  percent: {
+    fontSize: 11,
+    opacity: 0.6,
+    fontFamily: 'monospace',
+  } as CSSProperties,
+
+  footer: {
+    padding: 16,
+    borderTop: '1px solid rgba(255,255,255,0.06)',
+  } as CSSProperties,
+
+  footerBtn: {
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    padding: '12px 14px',
+    borderRadius: 10,
+    border: 'none',
+    background: 'transparent',
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 14,
+    cursor: 'pointer',
+    textAlign: 'left',
+    textDecoration: 'none',
+    marginBottom: 6,
+  } as CSSProperties,
+
+  main: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+  } as CSSProperties,
+
+  topbar: {
+    height: 64,
+    backgroundColor: 'rgba(20, 20, 20, 0.8)',
+    borderBottom: '1px solid rgba(255,255,255,0.06)',
+    display: 'flex',
+    alignItems: 'center',
+    padding: '0 24px',
+    gap: 24,
+  } as CSSProperties,
+
+  controls: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+  } as CSSProperties,
+
+  playBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    border: 'none',
+    background: 'rgba(255,255,255,0.08)',
+    color: 'rgba(255,255,255,0.6)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+  } as CSSProperties,
+
+  playBtnActive: {
+    background: '#f59e0b',
+    color: '#000',
+    boxShadow: '0 4px 12px rgba(245, 158, 11, 0.4)',
+  } as CSSProperties,
+
+  resetBtn: {
+    height: 44,
+    padding: '0 18px',
+    borderRadius: 12,
+    border: 'none',
+    background: 'rgba(255,255,255,0.08)',
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 13,
+    fontWeight: 500,
+    cursor: 'pointer',
+  } as CSSProperties,
+
+  timeline: {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 16,
+  } as CSSProperties,
+
+  rangeInput: {
+    flex: 1,
+    height: 6,
+    borderRadius: 3,
+    WebkitAppearance: 'none',
+    appearance: 'none',
+    background: 'rgba(255,255,255,0.1)',
+    cursor: 'pointer',
+  } as CSSProperties,
+
+  percentText: {
+    fontSize: 15,
+    fontFamily: 'monospace',
+    color: '#f59e0b',
+    fontWeight: 600,
+    minWidth: 50,
+    textAlign: 'right',
+  } as CSSProperties,
+
+  stageBadge: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    padding: '10px 16px',
+    borderRadius: 12,
+    background: 'rgba(255,255,255,0.06)',
+    border: '1px solid rgba(255,255,255,0.08)',
+  } as CSSProperties,
+
+  content: {
+    flex: 1,
+    display: 'flex',
+    overflow: 'hidden',
+  } as CSSProperties,
+
+  properties: {
+    width: 340,
+    backgroundColor: 'rgba(17, 17, 17, 0.9)',
+    borderRight: '1px solid rgba(255,255,255,0.06)',
+    overflowY: 'auto',
+    padding: 24,
+  } as CSSProperties,
+
+  panelTitle: {
+    fontSize: 18,
+    fontWeight: 600,
+    color: '#fff',
+    margin: '0 0 8px 0',
+  } as CSSProperties,
+
+  panelDesc: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.5)',
+    lineHeight: 1.6,
+    margin: '0 0 28px 0',
+  } as CSSProperties,
+
+  card: {
+    padding: 20,
+    borderRadius: 14,
+    background: 'rgba(255,255,255,0.03)',
+    border: '1px solid rgba(255,255,255,0.06)',
+    marginBottom: 20,
+  } as CSSProperties,
+
+  cardTitle: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.4)',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    fontWeight: 600,
+    margin: '0 0 14px 0',
+  } as CSSProperties,
+
+  quickViews: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: 10,
+  } as CSSProperties,
+
+  quickBtn: {
+    padding: '12px 16px',
+    borderRadius: 10,
+    border: '1px solid rgba(255,255,255,0.08)',
+    background: 'rgba(255,255,255,0.04)',
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 13,
+    fontWeight: 500,
+    cursor: 'pointer',
+  } as CSSProperties,
+
+  sliderRow: {
+    marginBottom: 20,
+  } as CSSProperties,
+
+  sliderHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  } as CSSProperties,
+
+  sliderLabel: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.5)',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  } as CSSProperties,
+
+  sliderInput: {
+    width: 70,
+    padding: '8px 12px',
+    borderRadius: 8,
+    border: '1px solid rgba(255,255,255,0.1)',
+    background: 'rgba(255,255,255,0.05)',
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 13,
+    fontFamily: 'monospace',
+    textAlign: 'center',
+  } as CSSProperties,
+
+  slider: {
+    width: '100%',
+    height: 6,
+    borderRadius: 3,
+    WebkitAppearance: 'none',
+    appearance: 'none',
+    background: 'rgba(255,255,255,0.1)',
+    cursor: 'pointer',
+  } as CSSProperties,
+
+  cardEditor: {
+    padding: 20,
+    borderRadius: 14,
+    background: 'rgba(255,255,255,0.03)',
+    border: '1px solid rgba(255,255,255,0.06)',
+    marginBottom: 16,
+  } as CSSProperties,
+
+  cardEditorTitle: {
+    width: '100%',
+    padding: 0,
+    marginBottom: 14,
+    border: 'none',
+    background: 'transparent',
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 600,
+    outline: 'none',
+  } as CSSProperties,
+
+  cardEditorDesc: {
+    width: '100%',
+    padding: '12px 14px',
+    marginBottom: 14,
+    borderRadius: 10,
+    border: '1px solid rgba(255,255,255,0.08)',
+    background: 'rgba(255,255,255,0.04)',
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 13,
+    resize: 'none',
+    height: 80,
+    outline: 'none',
+    fontFamily: 'inherit',
+  } as CSSProperties,
+
+  positionBtns: {
+    display: 'flex',
+    gap: 10,
+    marginBottom: 20,
+  } as CSSProperties,
+
+  positionBtn: {
+    flex: 1,
+    padding: '12px 16px',
+    borderRadius: 10,
+    border: '1px solid rgba(255,255,255,0.08)',
+    background: 'rgba(255,255,255,0.04)',
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 13,
+    fontWeight: 500,
+    cursor: 'pointer',
+  } as CSSProperties,
+
+  positionBtnActive: {
+    background: 'rgba(245, 158, 11, 0.1)',
+    borderColor: 'rgba(245, 158, 11, 0.4)',
+    color: '#f59e0b',
+  } as CSSProperties,
+
+  cardDivider: {
+    borderTop: '1px solid rgba(255,255,255,0.06)',
+    paddingTop: 20,
+  } as CSSProperties,
+
+  viewport: {
+    flex: 1,
+    position: 'relative',
+    backgroundColor: '#09090b',
+  } as CSSProperties,
+
+  viewportInfo: {
+    position: 'absolute',
+    bottom: 16,
+    left: 16,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '10px 14px',
+    borderRadius: 10,
+    backgroundColor: 'rgba(20, 20, 20, 0.9)',
+    border: '1px solid rgba(255,255,255,0.08)',
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 12,
+  } as CSSProperties,
+
+  introOverlay: {
+    position: 'absolute',
+    inset: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    pointerEvents: 'none',
+  } as CSSProperties,
+
+  tagline: {
+    display: 'block',
+    color: 'rgba(245, 158, 11, 0.6)',
+    textTransform: 'uppercase',
+    letterSpacing: 6,
+    fontSize: 11,
+    marginBottom: 12,
+  } as CSSProperties,
+
+  h1: {
+    fontSize: 42,
+    fontWeight: 300,
+    letterSpacing: 4,
+    margin: 0,
+  } as CSSProperties,
+
+  brand: {
+    display: 'block',
+    color: '#fff',
+  } as CSSProperties,
+
+  product: {
+    display: 'block',
+    color: '#f59e0b',
+    marginTop: 4,
+  } as CSSProperties,
+
+  infoCard: {
+    position: 'absolute',
+    top: '50%',
+    transform: 'translateY(-50%)',
+  } as CSSProperties,
+
+  infoCardInner: {
+    backdropFilter: 'blur(24px)',
+    backgroundColor: 'rgba(20, 20, 20, 0.7)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: 20,
+    padding: 28,
+    maxWidth: 280,
+    boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+  } as CSSProperties,
+
+  accent: {
+    width: 48,
+    height: 4,
+    background: 'linear-gradient(90deg, #f59e0b, #d97706)',
+    borderRadius: 2,
+    marginBottom: 18,
+  } as CSSProperties,
+
+  infoH3: {
+    fontSize: 22,
+    fontWeight: 600,
+    color: '#fff',
+    margin: '0 0 10px 0',
+  } as CSSProperties,
+
+  infoP: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.6)',
+    lineHeight: 1.6,
+    margin: 0,
+  } as CSSProperties,
+}
 
 // Types
 interface AnimationStage {
@@ -62,14 +568,14 @@ function FerreroPreview({ stages, scroll }: { stages: AnimationStage[]; scroll: 
 
   useFrame(() => {
     if (!ref.current) return
-    const s = stages.find(x => scroll >= x.scrollStart && scroll <= x.scrollEnd) || stages[0]
-    ref.current.rotation.x = THREE.MathUtils.lerp(ref.current.rotation.x, s.rotX, 0.1)
-    ref.current.rotation.y = THREE.MathUtils.lerp(ref.current.rotation.y, s.rotY, 0.1)
-    ref.current.rotation.z = THREE.MathUtils.lerp(ref.current.rotation.z, s.rotZ, 0.1)
-    ref.current.position.x = THREE.MathUtils.lerp(ref.current.position.x, s.posX, 0.1)
-    ref.current.position.y = THREE.MathUtils.lerp(ref.current.position.y, s.posY, 0.1)
-    ref.current.position.z = THREE.MathUtils.lerp(ref.current.position.z, s.posZ, 0.1)
-    const sc = THREE.MathUtils.lerp(ref.current.scale.x, s.scale, 0.1)
+    const st = stages.find(x => scroll >= x.scrollStart && scroll <= x.scrollEnd) || stages[0]
+    ref.current.rotation.x = THREE.MathUtils.lerp(ref.current.rotation.x, st.rotX, 0.1)
+    ref.current.rotation.y = THREE.MathUtils.lerp(ref.current.rotation.y, st.rotY, 0.1)
+    ref.current.rotation.z = THREE.MathUtils.lerp(ref.current.rotation.z, st.rotZ, 0.1)
+    ref.current.position.x = THREE.MathUtils.lerp(ref.current.position.x, st.posX, 0.1)
+    ref.current.position.y = THREE.MathUtils.lerp(ref.current.position.y, st.posY, 0.1)
+    ref.current.position.z = THREE.MathUtils.lerp(ref.current.position.z, st.posZ, 0.1)
+    const sc = THREE.MathUtils.lerp(ref.current.scale.x, st.scale, 0.1)
     ref.current.scale.setScalar(sc)
   })
 
@@ -93,7 +599,7 @@ export function DebugPage() {
   }, [isPlaying])
 
   const update = (key: keyof AnimationStage, val: number) => {
-    setStages(p => p.map((s, i) => i === activeStage ? { ...s, [key]: val } : s))
+    setStages(p => p.map((st, i) => i === activeStage ? { ...st, [key]: val } : st))
   }
 
   const current = stages[activeStage]
@@ -104,94 +610,94 @@ export function DebugPage() {
   }
 
   return (
-    <div className="debug-page">
+    <div style={s.page}>
       {/* Left Sidebar */}
-      <aside className="debug-sidebar">
+      <aside style={s.sidebar}>
         {/* Header */}
-        <div className="debug-sidebar-header">
-          <div className="debug-logo">
-            <span>F</span>
+        <div style={s.sidebarHeader}>
+          <div style={s.logo}>
+            <span style={s.logoText}>F</span>
           </div>
           <div>
-            <div className="debug-title">Animation Editor</div>
-            <div className="debug-subtitle">Ferrero Rocher</div>
+            <div style={s.title}>Animation Editor</div>
+            <div style={s.subtitle}>Ferrero Rocher</div>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="debug-nav">
+        <nav style={s.nav}>
           {/* Editor Section */}
-          <div className="debug-section">
-            <div className="debug-section-title">Editor</div>
+          <div style={s.section}>
+            <div style={s.sectionTitle}>Editor</div>
 
             <button
               onClick={() => setPanel('stages')}
-              className={`debug-nav-btn ${panel === 'stages' ? 'active' : ''}`}
+              style={{ ...s.navBtn, ...(panel === 'stages' ? s.navBtnActive : {}) }}
             >
-              <Layers size={18} className="icon" />
-              <span className="label">Animation Stages</span>
-              {panel === 'stages' && <ChevronRight size={14} className="chevron" />}
+              <Layers size={18} style={{ opacity: panel === 'stages' ? 1 : 0.5 }} />
+              <span style={{ flex: 1 }}>Animation Stages</span>
+              {panel === 'stages' && <ChevronRight size={14} style={{ opacity: 0.5 }} />}
             </button>
 
             <button
               onClick={() => setPanel('cards')}
-              className={`debug-nav-btn ${panel === 'cards' ? 'active' : ''}`}
+              style={{ ...s.navBtn, ...(panel === 'cards' ? s.navBtnActive : {}) }}
             >
-              <CreditCard size={18} className="icon" />
-              <span className="label">Info Cards</span>
-              {panel === 'cards' && <ChevronRight size={14} className="chevron" />}
+              <CreditCard size={18} style={{ opacity: panel === 'cards' ? 1 : 0.5 }} />
+              <span style={{ flex: 1 }}>Info Cards</span>
+              {panel === 'cards' && <ChevronRight size={14} style={{ opacity: 0.5 }} />}
             </button>
           </div>
 
-          <div className="debug-divider" />
+          <div style={s.divider} />
 
           {/* Transform Section */}
-          <div className="debug-section">
-            <div className="debug-section-title">Transform</div>
+          <div style={s.section}>
+            <div style={s.sectionTitle}>Transform</div>
 
             <button
               onClick={() => setPanel('rotation')}
-              className={`debug-nav-btn ${panel === 'rotation' ? 'active' : ''}`}
+              style={{ ...s.navBtn, ...(panel === 'rotation' ? s.navBtnActive : {}) }}
             >
-              <RotateCcw size={18} className="icon" />
-              <span className="label">Rotation</span>
-              {panel === 'rotation' && <ChevronRight size={14} className="chevron" />}
+              <RotateCcw size={18} style={{ opacity: panel === 'rotation' ? 1 : 0.5 }} />
+              <span style={{ flex: 1 }}>Rotation</span>
+              {panel === 'rotation' && <ChevronRight size={14} style={{ opacity: 0.5 }} />}
             </button>
 
             <button
               onClick={() => setPanel('position')}
-              className={`debug-nav-btn ${panel === 'position' ? 'active' : ''}`}
+              style={{ ...s.navBtn, ...(panel === 'position' ? s.navBtnActive : {}) }}
             >
-              <Move size={18} className="icon" />
-              <span className="label">Position</span>
-              {panel === 'position' && <ChevronRight size={14} className="chevron" />}
+              <Move size={18} style={{ opacity: panel === 'position' ? 1 : 0.5 }} />
+              <span style={{ flex: 1 }}>Position</span>
+              {panel === 'position' && <ChevronRight size={14} style={{ opacity: 0.5 }} />}
             </button>
 
             <button
               onClick={() => setPanel('scale')}
-              className={`debug-nav-btn ${panel === 'scale' ? 'active' : ''}`}
+              style={{ ...s.navBtn, ...(panel === 'scale' ? s.navBtnActive : {}) }}
             >
-              <Maximize2 size={18} className="icon" />
-              <span className="label">Scale</span>
-              {panel === 'scale' && <ChevronRight size={14} className="chevron" />}
+              <Maximize2 size={18} style={{ opacity: panel === 'scale' ? 1 : 0.5 }} />
+              <span style={{ flex: 1 }}>Scale</span>
+              {panel === 'scale' && <ChevronRight size={14} style={{ opacity: 0.5 }} />}
             </button>
           </div>
 
-          <div className="debug-divider" />
+          <div style={s.divider} />
 
           {/* Active Stage Section */}
-          <div className="debug-section">
-            <div className="debug-section-title">Active Stage</div>
+          <div style={s.section}>
+            <div style={s.sectionTitle}>Active Stage</div>
 
-            {stages.map((s, i) => (
+            {stages.map((st, i) => (
               <button
                 key={i}
-                onClick={() => { setActiveStage(i); setScroll((s.scrollStart + s.scrollEnd) / 2) }}
-                className={`debug-stage-btn ${activeStage === i ? 'active' : ''}`}
+                onClick={() => { setActiveStage(i); setScroll((st.scrollStart + st.scrollEnd) / 2) }}
+                style={{ ...s.stageBtn, ...(activeStage === i ? s.stageBtnActive : {}) }}
               >
-                <span>{s.name}</span>
-                <span className="percent">
-                  {(s.scrollStart * 100).toFixed(0)}-{(s.scrollEnd * 100).toFixed(0)}%
+                <span>{st.name}</span>
+                <span style={s.percent}>
+                  {(st.scrollStart * 100).toFixed(0)}-{(st.scrollEnd * 100).toFixed(0)}%
                 </span>
               </button>
             ))}
@@ -199,12 +705,12 @@ export function DebugPage() {
         </nav>
 
         {/* Footer */}
-        <div className="debug-footer">
-          <a href="/" className="debug-footer-btn">
+        <div style={s.footer}>
+          <a href="/" style={s.footerBtn}>
             <Home size={16} />
             <span>Back to Home</span>
           </a>
-          <button onClick={handleExport} className="debug-footer-btn">
+          <button onClick={handleExport} style={s.footerBtn}>
             <Download size={16} />
             <span>Export Config</span>
           </button>
@@ -212,22 +718,22 @@ export function DebugPage() {
       </aside>
 
       {/* Main Content */}
-      <main className="debug-main">
+      <main style={s.main}>
         {/* Top Bar */}
-        <header className="debug-topbar">
-          <div className="debug-controls">
+        <header style={s.topbar}>
+          <div style={s.controls}>
             <button
               onClick={() => setIsPlaying(!isPlaying)}
-              className={`debug-play-btn ${isPlaying ? 'playing' : ''}`}
+              style={{ ...s.playBtn, ...(isPlaying ? s.playBtnActive : {}) }}
             >
               {isPlaying ? <Pause size={18} /> : <Play size={18} />}
             </button>
-            <button onClick={() => setScroll(0)} className="debug-reset-btn">
+            <button onClick={() => setScroll(0)} style={s.resetBtn}>
               Reset
             </button>
           </div>
 
-          <div className="debug-timeline">
+          <div style={s.timeline}>
             <input
               type="range"
               min={0}
@@ -235,31 +741,32 @@ export function DebugPage() {
               step={0.1}
               value={scroll * 100}
               onChange={(e) => setScroll(parseFloat(e.target.value) / 100)}
+              style={s.rangeInput}
             />
-            <div className="debug-percent">{(scroll * 100).toFixed(0)}%</div>
+            <div style={s.percentText}>{(scroll * 100).toFixed(0)}%</div>
           </div>
 
-          <div className="debug-stage-badge">
-            <Eye size={14} className="icon" />
-            <span>{current.name}</span>
+          <div style={s.stageBadge}>
+            <Eye size={14} style={{ color: 'rgba(255,255,255,0.4)' }} />
+            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>{current.name}</span>
           </div>
         </header>
 
         {/* Content Area */}
-        <div className="debug-content">
+        <div style={s.content}>
           {/* Properties Panel */}
-          <div className="debug-properties">
+          <div style={s.properties}>
             {/* Stages Panel */}
             {panel === 'stages' && (
               <>
-                <h2 className="debug-panel-title">Animation Stages</h2>
-                <p className="debug-panel-desc">
+                <h2 style={s.panelTitle}>Animation Stages</h2>
+                <p style={s.panelDesc}>
                   Configura le transizioni 3D per ogni sezione dello scroll.
                 </p>
 
-                <div className="debug-card">
-                  <div className="debug-card-title">Quick Views</div>
-                  <div className="debug-quick-views">
+                <div style={s.card}>
+                  <div style={s.cardTitle}>Quick Views</div>
+                  <div style={s.quickViews}>
                     {[
                       { n: 'Front', r: [0, 0, 0] },
                       { n: 'Top', r: [-1.57, 0, 0] },
@@ -268,10 +775,10 @@ export function DebugPage() {
                     ].map(p => (
                       <button
                         key={p.n}
-                        onClick={() => setStages(prev => prev.map((s, i) =>
-                          i === activeStage ? { ...s, rotX: p.r[0], rotY: p.r[1], rotZ: p.r[2] } : s
+                        onClick={() => setStages(prev => prev.map((st, i) =>
+                          i === activeStage ? { ...st, rotX: p.r[0], rotY: p.r[1], rotZ: p.r[2] } : st
                         ))}
-                        className="debug-quick-btn"
+                        style={s.quickBtn}
                       >
                         {p.n}
                       </button>
@@ -279,17 +786,17 @@ export function DebugPage() {
                   </div>
                 </div>
 
-                <div className="debug-card">
-                  <div className="debug-card-title">Scroll Range</div>
-                  <div className="debug-slider-row">
-                    <div className="debug-slider-header">
-                      <label className="debug-slider-label">Start</label>
+                <div style={s.card}>
+                  <div style={s.cardTitle}>Scroll Range</div>
+                  <div style={s.sliderRow}>
+                    <div style={s.sliderHeader}>
+                      <label style={s.sliderLabel}>Start</label>
                       <input
                         type="number"
                         value={current.scrollStart.toFixed(2)}
                         onChange={(e) => update('scrollStart', parseFloat(e.target.value) || 0)}
                         step={0.01}
-                        className="debug-slider-input"
+                        style={s.sliderInput}
                       />
                     </div>
                     <input
@@ -299,18 +806,18 @@ export function DebugPage() {
                       step={0.01}
                       value={current.scrollStart}
                       onChange={(e) => update('scrollStart', parseFloat(e.target.value))}
-                      className="debug-slider"
+                      style={s.slider}
                     />
                   </div>
-                  <div className="debug-slider-row">
-                    <div className="debug-slider-header">
-                      <label className="debug-slider-label">End</label>
+                  <div style={{ ...s.sliderRow, marginBottom: 0 }}>
+                    <div style={s.sliderHeader}>
+                      <label style={s.sliderLabel}>End</label>
                       <input
                         type="number"
                         value={current.scrollEnd.toFixed(2)}
                         onChange={(e) => update('scrollEnd', parseFloat(e.target.value) || 0)}
                         step={0.01}
-                        className="debug-slider-input"
+                        style={s.sliderInput}
                       />
                     </div>
                     <input
@@ -320,7 +827,7 @@ export function DebugPage() {
                       step={0.01}
                       value={current.scrollEnd}
                       onChange={(e) => update('scrollEnd', parseFloat(e.target.value))}
-                      className="debug-slider"
+                      style={s.slider}
                     />
                   </div>
                 </div>
@@ -330,24 +837,24 @@ export function DebugPage() {
             {/* Rotation Panel */}
             {panel === 'rotation' && (
               <>
-                <h2 className="debug-panel-title">Rotation</h2>
-                <p className="debug-panel-desc">
+                <h2 style={s.panelTitle}>Rotation</h2>
+                <p style={s.panelDesc}>
                   Controlla la rotazione del modello su ogni asse.
                 </p>
-                <div className="debug-card">
-                  {['X', 'Y', 'Z'].map((axis) => {
+                <div style={s.card}>
+                  {['X', 'Y', 'Z'].map((axis, idx) => {
                     const key = `rot${axis}` as 'rotX' | 'rotY' | 'rotZ'
                     const max = axis === 'Y' ? 6.28 : 3.14
                     return (
-                      <div key={axis} className="debug-slider-row">
-                        <div className="debug-slider-header">
-                          <label className="debug-slider-label">{axis} Axis</label>
+                      <div key={axis} style={{ ...s.sliderRow, marginBottom: idx === 2 ? 0 : 20 }}>
+                        <div style={s.sliderHeader}>
+                          <label style={s.sliderLabel}>{axis} Axis</label>
                           <input
                             type="number"
                             value={current[key].toFixed(2)}
                             onChange={(e) => update(key, parseFloat(e.target.value) || 0)}
                             step={0.01}
-                            className="debug-slider-input"
+                            style={s.sliderInput}
                           />
                         </div>
                         <input
@@ -357,7 +864,7 @@ export function DebugPage() {
                           step={0.01}
                           value={current[key]}
                           onChange={(e) => update(key, parseFloat(e.target.value))}
-                          className="debug-slider"
+                          style={s.slider}
                         />
                       </div>
                     )
@@ -369,23 +876,23 @@ export function DebugPage() {
             {/* Position Panel */}
             {panel === 'position' && (
               <>
-                <h2 className="debug-panel-title">Position</h2>
-                <p className="debug-panel-desc">
+                <h2 style={s.panelTitle}>Position</h2>
+                <p style={s.panelDesc}>
                   Sposta il modello nello spazio 3D.
                 </p>
-                <div className="debug-card">
-                  {['X', 'Y', 'Z'].map((axis) => {
+                <div style={s.card}>
+                  {['X', 'Y', 'Z'].map((axis, idx) => {
                     const key = `pos${axis}` as 'posX' | 'posY' | 'posZ'
                     return (
-                      <div key={axis} className="debug-slider-row">
-                        <div className="debug-slider-header">
-                          <label className="debug-slider-label">{axis} Axis</label>
+                      <div key={axis} style={{ ...s.sliderRow, marginBottom: idx === 2 ? 0 : 20 }}>
+                        <div style={s.sliderHeader}>
+                          <label style={s.sliderLabel}>{axis} Axis</label>
                           <input
                             type="number"
                             value={current[key].toFixed(2)}
                             onChange={(e) => update(key, parseFloat(e.target.value) || 0)}
                             step={0.1}
-                            className="debug-slider-input"
+                            style={s.sliderInput}
                           />
                         </div>
                         <input
@@ -395,7 +902,7 @@ export function DebugPage() {
                           step={0.1}
                           value={current[key]}
                           onChange={(e) => update(key, parseFloat(e.target.value))}
-                          className="debug-slider"
+                          style={s.slider}
                         />
                       </div>
                     )
@@ -407,20 +914,20 @@ export function DebugPage() {
             {/* Scale Panel */}
             {panel === 'scale' && (
               <>
-                <h2 className="debug-panel-title">Scale</h2>
-                <p className="debug-panel-desc">
+                <h2 style={s.panelTitle}>Scale</h2>
+                <p style={s.panelDesc}>
                   Ridimensiona il modello uniformemente.
                 </p>
-                <div className="debug-card">
-                  <div className="debug-slider-row">
-                    <div className="debug-slider-header">
-                      <label className="debug-slider-label">Size</label>
+                <div style={s.card}>
+                  <div style={{ ...s.sliderRow, marginBottom: 0 }}>
+                    <div style={s.sliderHeader}>
+                      <label style={s.sliderLabel}>Size</label>
                       <input
                         type="number"
                         value={current.scale.toFixed(2)}
                         onChange={(e) => update('scale', parseFloat(e.target.value) || 0)}
                         step={0.1}
-                        className="debug-slider-input"
+                        style={s.sliderInput}
                       />
                     </div>
                     <input
@@ -430,7 +937,7 @@ export function DebugPage() {
                       step={0.1}
                       value={current.scale}
                       onChange={(e) => update('scale', parseFloat(e.target.value))}
-                      className="debug-slider"
+                      style={s.slider}
                     />
                   </div>
                 </div>
@@ -440,52 +947,52 @@ export function DebugPage() {
             {/* Cards Panel */}
             {panel === 'cards' && (
               <>
-                <h2 className="debug-panel-title">Info Cards</h2>
-                <p className="debug-panel-desc">
+                <h2 style={s.panelTitle}>Info Cards</h2>
+                <p style={s.panelDesc}>
                   Modifica i contenuti e i timing delle info card.
                 </p>
 
                 {cards.map((card, i) => (
-                  <div key={card.id} className="debug-card-editor">
+                  <div key={card.id} style={s.cardEditor}>
                     <input
                       type="text"
                       value={card.title}
                       onChange={(e) => setCards(p => p.map((c, j) => j === i ? { ...c, title: e.target.value } : c))}
                       placeholder="Card Title"
-                      className="debug-card-editor-title"
+                      style={s.cardEditorTitle}
                     />
                     <textarea
                       value={card.description}
                       onChange={(e) => setCards(p => p.map((c, j) => j === i ? { ...c, description: e.target.value } : c))}
                       placeholder="Description..."
-                      className="debug-card-editor-desc"
+                      style={s.cardEditorDesc}
                     />
 
-                    <div className="debug-position-btns">
+                    <div style={s.positionBtns}>
                       <button
                         onClick={() => setCards(p => p.map((c, j) => j === i ? { ...c, position: 'left' } : c))}
-                        className={`debug-position-btn ${card.position === 'left' ? 'active' : ''}`}
+                        style={{ ...s.positionBtn, ...(card.position === 'left' ? s.positionBtnActive : {}) }}
                       >
                         ← Left
                       </button>
                       <button
                         onClick={() => setCards(p => p.map((c, j) => j === i ? { ...c, position: 'right' } : c))}
-                        className={`debug-position-btn ${card.position === 'right' ? 'active' : ''}`}
+                        style={{ ...s.positionBtn, ...(card.position === 'right' ? s.positionBtnActive : {}) }}
                       >
                         Right →
                       </button>
                     </div>
 
-                    <div className="debug-card-divider">
-                      <div className="debug-slider-row">
-                        <div className="debug-slider-header">
-                          <label className="debug-slider-label">Fade In</label>
+                    <div style={s.cardDivider}>
+                      <div style={s.sliderRow}>
+                        <div style={s.sliderHeader}>
+                          <label style={s.sliderLabel}>Fade In</label>
                           <input
                             type="number"
                             value={card.startScroll.toFixed(2)}
                             onChange={(e) => setCards(p => p.map((c, j) => j === i ? { ...c, startScroll: parseFloat(e.target.value) || 0 } : c))}
                             step={0.01}
-                            className="debug-slider-input"
+                            style={s.sliderInput}
                           />
                         </div>
                         <input
@@ -495,18 +1002,18 @@ export function DebugPage() {
                           step={0.01}
                           value={card.startScroll}
                           onChange={(e) => setCards(p => p.map((c, j) => j === i ? { ...c, startScroll: parseFloat(e.target.value) } : c))}
-                          className="debug-slider"
+                          style={s.slider}
                         />
                       </div>
-                      <div className="debug-slider-row">
-                        <div className="debug-slider-header">
-                          <label className="debug-slider-label">Fade Out</label>
+                      <div style={{ ...s.sliderRow, marginBottom: 0 }}>
+                        <div style={s.sliderHeader}>
+                          <label style={s.sliderLabel}>Fade Out</label>
                           <input
                             type="number"
                             value={card.endScroll.toFixed(2)}
                             onChange={(e) => setCards(p => p.map((c, j) => j === i ? { ...c, endScroll: parseFloat(e.target.value) || 0 } : c))}
                             step={0.01}
-                            className="debug-slider-input"
+                            style={s.sliderInput}
                           />
                         </div>
                         <input
@@ -516,7 +1023,7 @@ export function DebugPage() {
                           step={0.01}
                           value={card.endScroll}
                           onChange={(e) => setCards(p => p.map((c, j) => j === i ? { ...c, endScroll: parseFloat(e.target.value) } : c))}
-                          className="debug-slider"
+                          style={s.slider}
                         />
                       </div>
                     </div>
@@ -527,7 +1034,7 @@ export function DebugPage() {
           </div>
 
           {/* 3D Viewport */}
-          <div className="debug-viewport">
+          <div style={s.viewport}>
             <Canvas camera={{ position: [0, 0, 10], fov: 35 }} dpr={[1, 2]}>
               <color attach="background" args={['#09090b']} />
               <ambientLight intensity={0.15} />
@@ -544,12 +1051,12 @@ export function DebugPage() {
 
             {/* Intro Title Overlay */}
             {scroll < 0.15 && (
-              <div className="debug-intro-overlay" style={{ opacity: Math.max(0, 1 - scroll * 7) }}>
+              <div style={{ ...s.introOverlay, opacity: Math.max(0, 1 - scroll * 7) }}>
                 <div style={{ textAlign: 'center' }}>
-                  <span className="tagline">L'arte del cioccolato</span>
-                  <h1>
-                    <span className="brand">FERRERO</span>
-                    <span className="product">ROCHER</span>
+                  <span style={s.tagline}>L'arte del cioccolato</span>
+                  <h1 style={s.h1}>
+                    <span style={s.brand}>FERRERO</span>
+                    <span style={s.product}>ROCHER</span>
                   </h1>
                 </div>
               </div>
@@ -567,21 +1074,24 @@ export function DebugPage() {
               return (
                 <div
                   key={card.id}
-                  className={`debug-info-card ${card.position}`}
-                  style={{ opacity }}
+                  style={{
+                    ...s.infoCard,
+                    ...(card.position === 'left' ? { left: 40 } : { right: 40 }),
+                    opacity,
+                  }}
                 >
-                  <div className="debug-info-card-inner">
-                    <div className="accent" />
-                    <h3>{card.title}</h3>
-                    <p>{card.description}</p>
+                  <div style={s.infoCardInner}>
+                    <div style={s.accent} />
+                    <h3 style={s.infoH3}>{card.title}</h3>
+                    <p style={s.infoP}>{card.description}</p>
                   </div>
                 </div>
               )
             })}
 
             {/* Viewport Info */}
-            <div className="debug-viewport-info">
-              <Settings size={12} className="icon" />
+            <div style={s.viewportInfo}>
+              <Settings size={12} />
               <span>Scroll to orbit • Drag to rotate</span>
             </div>
           </div>
