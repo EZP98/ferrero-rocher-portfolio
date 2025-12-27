@@ -16,6 +16,7 @@ import {
   Settings,
   Eye
 } from 'lucide-react'
+import './DebugPage.css'
 
 // Types
 interface AnimationStage {
@@ -103,207 +104,93 @@ export function DebugPage() {
   }
 
   return (
-    <div style={{
-      height: '100vh',
-      backgroundColor: '#0c0c0c',
-      display: 'flex',
-      overflow: 'hidden',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-    }}>
-
+    <div className="debug-page">
       {/* Left Sidebar */}
-      <aside style={{
-        width: 280,
-        backgroundColor: '#141414',
-        borderRight: '1px solid rgba(255,255,255,0.06)',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-
+      <aside className="debug-sidebar">
         {/* Header */}
-        <div style={{
-          padding: 20,
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 14
-        }}>
-          <div style={{
-            width: 44,
-            height: 44,
-            borderRadius: 12,
-            background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)'
-          }}>
-            <span style={{ color: '#000', fontWeight: 700, fontSize: 18 }}>F</span>
+        <div className="debug-sidebar-header">
+          <div className="debug-logo">
+            <span>F</span>
           </div>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>Animation Editor</div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>Ferrero Rocher</div>
+            <div className="debug-title">Animation Editor</div>
+            <div className="debug-subtitle">Ferrero Rocher</div>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav style={{ flex: 1, padding: 16, overflowY: 'auto' }}>
-
+        <nav className="debug-nav">
           {/* Editor Section */}
-          <div style={{ marginBottom: 24 }}>
-            <div style={{
-              fontSize: 10,
-              color: 'rgba(255,255,255,0.3)',
-              textTransform: 'uppercase',
-              letterSpacing: 1.5,
-              fontWeight: 600,
-              padding: '0 12px',
-              marginBottom: 12
-            }}>
-              Editor
-            </div>
+          <div className="debug-section">
+            <div className="debug-section-title">Editor</div>
 
             <button
               onClick={() => setPanel('stages')}
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                padding: '12px 14px',
-                borderRadius: 10,
-                border: 'none',
-                background: panel === 'stages' ? 'rgba(245, 158, 11, 0.12)' : 'transparent',
-                color: panel === 'stages' ? '#f59e0b' : 'rgba(255,255,255,0.5)',
-                fontSize: 14,
-                fontWeight: 500,
-                cursor: 'pointer',
-                textAlign: 'left',
-                marginBottom: 4,
-                transition: 'all 0.15s ease'
-              }}
+              className={`debug-nav-btn ${panel === 'stages' ? 'active' : ''}`}
             >
-              <Layers size={18} style={{ opacity: panel === 'stages' ? 1 : 0.5 }} />
-              <span style={{ flex: 1 }}>Animation Stages</span>
-              {panel === 'stages' && <ChevronRight size={14} style={{ opacity: 0.5 }} />}
+              <Layers size={18} className="icon" />
+              <span className="label">Animation Stages</span>
+              {panel === 'stages' && <ChevronRight size={14} className="chevron" />}
             </button>
 
             <button
               onClick={() => setPanel('cards')}
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                padding: '12px 14px',
-                borderRadius: 10,
-                border: 'none',
-                background: panel === 'cards' ? 'rgba(245, 158, 11, 0.12)' : 'transparent',
-                color: panel === 'cards' ? '#f59e0b' : 'rgba(255,255,255,0.5)',
-                fontSize: 14,
-                fontWeight: 500,
-                cursor: 'pointer',
-                textAlign: 'left',
-                transition: 'all 0.15s ease'
-              }}
+              className={`debug-nav-btn ${panel === 'cards' ? 'active' : ''}`}
             >
-              <CreditCard size={18} style={{ opacity: panel === 'cards' ? 1 : 0.5 }} />
-              <span style={{ flex: 1 }}>Info Cards</span>
-              {panel === 'cards' && <ChevronRight size={14} style={{ opacity: 0.5 }} />}
+              <CreditCard size={18} className="icon" />
+              <span className="label">Info Cards</span>
+              {panel === 'cards' && <ChevronRight size={14} className="chevron" />}
             </button>
           </div>
 
-          {/* Divider */}
-          <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '8px 12px 20px' }} />
+          <div className="debug-divider" />
 
           {/* Transform Section */}
-          <div style={{ marginBottom: 24 }}>
-            <div style={{
-              fontSize: 10,
-              color: 'rgba(255,255,255,0.3)',
-              textTransform: 'uppercase',
-              letterSpacing: 1.5,
-              fontWeight: 600,
-              padding: '0 12px',
-              marginBottom: 12
-            }}>
-              Transform
-            </div>
+          <div className="debug-section">
+            <div className="debug-section-title">Transform</div>
 
-            {[
-              { id: 'rotation', icon: RotateCcw, label: 'Rotation' },
-              { id: 'position', icon: Move, label: 'Position' },
-              { id: 'scale', icon: Maximize2, label: 'Scale' },
-            ].map(item => (
-              <button
-                key={item.id}
-                onClick={() => setPanel(item.id as typeof panel)}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  padding: '12px 14px',
-                  borderRadius: 10,
-                  border: 'none',
-                  background: panel === item.id ? 'rgba(245, 158, 11, 0.12)' : 'transparent',
-                  color: panel === item.id ? '#f59e0b' : 'rgba(255,255,255,0.5)',
-                  fontSize: 14,
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  marginBottom: 4,
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <item.icon size={18} style={{ opacity: panel === item.id ? 1 : 0.5 }} />
-                <span style={{ flex: 1 }}>{item.label}</span>
-                {panel === item.id && <ChevronRight size={14} style={{ opacity: 0.5 }} />}
-              </button>
-            ))}
+            <button
+              onClick={() => setPanel('rotation')}
+              className={`debug-nav-btn ${panel === 'rotation' ? 'active' : ''}`}
+            >
+              <RotateCcw size={18} className="icon" />
+              <span className="label">Rotation</span>
+              {panel === 'rotation' && <ChevronRight size={14} className="chevron" />}
+            </button>
+
+            <button
+              onClick={() => setPanel('position')}
+              className={`debug-nav-btn ${panel === 'position' ? 'active' : ''}`}
+            >
+              <Move size={18} className="icon" />
+              <span className="label">Position</span>
+              {panel === 'position' && <ChevronRight size={14} className="chevron" />}
+            </button>
+
+            <button
+              onClick={() => setPanel('scale')}
+              className={`debug-nav-btn ${panel === 'scale' ? 'active' : ''}`}
+            >
+              <Maximize2 size={18} className="icon" />
+              <span className="label">Scale</span>
+              {panel === 'scale' && <ChevronRight size={14} className="chevron" />}
+            </button>
           </div>
 
-          {/* Divider */}
-          <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '8px 12px 20px' }} />
+          <div className="debug-divider" />
 
           {/* Active Stage Section */}
-          <div>
-            <div style={{
-              fontSize: 10,
-              color: 'rgba(255,255,255,0.3)',
-              textTransform: 'uppercase',
-              letterSpacing: 1.5,
-              fontWeight: 600,
-              padding: '0 12px',
-              marginBottom: 12
-            }}>
-              Active Stage
-            </div>
+          <div className="debug-section">
+            <div className="debug-section-title">Active Stage</div>
 
             {stages.map((s, i) => (
               <button
                 key={i}
                 onClick={() => { setActiveStage(i); setScroll((s.scrollStart + s.scrollEnd) / 2) }}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '12px 14px',
-                  borderRadius: 10,
-                  border: activeStage === i ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid transparent',
-                  background: activeStage === i ? 'rgba(245, 158, 11, 0.1)' : 'transparent',
-                  color: activeStage === i ? '#f59e0b' : 'rgba(255,255,255,0.5)',
-                  fontSize: 14,
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  marginBottom: 6,
-                  transition: 'all 0.15s ease'
-                }}
+                className={`debug-stage-btn ${activeStage === i ? 'active' : ''}`}
               >
                 <span>{s.name}</span>
-                <span style={{ fontSize: 11, opacity: 0.6, fontFamily: 'monospace' }}>
+                <span className="percent">
                   {(s.scrollStart * 100).toFixed(0)}-{(s.scrollEnd * 100).toFixed(0)}%
                 </span>
               </button>
@@ -311,110 +198,36 @@ export function DebugPage() {
           </div>
         </nav>
 
-        {/* Footer Actions */}
-        <div style={{
-          padding: 16,
-          borderTop: '1px solid rgba(255,255,255,0.06)'
-        }}>
-          <a
-            href="/"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              padding: '12px 14px',
-              borderRadius: 10,
-              color: 'rgba(255,255,255,0.5)',
-              fontSize: 14,
-              textDecoration: 'none',
-              marginBottom: 6,
-              transition: 'all 0.15s ease'
-            }}
-          >
+        {/* Footer */}
+        <div className="debug-footer">
+          <a href="/" className="debug-footer-btn">
             <Home size={16} />
             <span>Back to Home</span>
           </a>
-          <button
-            onClick={handleExport}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              padding: '12px 14px',
-              borderRadius: 10,
-              border: 'none',
-              background: 'transparent',
-              color: 'rgba(255,255,255,0.5)',
-              fontSize: 14,
-              cursor: 'pointer',
-              textAlign: 'left',
-              transition: 'all 0.15s ease'
-            }}
-          >
+          <button onClick={handleExport} className="debug-footer-btn">
             <Download size={16} />
             <span>Export Config</span>
           </button>
         </div>
-
       </aside>
 
       {/* Main Content */}
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-
+      <main className="debug-main">
         {/* Top Bar */}
-        <header style={{
-          height: 64,
-          backgroundColor: 'rgba(20, 20, 20, 0.8)',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0 24px',
-          gap: 24
-        }}>
-
-          {/* Play Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <header className="debug-topbar">
+          <div className="debug-controls">
             <button
               onClick={() => setIsPlaying(!isPlaying)}
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 12,
-                border: 'none',
-                background: isPlaying ? '#f59e0b' : 'rgba(255,255,255,0.08)',
-                color: isPlaying ? '#000' : 'rgba(255,255,255,0.6)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                boxShadow: isPlaying ? '0 4px 12px rgba(245, 158, 11, 0.4)' : 'none',
-                transition: 'all 0.2s ease'
-              }}
+              className={`debug-play-btn ${isPlaying ? 'playing' : ''}`}
             >
               {isPlaying ? <Pause size={18} /> : <Play size={18} />}
             </button>
-            <button
-              onClick={() => setScroll(0)}
-              style={{
-                height: 44,
-                padding: '0 18px',
-                borderRadius: 12,
-                border: 'none',
-                background: 'rgba(255,255,255,0.08)',
-                color: 'rgba(255,255,255,0.6)',
-                fontSize: 13,
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
-            >
+            <button onClick={() => setScroll(0)} className="debug-reset-btn">
               Reset
             </button>
           </div>
 
-          {/* Timeline */}
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div className="debug-timeline">
             <input
               type="range"
               min={0}
@@ -422,87 +235,31 @@ export function DebugPage() {
               step={0.1}
               value={scroll * 100}
               onChange={(e) => setScroll(parseFloat(e.target.value) / 100)}
-              style={{
-                flex: 1,
-                height: 6,
-                borderRadius: 3,
-                appearance: 'none',
-                background: 'rgba(255,255,255,0.1)',
-                cursor: 'pointer',
-                accentColor: '#f59e0b'
-              }}
             />
-            <div style={{
-              fontSize: 15,
-              fontFamily: 'monospace',
-              color: '#f59e0b',
-              fontWeight: 600,
-              minWidth: 50,
-              textAlign: 'right'
-            }}>
-              {(scroll * 100).toFixed(0)}%
-            </div>
+            <div className="debug-percent">{(scroll * 100).toFixed(0)}%</div>
           </div>
 
-          {/* Current Stage Badge */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            padding: '10px 16px',
-            borderRadius: 12,
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.08)'
-          }}>
-            <Eye size={14} style={{ color: 'rgba(255,255,255,0.4)' }} />
-            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
-              {current.name}
-            </span>
+          <div className="debug-stage-badge">
+            <Eye size={14} className="icon" />
+            <span>{current.name}</span>
           </div>
-
         </header>
 
         {/* Content Area */}
-        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-
+        <div className="debug-content">
           {/* Properties Panel */}
-          <div style={{
-            width: 340,
-            backgroundColor: 'rgba(17, 17, 17, 0.9)',
-            borderRight: '1px solid rgba(255,255,255,0.06)',
-            overflowY: 'auto',
-            padding: 24
-          }}>
-
+          <div className="debug-properties">
             {/* Stages Panel */}
             {panel === 'stages' && (
-              <div>
-                <h2 style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 8 }}>
-                  Animation Stages
-                </h2>
-                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, marginBottom: 28 }}>
+              <>
+                <h2 className="debug-panel-title">Animation Stages</h2>
+                <p className="debug-panel-desc">
                   Configura le transizioni 3D per ogni sezione dello scroll.
                 </p>
 
-                {/* Quick Views */}
-                <div style={{
-                  padding: 20,
-                  borderRadius: 14,
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.06)',
-                  marginBottom: 20
-                }}>
-                  <div style={{
-                    fontSize: 11,
-                    color: 'rgba(255,255,255,0.4)',
-                    textTransform: 'uppercase',
-                    letterSpacing: 1,
-                    fontWeight: 600,
-                    marginBottom: 14
-                  }}>
-                    Quick Views
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div className="debug-card">
+                  <div className="debug-card-title">Quick Views</div>
+                  <div className="debug-quick-views">
                     {[
                       { n: 'Front', r: [0, 0, 0] },
                       { n: 'Top', r: [-1.57, 0, 0] },
@@ -514,17 +271,7 @@ export function DebugPage() {
                         onClick={() => setStages(prev => prev.map((s, i) =>
                           i === activeStage ? { ...s, rotX: p.r[0], rotY: p.r[1], rotZ: p.r[2] } : s
                         ))}
-                        style={{
-                          padding: '12px 16px',
-                          borderRadius: 10,
-                          border: '1px solid rgba(255,255,255,0.08)',
-                          background: 'rgba(255,255,255,0.04)',
-                          color: 'rgba(255,255,255,0.6)',
-                          fontSize: 13,
-                          fontWeight: 500,
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease'
-                        }}
+                        className="debug-quick-btn"
                       >
                         {p.n}
                       </button>
@@ -532,44 +279,17 @@ export function DebugPage() {
                   </div>
                 </div>
 
-                {/* Scroll Range */}
-                <div style={{
-                  padding: 20,
-                  borderRadius: 14,
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.06)'
-                }}>
-                  <div style={{
-                    fontSize: 11,
-                    color: 'rgba(255,255,255,0.4)',
-                    textTransform: 'uppercase',
-                    letterSpacing: 1,
-                    fontWeight: 600,
-                    marginBottom: 20
-                  }}>
-                    Scroll Range
-                  </div>
-
-                  {/* Start */}
-                  <div style={{ marginBottom: 20 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                      <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Start</label>
+                <div className="debug-card">
+                  <div className="debug-card-title">Scroll Range</div>
+                  <div className="debug-slider-row">
+                    <div className="debug-slider-header">
+                      <label className="debug-slider-label">Start</label>
                       <input
                         type="number"
                         value={current.scrollStart.toFixed(2)}
                         onChange={(e) => update('scrollStart', parseFloat(e.target.value) || 0)}
                         step={0.01}
-                        style={{
-                          width: 70,
-                          padding: '8px 12px',
-                          borderRadius: 8,
-                          border: '1px solid rgba(255,255,255,0.1)',
-                          background: 'rgba(255,255,255,0.05)',
-                          color: 'rgba(255,255,255,0.8)',
-                          fontSize: 13,
-                          fontFamily: 'monospace',
-                          textAlign: 'center'
-                        }}
+                        className="debug-slider-input"
                       />
                     </div>
                     <input
@@ -579,30 +299,18 @@ export function DebugPage() {
                       step={0.01}
                       value={current.scrollStart}
                       onChange={(e) => update('scrollStart', parseFloat(e.target.value))}
-                      style={{ width: '100%', accentColor: '#f59e0b' }}
+                      className="debug-slider"
                     />
                   </div>
-
-                  {/* End */}
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                      <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.5 }}>End</label>
+                  <div className="debug-slider-row">
+                    <div className="debug-slider-header">
+                      <label className="debug-slider-label">End</label>
                       <input
                         type="number"
                         value={current.scrollEnd.toFixed(2)}
                         onChange={(e) => update('scrollEnd', parseFloat(e.target.value) || 0)}
                         step={0.01}
-                        style={{
-                          width: 70,
-                          padding: '8px 12px',
-                          borderRadius: 8,
-                          border: '1px solid rgba(255,255,255,0.1)',
-                          background: 'rgba(255,255,255,0.05)',
-                          color: 'rgba(255,255,255,0.8)',
-                          fontSize: 13,
-                          fontFamily: 'monospace',
-                          textAlign: 'center'
-                        }}
+                        className="debug-slider-input"
                       />
                     </div>
                     <input
@@ -612,52 +320,34 @@ export function DebugPage() {
                       step={0.01}
                       value={current.scrollEnd}
                       onChange={(e) => update('scrollEnd', parseFloat(e.target.value))}
-                      style={{ width: '100%', accentColor: '#f59e0b' }}
+                      className="debug-slider"
                     />
                   </div>
                 </div>
-              </div>
+              </>
             )}
 
             {/* Rotation Panel */}
             {panel === 'rotation' && (
-              <div>
-                <h2 style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 8 }}>
-                  Rotation
-                </h2>
-                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, marginBottom: 28 }}>
+              <>
+                <h2 className="debug-panel-title">Rotation</h2>
+                <p className="debug-panel-desc">
                   Controlla la rotazione del modello su ogni asse.
                 </p>
-
-                <div style={{
-                  padding: 20,
-                  borderRadius: 14,
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.06)'
-                }}>
-                  {['X', 'Y', 'Z'].map((axis, idx) => {
+                <div className="debug-card">
+                  {['X', 'Y', 'Z'].map((axis) => {
                     const key = `rot${axis}` as 'rotX' | 'rotY' | 'rotZ'
                     const max = axis === 'Y' ? 6.28 : 3.14
                     return (
-                      <div key={axis} style={{ marginBottom: idx < 2 ? 24 : 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                          <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{axis} Axis</label>
+                      <div key={axis} className="debug-slider-row">
+                        <div className="debug-slider-header">
+                          <label className="debug-slider-label">{axis} Axis</label>
                           <input
                             type="number"
                             value={current[key].toFixed(2)}
                             onChange={(e) => update(key, parseFloat(e.target.value) || 0)}
                             step={0.01}
-                            style={{
-                              width: 70,
-                              padding: '8px 12px',
-                              borderRadius: 8,
-                              border: '1px solid rgba(255,255,255,0.1)',
-                              background: 'rgba(255,255,255,0.05)',
-                              color: 'rgba(255,255,255,0.8)',
-                              fontSize: 13,
-                              fontFamily: 'monospace',
-                              textAlign: 'center'
-                            }}
+                            className="debug-slider-input"
                           />
                         </div>
                         <input
@@ -667,53 +357,35 @@ export function DebugPage() {
                           step={0.01}
                           value={current[key]}
                           onChange={(e) => update(key, parseFloat(e.target.value))}
-                          style={{ width: '100%', accentColor: '#f59e0b' }}
+                          className="debug-slider"
                         />
                       </div>
                     )
                   })}
                 </div>
-              </div>
+              </>
             )}
 
             {/* Position Panel */}
             {panel === 'position' && (
-              <div>
-                <h2 style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 8 }}>
-                  Position
-                </h2>
-                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, marginBottom: 28 }}>
+              <>
+                <h2 className="debug-panel-title">Position</h2>
+                <p className="debug-panel-desc">
                   Sposta il modello nello spazio 3D.
                 </p>
-
-                <div style={{
-                  padding: 20,
-                  borderRadius: 14,
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.06)'
-                }}>
-                  {['X', 'Y', 'Z'].map((axis, idx) => {
+                <div className="debug-card">
+                  {['X', 'Y', 'Z'].map((axis) => {
                     const key = `pos${axis}` as 'posX' | 'posY' | 'posZ'
                     return (
-                      <div key={axis} style={{ marginBottom: idx < 2 ? 24 : 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                          <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{axis} Axis</label>
+                      <div key={axis} className="debug-slider-row">
+                        <div className="debug-slider-header">
+                          <label className="debug-slider-label">{axis} Axis</label>
                           <input
                             type="number"
                             value={current[key].toFixed(2)}
                             onChange={(e) => update(key, parseFloat(e.target.value) || 0)}
                             step={0.1}
-                            style={{
-                              width: 70,
-                              padding: '8px 12px',
-                              borderRadius: 8,
-                              border: '1px solid rgba(255,255,255,0.1)',
-                              background: 'rgba(255,255,255,0.05)',
-                              color: 'rgba(255,255,255,0.8)',
-                              fontSize: 13,
-                              fontFamily: 'monospace',
-                              textAlign: 'center'
-                            }}
+                            className="debug-slider-input"
                           />
                         </div>
                         <input
@@ -723,162 +395,97 @@ export function DebugPage() {
                           step={0.1}
                           value={current[key]}
                           onChange={(e) => update(key, parseFloat(e.target.value))}
-                          style={{ width: '100%', accentColor: '#f59e0b' }}
+                          className="debug-slider"
                         />
                       </div>
                     )
                   })}
                 </div>
-              </div>
+              </>
             )}
 
             {/* Scale Panel */}
             {panel === 'scale' && (
-              <div>
-                <h2 style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 8 }}>
-                  Scale
-                </h2>
-                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, marginBottom: 28 }}>
+              <>
+                <h2 className="debug-panel-title">Scale</h2>
+                <p className="debug-panel-desc">
                   Ridimensiona il modello uniformemente.
                 </p>
-
-                <div style={{
-                  padding: 20,
-                  borderRadius: 14,
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.06)'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                    <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Size</label>
+                <div className="debug-card">
+                  <div className="debug-slider-row">
+                    <div className="debug-slider-header">
+                      <label className="debug-slider-label">Size</label>
+                      <input
+                        type="number"
+                        value={current.scale.toFixed(2)}
+                        onChange={(e) => update('scale', parseFloat(e.target.value) || 0)}
+                        step={0.1}
+                        className="debug-slider-input"
+                      />
+                    </div>
                     <input
-                      type="number"
-                      value={current.scale.toFixed(2)}
-                      onChange={(e) => update('scale', parseFloat(e.target.value) || 0)}
+                      type="range"
+                      min={0.5}
+                      max={5}
                       step={0.1}
-                      style={{
-                        width: 70,
-                        padding: '8px 12px',
-                        borderRadius: 8,
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        background: 'rgba(255,255,255,0.05)',
-                        color: 'rgba(255,255,255,0.8)',
-                        fontSize: 13,
-                        fontFamily: 'monospace',
-                        textAlign: 'center'
-                      }}
+                      value={current.scale}
+                      onChange={(e) => update('scale', parseFloat(e.target.value))}
+                      className="debug-slider"
                     />
                   </div>
-                  <input
-                    type="range"
-                    min={0.5}
-                    max={5}
-                    step={0.1}
-                    value={current.scale}
-                    onChange={(e) => update('scale', parseFloat(e.target.value))}
-                    style={{ width: '100%', accentColor: '#f59e0b' }}
-                  />
                 </div>
-              </div>
+              </>
             )}
 
             {/* Cards Panel */}
             {panel === 'cards' && (
-              <div>
-                <h2 style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 8 }}>
-                  Info Cards
-                </h2>
-                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, marginBottom: 28 }}>
+              <>
+                <h2 className="debug-panel-title">Info Cards</h2>
+                <p className="debug-panel-desc">
                   Modifica i contenuti e i timing delle info card.
                 </p>
 
                 {cards.map((card, i) => (
-                  <div key={card.id} style={{
-                    padding: 20,
-                    borderRadius: 14,
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.06)',
-                    marginBottom: 16
-                  }}>
+                  <div key={card.id} className="debug-card-editor">
                     <input
                       type="text"
                       value={card.title}
                       onChange={(e) => setCards(p => p.map((c, j) => j === i ? { ...c, title: e.target.value } : c))}
                       placeholder="Card Title"
-                      style={{
-                        width: '100%',
-                        padding: 0,
-                        marginBottom: 14,
-                        border: 'none',
-                        background: 'transparent',
-                        color: '#fff',
-                        fontSize: 16,
-                        fontWeight: 600,
-                        outline: 'none'
-                      }}
+                      className="debug-card-editor-title"
                     />
                     <textarea
                       value={card.description}
                       onChange={(e) => setCards(p => p.map((c, j) => j === i ? { ...c, description: e.target.value } : c))}
                       placeholder="Description..."
-                      style={{
-                        width: '100%',
-                        padding: '12px 14px',
-                        marginBottom: 14,
-                        borderRadius: 10,
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        background: 'rgba(255,255,255,0.04)',
-                        color: 'rgba(255,255,255,0.8)',
-                        fontSize: 13,
-                        resize: 'none',
-                        height: 80,
-                        outline: 'none',
-                        fontFamily: 'inherit'
-                      }}
+                      className="debug-card-editor-desc"
                     />
 
-                    <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-                      {(['left', 'right'] as const).map(pos => (
-                        <button
-                          key={pos}
-                          onClick={() => setCards(p => p.map((c, j) => j === i ? { ...c, position: pos } : c))}
-                          style={{
-                            flex: 1,
-                            padding: '12px 16px',
-                            borderRadius: 10,
-                            border: card.position === pos ? '1px solid rgba(245, 158, 11, 0.4)' : '1px solid rgba(255,255,255,0.08)',
-                            background: card.position === pos ? 'rgba(245, 158, 11, 0.1)' : 'rgba(255,255,255,0.04)',
-                            color: card.position === pos ? '#f59e0b' : 'rgba(255,255,255,0.5)',
-                            fontSize: 13,
-                            fontWeight: 500,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          {pos === 'left' ? '← Left' : 'Right →'}
-                        </button>
-                      ))}
+                    <div className="debug-position-btns">
+                      <button
+                        onClick={() => setCards(p => p.map((c, j) => j === i ? { ...c, position: 'left' } : c))}
+                        className={`debug-position-btn ${card.position === 'left' ? 'active' : ''}`}
+                      >
+                        ← Left
+                      </button>
+                      <button
+                        onClick={() => setCards(p => p.map((c, j) => j === i ? { ...c, position: 'right' } : c))}
+                        className={`debug-position-btn ${card.position === 'right' ? 'active' : ''}`}
+                      >
+                        Right →
+                      </button>
                     </div>
 
-                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 20 }}>
-                      {/* Fade In */}
-                      <div style={{ marginBottom: 20 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                          <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Fade In</label>
+                    <div className="debug-card-divider">
+                      <div className="debug-slider-row">
+                        <div className="debug-slider-header">
+                          <label className="debug-slider-label">Fade In</label>
                           <input
                             type="number"
                             value={card.startScroll.toFixed(2)}
                             onChange={(e) => setCards(p => p.map((c, j) => j === i ? { ...c, startScroll: parseFloat(e.target.value) || 0 } : c))}
                             step={0.01}
-                            style={{
-                              width: 70,
-                              padding: '8px 12px',
-                              borderRadius: 8,
-                              border: '1px solid rgba(255,255,255,0.1)',
-                              background: 'rgba(255,255,255,0.05)',
-                              color: 'rgba(255,255,255,0.8)',
-                              fontSize: 13,
-                              fontFamily: 'monospace',
-                              textAlign: 'center'
-                            }}
+                            className="debug-slider-input"
                           />
                         </div>
                         <input
@@ -888,30 +495,18 @@ export function DebugPage() {
                           step={0.01}
                           value={card.startScroll}
                           onChange={(e) => setCards(p => p.map((c, j) => j === i ? { ...c, startScroll: parseFloat(e.target.value) } : c))}
-                          style={{ width: '100%', accentColor: '#f59e0b' }}
+                          className="debug-slider"
                         />
                       </div>
-
-                      {/* Fade Out */}
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                          <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Fade Out</label>
+                      <div className="debug-slider-row">
+                        <div className="debug-slider-header">
+                          <label className="debug-slider-label">Fade Out</label>
                           <input
                             type="number"
                             value={card.endScroll.toFixed(2)}
                             onChange={(e) => setCards(p => p.map((c, j) => j === i ? { ...c, endScroll: parseFloat(e.target.value) || 0 } : c))}
                             step={0.01}
-                            style={{
-                              width: 70,
-                              padding: '8px 12px',
-                              borderRadius: 8,
-                              border: '1px solid rgba(255,255,255,0.1)',
-                              background: 'rgba(255,255,255,0.05)',
-                              color: 'rgba(255,255,255,0.8)',
-                              fontSize: 13,
-                              fontFamily: 'monospace',
-                              textAlign: 'center'
-                            }}
+                            className="debug-slider-input"
                           />
                         </div>
                         <input
@@ -921,19 +516,18 @@ export function DebugPage() {
                           step={0.01}
                           value={card.endScroll}
                           onChange={(e) => setCards(p => p.map((c, j) => j === i ? { ...c, endScroll: parseFloat(e.target.value) } : c))}
-                          style={{ width: '100%', accentColor: '#f59e0b' }}
+                          className="debug-slider"
                         />
                       </div>
                     </div>
                   </div>
                 ))}
-              </div>
+              </>
             )}
-
           </div>
 
           {/* 3D Viewport */}
-          <div style={{ flex: 1, position: 'relative', backgroundColor: '#09090b' }}>
+          <div className="debug-viewport">
             <Canvas camera={{ position: [0, 0, 10], fov: 35 }} dpr={[1, 2]}>
               <color attach="background" args={['#09090b']} />
               <ambientLight intensity={0.15} />
@@ -950,31 +544,12 @@ export function DebugPage() {
 
             {/* Intro Title Overlay */}
             {scroll < 0.15 && (
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  pointerEvents: 'none',
-                  opacity: Math.max(0, 1 - scroll * 7)
-                }}
-              >
+              <div className="debug-intro-overlay" style={{ opacity: Math.max(0, 1 - scroll * 7) }}>
                 <div style={{ textAlign: 'center' }}>
-                  <span style={{
-                    display: 'block',
-                    color: 'rgba(245, 158, 11, 0.6)',
-                    textTransform: 'uppercase',
-                    letterSpacing: 6,
-                    fontSize: 11,
-                    marginBottom: 12
-                  }}>
-                    L'arte del cioccolato
-                  </span>
-                  <h1 style={{ fontSize: 42, fontWeight: 300, letterSpacing: 4 }}>
-                    <span style={{ display: 'block', color: '#fff' }}>FERRERO</span>
-                    <span style={{ display: 'block', color: '#f59e0b', marginTop: 4 }}>ROCHER</span>
+                  <span className="tagline">L'arte del cioccolato</span>
+                  <h1>
+                    <span className="brand">FERRERO</span>
+                    <span className="product">ROCHER</span>
                   </h1>
                 </div>
               </div>
@@ -992,58 +567,26 @@ export function DebugPage() {
               return (
                 <div
                   key={card.id}
-                  style={{
-                    position: 'absolute',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    [card.position === 'right' ? 'right' : 'left']: 40,
-                    opacity
-                  }}
+                  className={`debug-info-card ${card.position}`}
+                  style={{ opacity }}
                 >
-                  <div style={{
-                    backdropFilter: 'blur(24px)',
-                    backgroundColor: 'rgba(20, 20, 20, 0.7)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: 20,
-                    padding: 28,
-                    maxWidth: 280,
-                    boxShadow: '0 20px 40px rgba(0,0,0,0.4)'
-                  }}>
-                    <div style={{
-                      width: 48,
-                      height: 4,
-                      background: 'linear-gradient(90deg, #f59e0b, #d97706)',
-                      borderRadius: 2,
-                      marginBottom: 18
-                    }} />
-                    <h3 style={{ fontSize: 22, fontWeight: 600, color: '#fff', marginBottom: 10 }}>{card.title}</h3>
-                    <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6 }}>{card.description}</p>
+                  <div className="debug-info-card-inner">
+                    <div className="accent" />
+                    <h3>{card.title}</h3>
+                    <p>{card.description}</p>
                   </div>
                 </div>
               )
             })}
 
             {/* Viewport Info */}
-            <div style={{
-              position: 'absolute',
-              bottom: 16,
-              left: 16,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '10px 14px',
-              borderRadius: 10,
-              backgroundColor: 'rgba(20, 20, 20, 0.9)',
-              border: '1px solid rgba(255,255,255,0.08)'
-            }}>
-              <Settings size={12} style={{ color: 'rgba(255,255,255,0.4)' }} />
-              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>Scroll to orbit • Drag to rotate</span>
+            <div className="debug-viewport-info">
+              <Settings size={12} className="icon" />
+              <span>Scroll to orbit • Drag to rotate</span>
             </div>
           </div>
-
         </div>
       </main>
-
     </div>
   )
 }
