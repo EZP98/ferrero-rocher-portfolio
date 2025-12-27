@@ -9,6 +9,7 @@ import { Scene3D } from './components/Scene3D'
 import { CustomCursor } from './components/CustomCursor'
 import { Hero } from './sections/Hero'
 import { Transition } from './sections/Transition'
+import { Features } from './sections/Features'
 import { About } from './sections/About'
 import { Works } from './sections/Works'
 import { Contact } from './sections/Contact'
@@ -52,6 +53,7 @@ export default function App() {
       <main>
         <Hero />
         <Transition />
+        <Features />
         <About />
         <Works />
         <Contact />
