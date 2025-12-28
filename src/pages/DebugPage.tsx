@@ -1481,12 +1481,41 @@ export function DebugPage() {
             onChange={e => setCardsState(prev => ({ ...prev, enabled: true, blur: parseFloat(e.target.value) }))}
             style={styles.quickSlider} title={`${cardsState.blur}px`} />
         </div>
+        {/* Animazione entrata */}
+        <select
+          style={{ ...styles.quickBtn, padding: '4px 8px', fontSize: 10, backgroundColor: c.card, cursor: 'pointer' }}
+          value={cardsState.animateIn}
+          onChange={e => setCardsState(prev => ({ ...prev, enabled: true, animateIn: e.target.value as 'fade' | 'slide' | 'scale' | 'flip' }))}
+          title="Animazione entrata"
+        >
+          <option value="fade">Fade In</option>
+          <option value="slide">Slide In</option>
+          <option value="scale">Scale In</option>
+          <option value="flip">Flip In</option>
+        </select>
         <button
           style={{ ...styles.quickBtn, backgroundColor: cardsState.glowEnabled ? c.green : c.card, fontSize: 10 }}
           onClick={() => setCardsState(prev => ({ ...prev, enabled: true, glowEnabled: !prev.glowEnabled }))}
         >
           💫 Glow
         </button>
+
+        {/* Separatore */}
+        <div style={{ width: 1, height: 24, backgroundColor: c.border, margin: '0 4px' }} />
+
+        {/* TITLE animazioni */}
+        <span style={{ ...styles.quickEffectsLabel, color: c.blue }}>ANIM:</span>
+        <select
+          style={{ ...styles.quickBtn, padding: '4px 8px', fontSize: 10, backgroundColor: c.card, cursor: 'pointer' }}
+          value={titleState.animationType}
+          onChange={e => setTitleState(prev => ({ ...prev, enabled: true, animateEnabled: e.target.value !== 'none', animationType: e.target.value as 'none' | 'pulse' | 'wave' | 'typewriter' }))}
+          title="Animazione titolo"
+        >
+          <option value="none">Nessuna</option>
+          <option value="pulse">Pulse</option>
+          <option value="wave">Wave</option>
+          <option value="typewriter">Typewriter</option>
+        </select>
 
         <div style={{ flex: 1 }} />
 
