@@ -1298,10 +1298,16 @@ export function DebugPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <div style={styles.timelineLabel}>TIMELINE</div>
           <button
-            style={{ ...styles.miniToggle, backgroundColor: showAdvancedTimeline ? c.gold : c.bg, color: showAdvancedTimeline ? '#000' : c.muted }}
+            style={{
+              ...styles.miniToggle,
+              backgroundColor: showAdvancedTimeline ? c.gold : c.card,
+              color: showAdvancedTimeline ? '#000' : '#fff',
+              border: `1px solid ${showAdvancedTimeline ? c.gold : c.accent}`,
+              fontWeight: 600,
+            }}
             onClick={() => setShowAdvancedTimeline(!showAdvancedTimeline)}
           >
-            {showAdvancedTimeline ? 'Keyframes ON' : 'Keyframes OFF'}
+            {showAdvancedTimeline ? '◆ Keyframes ON' : '◇ Keyframes OFF'}
           </button>
         </div>
 
