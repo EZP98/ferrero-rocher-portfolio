@@ -14,95 +14,108 @@ import {
   Download,
   ChevronRight,
   Settings,
-  Eye
+  Eye,
+  Sparkles
 } from 'lucide-react'
 
-// Inline styles - cannot be overridden by CSS
+// ReactBits-inspired design system
+const colors = {
+  bg: '#09090b',
+  bgCard: '#0f0f11',
+  bgHover: '#18181b',
+  bgActive: 'rgba(139, 92, 246, 0.1)',
+  border: 'rgba(255, 255, 255, 0.06)',
+  borderHover: 'rgba(255, 255, 255, 0.1)',
+  borderActive: 'rgba(139, 92, 246, 0.3)',
+  text: '#fafafa',
+  textMuted: 'rgba(255, 255, 255, 0.5)',
+  textDim: 'rgba(255, 255, 255, 0.3)',
+  accent: '#8b5cf6', // Purple glow
+  accentLight: '#a78bfa',
+  gold: '#f59e0b',
+  glow: '0 0 20px rgba(139, 92, 246, 0.15)',
+  glowStrong: '0 0 30px rgba(139, 92, 246, 0.25)',
+}
+
+// Inline styles
 const s = {
   page: {
     height: '100vh',
-    backgroundColor: '#0c0c0c',
+    backgroundColor: colors.bg,
     display: 'flex',
     overflow: 'hidden',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
   } as CSSProperties,
 
   sidebar: {
-    width: '280px',
-    minWidth: '280px',
-    backgroundColor: '#141414',
-    borderRight: '1px solid rgba(255,255,255,0.06)',
+    width: '260px',
+    minWidth: '260px',
+    backgroundColor: colors.bgCard,
+    borderRight: `1px solid ${colors.border}`,
     display: 'flex',
     flexDirection: 'column',
     boxSizing: 'border-box',
   } as CSSProperties,
 
   sidebarHeader: {
-    padding: 20,
-    borderBottom: '1px solid rgba(255,255,255,0.06)',
+    padding: '24px 20px',
+    borderBottom: `1px solid ${colors.border}`,
     display: 'flex',
     alignItems: 'center',
-    gap: 14,
+    gap: '12px',
   } as CSSProperties,
 
   logo: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+    width: '40px',
+    height: '40px',
+    borderRadius: '10px',
+    background: `linear-gradient(135deg, ${colors.accent} 0%, #7c3aed 100%)`,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
+    boxShadow: colors.glow,
     flexShrink: 0,
   } as CSSProperties,
 
   logoText: {
-    color: '#000',
+    color: '#fff',
     fontWeight: 700,
-    fontSize: 18,
+    fontSize: '16px',
   } as CSSProperties,
 
   title: {
-    fontSize: 14,
+    fontSize: '15px',
     fontWeight: 600,
-    color: '#fff',
+    color: colors.text,
     margin: 0,
+    letterSpacing: '-0.01em',
   } as CSSProperties,
 
   subtitle: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.4)',
-    marginTop: 2,
+    fontSize: '12px',
+    color: colors.textMuted,
+    marginTop: '2px',
   } as CSSProperties,
 
   nav: {
     flex: 1,
-    padding: '16px',
+    padding: '12px',
     overflowY: 'auto',
     boxSizing: 'border-box',
-    width: '100%',
   } as CSSProperties,
 
   section: {
-    marginBottom: '24px',
-    width: '100%',
+    marginBottom: '8px',
   } as CSSProperties,
 
   sectionTitle: {
-    fontSize: 10,
-    color: 'rgba(255,255,255,0.3)',
+    fontSize: '11px',
+    color: colors.textDim,
     textTransform: 'uppercase',
-    letterSpacing: 1.5,
-    fontWeight: 600,
-    padding: '0 12px',
-    marginBottom: 12,
-  } as CSSProperties,
-
-  divider: {
-    height: 1,
-    background: 'rgba(255,255,255,0.06)',
-    margin: '8px 12px 20px',
+    letterSpacing: '0.05em',
+    fontWeight: 500,
+    padding: '8px 12px 8px',
+    margin: 0,
   } as CSSProperties,
 
   navBtn: {
@@ -110,22 +123,23 @@ const s = {
     boxSizing: 'border-box',
     display: 'flex',
     alignItems: 'center',
-    gap: '12px',
-    padding: '12px 14px',
-    borderRadius: '10px',
+    gap: '10px',
+    padding: '10px 12px',
+    borderRadius: '8px',
     border: 'none',
     background: 'transparent',
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: '14px',
+    color: colors.textMuted,
+    fontSize: '13px',
     fontWeight: 500,
     cursor: 'pointer',
     textAlign: 'left',
-    marginBottom: '4px',
+    marginBottom: '2px',
+    transition: 'all 0.15s ease',
   } as CSSProperties,
 
   navBtnActive: {
-    background: 'rgba(245, 158, 11, 0.12)',
-    color: '#f59e0b',
+    background: colors.bgActive,
+    color: colors.accent,
   } as CSSProperties,
 
   stageBtn: {
@@ -134,33 +148,41 @@ const s = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '12px 14px',
-    borderRadius: '10px',
-    border: '1px solid transparent',
+    padding: '10px 12px',
+    borderRadius: '8px',
+    border: `1px solid transparent`,
     background: 'transparent',
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: '14px',
+    color: colors.textMuted,
+    fontSize: '13px',
     fontWeight: 500,
     cursor: 'pointer',
     textAlign: 'left',
-    marginBottom: '6px',
+    marginBottom: '2px',
+    transition: 'all 0.15s ease',
   } as CSSProperties,
 
   stageBtnActive: {
-    background: 'rgba(245, 158, 11, 0.1)',
-    borderColor: 'rgba(245, 158, 11, 0.3)',
-    color: '#f59e0b',
+    background: colors.bgActive,
+    borderColor: colors.borderActive,
+    color: colors.accent,
+    boxShadow: colors.glow,
   } as CSSProperties,
 
   percent: {
-    fontSize: 11,
+    fontSize: '11px',
     opacity: 0.6,
-    fontFamily: 'monospace',
+    fontFamily: 'JetBrains Mono, monospace',
+  } as CSSProperties,
+
+  divider: {
+    height: '1px',
+    background: colors.border,
+    margin: '12px',
   } as CSSProperties,
 
   footer: {
-    padding: 16,
-    borderTop: '1px solid rgba(255,255,255,0.06)',
+    padding: '12px',
+    borderTop: `1px solid ${colors.border}`,
   } as CSSProperties,
 
   footerBtn: {
@@ -168,106 +190,98 @@ const s = {
     boxSizing: 'border-box',
     display: 'flex',
     alignItems: 'center',
-    gap: '12px',
-    padding: '12px 14px',
-    borderRadius: '10px',
+    gap: '10px',
+    padding: '10px 12px',
+    borderRadius: '8px',
     border: 'none',
     background: 'transparent',
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: '14px',
+    color: colors.textMuted,
+    fontSize: '13px',
     cursor: 'pointer',
     textAlign: 'left',
     textDecoration: 'none',
-    marginBottom: '6px',
+    marginBottom: '2px',
+    transition: 'all 0.15s ease',
   } as CSSProperties,
 
   main: {
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
+    backgroundColor: colors.bg,
   } as CSSProperties,
 
   topbar: {
-    height: 64,
-    backgroundColor: 'rgba(20, 20, 20, 0.8)',
-    borderBottom: '1px solid rgba(255,255,255,0.06)',
+    height: '56px',
+    backgroundColor: colors.bgCard,
+    borderBottom: `1px solid ${colors.border}`,
     display: 'flex',
     alignItems: 'center',
-    padding: '0 24px',
-    gap: 24,
+    padding: '0 20px',
+    gap: '16px',
   } as CSSProperties,
 
   controls: {
     display: 'flex',
     alignItems: 'center',
-    gap: 10,
+    gap: '8px',
   } as CSSProperties,
 
   playBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    border: 'none',
-    background: 'rgba(255,255,255,0.08)',
-    color: 'rgba(255,255,255,0.6)',
+    width: '40px',
+    height: '40px',
+    borderRadius: '10px',
+    border: `1px solid ${colors.border}`,
+    background: colors.bgCard,
+    color: colors.textMuted,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     cursor: 'pointer',
+    transition: 'all 0.15s ease',
   } as CSSProperties,
 
   playBtnActive: {
-    background: '#f59e0b',
-    color: '#000',
-    boxShadow: '0 4px 12px rgba(245, 158, 11, 0.4)',
-  } as CSSProperties,
-
-  resetBtn: {
-    height: 44,
-    padding: '0 18px',
-    borderRadius: 12,
-    border: 'none',
-    background: 'rgba(255,255,255,0.08)',
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 13,
-    fontWeight: 500,
-    cursor: 'pointer',
+    background: colors.accent,
+    borderColor: colors.accent,
+    color: '#fff',
+    boxShadow: colors.glowStrong,
   } as CSSProperties,
 
   timeline: {
     flex: 1,
     display: 'flex',
     alignItems: 'center',
-    gap: 16,
+    gap: '12px',
   } as CSSProperties,
 
   rangeInput: {
     flex: 1,
-    height: 6,
-    borderRadius: 3,
+    height: '4px',
+    borderRadius: '2px',
     WebkitAppearance: 'none',
     appearance: 'none',
-    background: 'rgba(255,255,255,0.1)',
+    background: `linear-gradient(90deg, ${colors.accent} 0%, rgba(255,255,255,0.1) 0%)`,
     cursor: 'pointer',
   } as CSSProperties,
 
   percentText: {
-    fontSize: 15,
-    fontFamily: 'monospace',
-    color: '#f59e0b',
-    fontWeight: 600,
-    minWidth: 50,
+    fontSize: '13px',
+    fontFamily: 'JetBrains Mono, monospace',
+    color: colors.accent,
+    fontWeight: 500,
+    minWidth: '40px',
     textAlign: 'right',
   } as CSSProperties,
 
   stageBadge: {
     display: 'flex',
     alignItems: 'center',
-    gap: 10,
-    padding: '10px 16px',
-    borderRadius: 12,
-    background: 'rgba(255,255,255,0.06)',
-    border: '1px solid rgba(255,255,255,0.08)',
+    gap: '8px',
+    padding: '8px 14px',
+    borderRadius: '8px',
+    background: colors.bgHover,
+    border: `1px solid ${colors.border}`,
   } as CSSProperties,
 
   content: {
@@ -277,95 +291,100 @@ const s = {
   } as CSSProperties,
 
   properties: {
-    width: 340,
-    backgroundColor: 'rgba(17, 17, 17, 0.9)',
-    borderRight: '1px solid rgba(255,255,255,0.06)',
+    width: '320px',
+    backgroundColor: colors.bgCard,
+    borderRight: `1px solid ${colors.border}`,
     overflowY: 'auto',
-    padding: 24,
+    padding: '20px',
+    boxSizing: 'border-box',
   } as CSSProperties,
 
   panelTitle: {
-    fontSize: 18,
+    fontSize: '16px',
     fontWeight: 600,
-    color: '#fff',
-    margin: '0 0 8px 0',
+    color: colors.text,
+    margin: '0 0 4px 0',
+    letterSpacing: '-0.01em',
   } as CSSProperties,
 
   panelDesc: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.5)',
-    lineHeight: 1.6,
-    margin: '0 0 28px 0',
+    fontSize: '13px',
+    color: colors.textMuted,
+    lineHeight: 1.5,
+    margin: '0 0 20px 0',
   } as CSSProperties,
 
   card: {
-    padding: 20,
-    borderRadius: 14,
-    background: 'rgba(255,255,255,0.03)',
-    border: '1px solid rgba(255,255,255,0.06)',
-    marginBottom: 20,
+    padding: '16px',
+    borderRadius: '12px',
+    background: colors.bg,
+    border: `1px solid ${colors.border}`,
+    marginBottom: '16px',
   } as CSSProperties,
 
   cardTitle: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.4)',
+    fontSize: '11px',
+    color: colors.textDim,
     textTransform: 'uppercase',
-    letterSpacing: 1,
-    fontWeight: 600,
-    margin: '0 0 14px 0',
+    letterSpacing: '0.05em',
+    fontWeight: 500,
+    margin: '0 0 12px 0',
   } as CSSProperties,
 
   quickViews: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
-    gap: 10,
+    gap: '8px',
   } as CSSProperties,
 
   quickBtn: {
-    padding: '12px 16px',
-    borderRadius: 10,
-    border: '1px solid rgba(255,255,255,0.08)',
-    background: 'rgba(255,255,255,0.04)',
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 13,
+    padding: '10px 14px',
+    borderRadius: '8px',
+    border: `1px solid ${colors.border}`,
+    background: 'transparent',
+    color: colors.textMuted,
+    fontSize: '12px',
     fontWeight: 500,
     cursor: 'pointer',
+    transition: 'all 0.15s ease',
   } as CSSProperties,
 
   sliderRow: {
-    marginBottom: 20,
+    marginBottom: '16px',
   } as CSSProperties,
 
   sliderHeader: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: '8px',
   } as CSSProperties,
 
   sliderLabel: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.5)',
+    fontSize: '12px',
+    color: colors.textMuted,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: '0.03em',
+    fontWeight: 500,
   } as CSSProperties,
 
   sliderInput: {
-    width: 70,
-    padding: '8px 12px',
-    borderRadius: 8,
-    border: '1px solid rgba(255,255,255,0.1)',
-    background: 'rgba(255,255,255,0.05)',
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 13,
-    fontFamily: 'monospace',
+    width: '60px',
+    padding: '6px 8px',
+    borderRadius: '6px',
+    border: `1px solid ${colors.border}`,
+    background: colors.bg,
+    color: colors.text,
+    fontSize: '12px',
+    fontFamily: 'JetBrains Mono, monospace',
     textAlign: 'center',
+    outline: 'none',
   } as CSSProperties,
 
   slider: {
     width: '100%',
-    height: 6,
-    borderRadius: 3,
+    height: '4px',
+    borderRadius: '2px',
     WebkitAppearance: 'none',
     appearance: 'none',
     background: 'rgba(255,255,255,0.1)',
@@ -373,88 +392,92 @@ const s = {
   } as CSSProperties,
 
   cardEditor: {
-    padding: 20,
-    borderRadius: 14,
-    background: 'rgba(255,255,255,0.03)',
-    border: '1px solid rgba(255,255,255,0.06)',
-    marginBottom: 16,
+    padding: '16px',
+    borderRadius: '12px',
+    background: colors.bg,
+    border: `1px solid ${colors.border}`,
+    marginBottom: '12px',
   } as CSSProperties,
 
   cardEditorTitle: {
     width: '100%',
     padding: 0,
-    marginBottom: 14,
+    marginBottom: '12px',
     border: 'none',
     background: 'transparent',
-    color: '#fff',
-    fontSize: 16,
+    color: colors.text,
+    fontSize: '14px',
     fontWeight: 600,
     outline: 'none',
   } as CSSProperties,
 
   cardEditorDesc: {
     width: '100%',
-    padding: '12px 14px',
-    marginBottom: 14,
-    borderRadius: 10,
-    border: '1px solid rgba(255,255,255,0.08)',
-    background: 'rgba(255,255,255,0.04)',
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 13,
+    boxSizing: 'border-box',
+    padding: '10px 12px',
+    marginBottom: '12px',
+    borderRadius: '8px',
+    border: `1px solid ${colors.border}`,
+    background: 'transparent',
+    color: colors.textMuted,
+    fontSize: '13px',
     resize: 'none',
-    height: 80,
+    height: '70px',
     outline: 'none',
     fontFamily: 'inherit',
   } as CSSProperties,
 
   positionBtns: {
     display: 'flex',
-    gap: 10,
-    marginBottom: 20,
+    gap: '8px',
+    marginBottom: '16px',
   } as CSSProperties,
 
   positionBtn: {
     flex: 1,
-    padding: '12px 16px',
-    borderRadius: 10,
-    border: '1px solid rgba(255,255,255,0.08)',
-    background: 'rgba(255,255,255,0.04)',
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 13,
+    padding: '10px 12px',
+    borderRadius: '8px',
+    border: `1px solid ${colors.border}`,
+    background: 'transparent',
+    color: colors.textMuted,
+    fontSize: '12px',
     fontWeight: 500,
     cursor: 'pointer',
+    transition: 'all 0.15s ease',
   } as CSSProperties,
 
   positionBtnActive: {
-    background: 'rgba(245, 158, 11, 0.1)',
-    borderColor: 'rgba(245, 158, 11, 0.4)',
-    color: '#f59e0b',
+    background: colors.bgActive,
+    borderColor: colors.borderActive,
+    color: colors.accent,
   } as CSSProperties,
 
   cardDivider: {
-    borderTop: '1px solid rgba(255,255,255,0.06)',
-    paddingTop: 20,
+    borderTop: `1px solid ${colors.border}`,
+    paddingTop: '16px',
+    marginTop: '4px',
   } as CSSProperties,
 
   viewport: {
     flex: 1,
     position: 'relative',
-    backgroundColor: '#09090b',
+    backgroundColor: colors.bg,
   } as CSSProperties,
 
   viewportInfo: {
     position: 'absolute',
-    bottom: 16,
-    left: 16,
+    bottom: '16px',
+    left: '16px',
     display: 'flex',
     alignItems: 'center',
-    gap: 8,
-    padding: '10px 14px',
-    borderRadius: 10,
-    backgroundColor: 'rgba(20, 20, 20, 0.9)',
-    border: '1px solid rgba(255,255,255,0.08)',
-    color: 'rgba(255,255,255,0.4)',
-    fontSize: 12,
+    gap: '8px',
+    padding: '8px 12px',
+    borderRadius: '8px',
+    backgroundColor: 'rgba(15, 15, 17, 0.9)',
+    backdropFilter: 'blur(8px)',
+    border: `1px solid ${colors.border}`,
+    color: colors.textDim,
+    fontSize: '11px',
   } as CSSProperties,
 
   introOverlay: {
@@ -468,17 +491,17 @@ const s = {
 
   tagline: {
     display: 'block',
-    color: 'rgba(245, 158, 11, 0.6)',
+    color: 'rgba(139, 92, 246, 0.6)',
     textTransform: 'uppercase',
-    letterSpacing: 6,
-    fontSize: 11,
-    marginBottom: 12,
+    letterSpacing: '4px',
+    fontSize: '11px',
+    marginBottom: '12px',
   } as CSSProperties,
 
   h1: {
-    fontSize: 42,
+    fontSize: '40px',
     fontWeight: 300,
-    letterSpacing: 4,
+    letterSpacing: '2px',
     margin: 0,
   } as CSSProperties,
 
@@ -489,8 +512,8 @@ const s = {
 
   product: {
     display: 'block',
-    color: '#f59e0b',
-    marginTop: 4,
+    color: colors.gold,
+    marginTop: '4px',
   } as CSSProperties,
 
   infoCard: {
@@ -500,34 +523,35 @@ const s = {
   } as CSSProperties,
 
   infoCardInner: {
-    backdropFilter: 'blur(24px)',
-    backgroundColor: 'rgba(20, 20, 20, 0.7)',
-    border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: 20,
-    padding: 28,
-    maxWidth: 280,
+    backdropFilter: 'blur(20px)',
+    backgroundColor: 'rgba(15, 15, 17, 0.8)',
+    border: `1px solid ${colors.border}`,
+    borderRadius: '16px',
+    padding: '24px',
+    maxWidth: '260px',
     boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
   } as CSSProperties,
 
   accent: {
-    width: 48,
-    height: 4,
-    background: 'linear-gradient(90deg, #f59e0b, #d97706)',
-    borderRadius: 2,
-    marginBottom: 18,
+    width: '40px',
+    height: '3px',
+    background: `linear-gradient(90deg, ${colors.accent}, ${colors.accentLight})`,
+    borderRadius: '2px',
+    marginBottom: '16px',
   } as CSSProperties,
 
   infoH3: {
-    fontSize: 22,
+    fontSize: '18px',
     fontWeight: 600,
-    color: '#fff',
-    margin: '0 0 10px 0',
+    color: colors.text,
+    margin: '0 0 8px 0',
+    letterSpacing: '-0.01em',
   } as CSSProperties,
 
   infoP: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.6)',
-    lineHeight: 1.6,
+    fontSize: '13px',
+    color: colors.textMuted,
+    lineHeight: 1.5,
     margin: 0,
   } as CSSProperties,
 }
@@ -555,7 +579,6 @@ interface InfoCard {
   endScroll: number
 }
 
-// Default data
 const defaultStages: AnimationStage[] = [
   { name: "Intro", scrollStart: 0, scrollEnd: 0.15, rotX: 0, rotY: 0, rotZ: 0, posX: 0, posY: 0, posZ: 0, scale: 2.2 },
   { name: "Vista Sopra", scrollStart: 0.15, scrollEnd: 0.30, rotX: -0.6, rotY: 1.57, rotZ: 0, posX: -2, posY: 0, posZ: 0, scale: 2.2 },
@@ -569,7 +592,6 @@ const defaultCards: InfoCard[] = [
   { id: 3, title: "L'Eleganza", description: "Avvolto in carta dorata.", position: 'right', startScroll: 0.45, endScroll: 0.58 },
 ]
 
-// 3D Preview Component
 function FerreroPreview({ stages, scroll }: { stages: AnimationStage[]; scroll: number }) {
   const ref = useRef<THREE.Group>(null)
   const { scene } = useGLTF('/models/ferrero.glb')
@@ -614,17 +636,16 @@ export function DebugPage() {
 
   const handleExport = () => {
     navigator.clipboard.writeText(JSON.stringify({ stages, cards }, null, 2))
-    alert('Configurazione copiata negli appunti!')
+    alert('Config copied!')
   }
 
   return (
     <div style={s.page}>
-      {/* Left Sidebar */}
+      {/* Sidebar */}
       <aside style={s.sidebar}>
-        {/* Header */}
         <div style={s.sidebarHeader}>
           <div style={s.logo}>
-            <span style={s.logoText}>F</span>
+            <Sparkles size={18} color="#fff" />
           </div>
           <div>
             <div style={s.title}>Animation Editor</div>
@@ -632,26 +653,22 @@ export function DebugPage() {
           </div>
         </div>
 
-        {/* Navigation */}
         <nav style={s.nav}>
-          {/* Editor Section */}
           <div style={s.section}>
             <div style={s.sectionTitle}>Editor</div>
-
             <button
               onClick={() => setPanel('stages')}
               style={{ ...s.navBtn, ...(panel === 'stages' ? s.navBtnActive : {}) }}
             >
-              <Layers size={18} style={{ opacity: panel === 'stages' ? 1 : 0.5 }} />
+              <Layers size={16} />
               <span style={{ flex: 1 }}>Animation Stages</span>
               {panel === 'stages' && <ChevronRight size={14} style={{ opacity: 0.5 }} />}
             </button>
-
             <button
               onClick={() => setPanel('cards')}
               style={{ ...s.navBtn, ...(panel === 'cards' ? s.navBtnActive : {}) }}
             >
-              <CreditCard size={18} style={{ opacity: panel === 'cards' ? 1 : 0.5 }} />
+              <CreditCard size={16} />
               <span style={{ flex: 1 }}>Info Cards</span>
               {panel === 'cards' && <ChevronRight size={14} style={{ opacity: 0.5 }} />}
             </button>
@@ -659,44 +676,35 @@ export function DebugPage() {
 
           <div style={s.divider} />
 
-          {/* Transform Section */}
           <div style={s.section}>
             <div style={s.sectionTitle}>Transform</div>
-
             <button
               onClick={() => setPanel('rotation')}
               style={{ ...s.navBtn, ...(panel === 'rotation' ? s.navBtnActive : {}) }}
             >
-              <RotateCcw size={18} style={{ opacity: panel === 'rotation' ? 1 : 0.5 }} />
+              <RotateCcw size={16} />
               <span style={{ flex: 1 }}>Rotation</span>
-              {panel === 'rotation' && <ChevronRight size={14} style={{ opacity: 0.5 }} />}
             </button>
-
             <button
               onClick={() => setPanel('position')}
               style={{ ...s.navBtn, ...(panel === 'position' ? s.navBtnActive : {}) }}
             >
-              <Move size={18} style={{ opacity: panel === 'position' ? 1 : 0.5 }} />
+              <Move size={16} />
               <span style={{ flex: 1 }}>Position</span>
-              {panel === 'position' && <ChevronRight size={14} style={{ opacity: 0.5 }} />}
             </button>
-
             <button
               onClick={() => setPanel('scale')}
               style={{ ...s.navBtn, ...(panel === 'scale' ? s.navBtnActive : {}) }}
             >
-              <Maximize2 size={18} style={{ opacity: panel === 'scale' ? 1 : 0.5 }} />
+              <Maximize2 size={16} />
               <span style={{ flex: 1 }}>Scale</span>
-              {panel === 'scale' && <ChevronRight size={14} style={{ opacity: 0.5 }} />}
             </button>
           </div>
 
           <div style={s.divider} />
 
-          {/* Active Stage Section */}
           <div style={s.section}>
-            <div style={s.sectionTitle}>Active Stage</div>
-
+            <div style={s.sectionTitle}>Stages</div>
             {stages.map((st, i) => (
               <button
                 key={i}
@@ -705,39 +713,34 @@ export function DebugPage() {
               >
                 <span>{st.name}</span>
                 <span style={s.percent}>
-                  {(st.scrollStart * 100).toFixed(0)}-{(st.scrollEnd * 100).toFixed(0)}%
+                  {(st.scrollStart * 100).toFixed(0)}–{(st.scrollEnd * 100).toFixed(0)}%
                 </span>
               </button>
             ))}
           </div>
         </nav>
 
-        {/* Footer */}
         <div style={s.footer}>
           <a href="/" style={s.footerBtn}>
             <Home size={16} />
-            <span>Back to Home</span>
+            <span>Home</span>
           </a>
           <button onClick={handleExport} style={s.footerBtn}>
             <Download size={16} />
-            <span>Export Config</span>
+            <span>Export</span>
           </button>
         </div>
       </aside>
 
-      {/* Main Content */}
+      {/* Main */}
       <main style={s.main}>
-        {/* Top Bar */}
         <header style={s.topbar}>
           <div style={s.controls}>
             <button
               onClick={() => setIsPlaying(!isPlaying)}
               style={{ ...s.playBtn, ...(isPlaying ? s.playBtnActive : {}) }}
             >
-              {isPlaying ? <Pause size={18} /> : <Play size={18} />}
-            </button>
-            <button onClick={() => setScroll(0)} style={s.resetBtn}>
-              Reset
+              {isPlaying ? <Pause size={16} /> : <Play size={16} />}
             </button>
           </div>
 
@@ -749,28 +752,23 @@ export function DebugPage() {
               step={0.1}
               value={scroll * 100}
               onChange={(e) => setScroll(parseFloat(e.target.value) / 100)}
-              style={s.rangeInput}
+              style={{ ...s.rangeInput, background: `linear-gradient(90deg, ${colors.accent} ${scroll * 100}%, rgba(255,255,255,0.1) ${scroll * 100}%)` }}
             />
             <div style={s.percentText}>{(scroll * 100).toFixed(0)}%</div>
           </div>
 
           <div style={s.stageBadge}>
-            <Eye size={14} style={{ color: 'rgba(255,255,255,0.4)' }} />
-            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>{current.name}</span>
+            <Eye size={14} style={{ color: colors.textDim }} />
+            <span style={{ fontSize: '12px', color: colors.text, fontWeight: 500 }}>{current.name}</span>
           </div>
         </header>
 
-        {/* Content Area */}
         <div style={s.content}>
-          {/* Properties Panel */}
           <div style={s.properties}>
-            {/* Stages Panel */}
             {panel === 'stages' && (
               <>
                 <h2 style={s.panelTitle}>Animation Stages</h2>
-                <p style={s.panelDesc}>
-                  Configura le transizioni 3D per ogni sezione dello scroll.
-                </p>
+                <p style={s.panelDesc}>Configure 3D transitions for each scroll section.</p>
 
                 <div style={s.card}>
                   <div style={s.cardTitle}>Quick Views</div>
@@ -842,19 +840,16 @@ export function DebugPage() {
               </>
             )}
 
-            {/* Rotation Panel */}
             {panel === 'rotation' && (
               <>
                 <h2 style={s.panelTitle}>Rotation</h2>
-                <p style={s.panelDesc}>
-                  Controlla la rotazione del modello su ogni asse.
-                </p>
+                <p style={s.panelDesc}>Control model rotation on each axis.</p>
                 <div style={s.card}>
                   {['X', 'Y', 'Z'].map((axis, idx) => {
                     const key = `rot${axis}` as 'rotX' | 'rotY' | 'rotZ'
                     const max = axis === 'Y' ? 6.28 : 3.14
                     return (
-                      <div key={axis} style={{ ...s.sliderRow, marginBottom: idx === 2 ? 0 : 20 }}>
+                      <div key={axis} style={{ ...s.sliderRow, marginBottom: idx === 2 ? 0 : 16 }}>
                         <div style={s.sliderHeader}>
                           <label style={s.sliderLabel}>{axis} Axis</label>
                           <input
@@ -881,18 +876,15 @@ export function DebugPage() {
               </>
             )}
 
-            {/* Position Panel */}
             {panel === 'position' && (
               <>
                 <h2 style={s.panelTitle}>Position</h2>
-                <p style={s.panelDesc}>
-                  Sposta il modello nello spazio 3D.
-                </p>
+                <p style={s.panelDesc}>Move the model in 3D space.</p>
                 <div style={s.card}>
                   {['X', 'Y', 'Z'].map((axis, idx) => {
                     const key = `pos${axis}` as 'posX' | 'posY' | 'posZ'
                     return (
-                      <div key={axis} style={{ ...s.sliderRow, marginBottom: idx === 2 ? 0 : 20 }}>
+                      <div key={axis} style={{ ...s.sliderRow, marginBottom: idx === 2 ? 0 : 16 }}>
                         <div style={s.sliderHeader}>
                           <label style={s.sliderLabel}>{axis} Axis</label>
                           <input
@@ -919,13 +911,10 @@ export function DebugPage() {
               </>
             )}
 
-            {/* Scale Panel */}
             {panel === 'scale' && (
               <>
                 <h2 style={s.panelTitle}>Scale</h2>
-                <p style={s.panelDesc}>
-                  Ridimensiona il modello uniformemente.
-                </p>
+                <p style={s.panelDesc}>Resize the model uniformly.</p>
                 <div style={s.card}>
                   <div style={{ ...s.sliderRow, marginBottom: 0 }}>
                     <div style={s.sliderHeader}>
@@ -952,13 +941,10 @@ export function DebugPage() {
               </>
             )}
 
-            {/* Cards Panel */}
             {panel === 'cards' && (
               <>
                 <h2 style={s.panelTitle}>Info Cards</h2>
-                <p style={s.panelDesc}>
-                  Modifica i contenuti e i timing delle info card.
-                </p>
+                <p style={s.panelDesc}>Edit card content and timing.</p>
 
                 {cards.map((card, i) => (
                   <div key={card.id} style={s.cardEditor}>
@@ -966,7 +952,7 @@ export function DebugPage() {
                       type="text"
                       value={card.title}
                       onChange={(e) => setCards(p => p.map((c, j) => j === i ? { ...c, title: e.target.value } : c))}
-                      placeholder="Card Title"
+                      placeholder="Title"
                       style={s.cardEditorTitle}
                     />
                     <textarea
@@ -1041,7 +1027,6 @@ export function DebugPage() {
             )}
           </div>
 
-          {/* 3D Viewport */}
           <div style={s.viewport}>
             <Canvas camera={{ position: [0, 0, 10], fov: 35 }} dpr={[1, 2]}>
               <color attach="background" args={['#09090b']} />
@@ -1057,7 +1042,6 @@ export function DebugPage() {
               <OrbitControls enableZoom enablePan />
             </Canvas>
 
-            {/* Intro Title Overlay */}
             {scroll < 0.15 && (
               <div style={{ ...s.introOverlay, opacity: Math.max(0, 1 - scroll * 7) }}>
                 <div style={{ textAlign: 'center' }}>
@@ -1070,7 +1054,6 @@ export function DebugPage() {
               </div>
             )}
 
-            {/* Info Card Overlays */}
             {cards.map(card => {
               if (scroll < card.startScroll || scroll > card.endScroll) return null
               const fadeIn = card.startScroll + 0.03
@@ -1097,10 +1080,9 @@ export function DebugPage() {
               )
             })}
 
-            {/* Viewport Info */}
             <div style={s.viewportInfo}>
               <Settings size={12} />
-              <span>Scroll to orbit • Drag to rotate</span>
+              <span>Drag to rotate • Scroll to zoom</span>
             </div>
           </div>
         </div>
