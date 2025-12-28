@@ -1360,176 +1360,209 @@ export function DebugPage() {
         </div>
       </div>
 
-      {/* Quick Effects Bar */}
-      <div style={styles.quickEffectsBar}>
-        <span style={styles.quickEffectsLabel}>EFFETTI:</span>
-
-        {/* Ruota */}
-        <div style={styles.effectGroup}>
-          <button
-            style={{ ...styles.quickBtn, backgroundColor: ferreroState.autoRotate ? c.gold : c.card, color: ferreroState.autoRotate ? '#000' : '#fff' }}
-            onClick={() => setFerreroState(prev => ({ ...prev, enabled: true, autoRotate: !prev.autoRotate }))}
-          >
-            🔄 Ruota
-          </button>
-          {ferreroState.autoRotate && (
-            <input type="range" min={0.1} max={5} step={0.1} value={ferreroState.autoRotateSpeed}
-              onChange={e => setFerreroState(prev => ({ ...prev, autoRotateSpeed: parseFloat(e.target.value) }))}
-              style={styles.quickSlider} title={`Velocità: ${ferreroState.autoRotateSpeed.toFixed(1)}`} />
-          )}
+      {/* Complete Effects Panel */}
+      <div style={styles.effectsPanel}>
+        {/* Row 1: FERRERO */}
+        <div style={styles.effectsRow}>
+          <span style={{ ...styles.effectsCategory, backgroundColor: c.gold + '22', color: c.gold }}>🍫 FERRERO</span>
+          <div style={styles.effectGroup}>
+            <button style={{ ...styles.quickBtn, backgroundColor: ferreroState.autoRotate ? c.gold : c.card, color: ferreroState.autoRotate ? '#000' : '#fff' }}
+              onClick={() => setFerreroState(prev => ({ ...prev, enabled: true, autoRotate: !prev.autoRotate }))}>🔄 Ruota</button>
+            {ferreroState.autoRotate && <input type="range" min={0.1} max={5} step={0.1} value={ferreroState.autoRotateSpeed}
+              onChange={e => setFerreroState(prev => ({ ...prev, autoRotateSpeed: parseFloat(e.target.value) }))} style={styles.quickSlider} />}
+          </div>
+          <div style={styles.effectGroup}>
+            <button style={{ ...styles.quickBtn, backgroundColor: ferreroState.floatEnabled ? c.gold : c.card, color: ferreroState.floatEnabled ? '#000' : '#fff' }}
+              onClick={() => setFerreroState(prev => ({ ...prev, enabled: true, floatEnabled: !prev.floatEnabled }))}>🎈 Float</button>
+            {ferreroState.floatEnabled && <input type="range" min={0.1} max={1} step={0.05} value={ferreroState.floatAmplitude}
+              onChange={e => setFerreroState(prev => ({ ...prev, floatAmplitude: parseFloat(e.target.value) }))} style={styles.quickSlider} />}
+          </div>
+          <div style={styles.effectGroup}>
+            <button style={{ ...styles.quickBtn, backgroundColor: ferreroState.bounceEnabled ? c.gold : c.card, color: ferreroState.bounceEnabled ? '#000' : '#fff' }}
+              onClick={() => setFerreroState(prev => ({ ...prev, enabled: true, bounceEnabled: !prev.bounceEnabled }))}>⬆️ Bounce</button>
+          </div>
+          <div style={styles.effectGroup}>
+            <span style={styles.effectLabel}>Scala</span>
+            <input type="range" min={0.5} max={4} step={0.1} value={ferreroState.scale}
+              onChange={e => setFerreroState(prev => ({ ...prev, enabled: true, scale: parseFloat(e.target.value) }))} style={styles.quickSlider} />
+            <span style={styles.effectValue}>{ferreroState.scale.toFixed(1)}</span>
+          </div>
+          <div style={styles.effectGroup}>
+            <span style={styles.effectLabel}>Metal</span>
+            <input type="range" min={0} max={1} step={0.05} value={ferreroState.metalness}
+              onChange={e => setFerreroState(prev => ({ ...prev, enabled: true, metalness: parseFloat(e.target.value) }))} style={styles.quickSlider} />
+          </div>
+          <div style={styles.effectGroup}>
+            <span style={styles.effectLabel}>Rough</span>
+            <input type="range" min={0} max={1} step={0.05} value={ferreroState.roughness}
+              onChange={e => setFerreroState(prev => ({ ...prev, enabled: true, roughness: parseFloat(e.target.value) }))} style={styles.quickSlider} />
+          </div>
+          <div style={styles.effectGroup}>
+            <button style={{ ...styles.quickBtn, backgroundColor: ferreroState.emissiveIntensity > 0 ? c.gold : c.card, color: ferreroState.emissiveIntensity > 0 ? '#000' : '#fff' }}
+              onClick={() => setFerreroState(prev => ({ ...prev, enabled: true, emissiveIntensity: prev.emissiveIntensity > 0 ? 0 : 0.8 }))}>✨ Glow</button>
+            {ferreroState.emissiveIntensity > 0 && <>
+              <input type="range" min={0.1} max={2} step={0.1} value={ferreroState.emissiveIntensity}
+                onChange={e => setFerreroState(prev => ({ ...prev, emissiveIntensity: parseFloat(e.target.value) }))} style={styles.quickSlider} />
+              <input type="color" value={ferreroState.emissiveColor} onChange={e => setFerreroState(prev => ({ ...prev, emissiveColor: e.target.value }))} style={styles.colorPicker} />
+            </>}
+          </div>
+          <button style={{ ...styles.quickBtn, backgroundColor: ferreroState.wireframe ? c.gold : c.card, color: ferreroState.wireframe ? '#000' : '#fff' }}
+            onClick={() => setFerreroState(prev => ({ ...prev, enabled: true, wireframe: !prev.wireframe }))}>🔲 Wire</button>
         </div>
 
-        {/* Fluttua */}
-        <div style={styles.effectGroup}>
-          <button
-            style={{ ...styles.quickBtn, backgroundColor: ferreroState.floatEnabled ? c.gold : c.card, color: ferreroState.floatEnabled ? '#000' : '#fff' }}
-            onClick={() => setFerreroState(prev => ({ ...prev, enabled: true, floatEnabled: !prev.floatEnabled }))}
-          >
-            🎈 Fluttua
-          </button>
-          {ferreroState.floatEnabled && (
-            <input type="range" min={0.1} max={1} step={0.05} value={ferreroState.floatAmplitude}
-              onChange={e => setFerreroState(prev => ({ ...prev, floatAmplitude: parseFloat(e.target.value) }))}
-              style={styles.quickSlider} title={`Ampiezza: ${ferreroState.floatAmplitude.toFixed(2)}`} />
-          )}
+        {/* Row 2: TITLE + CARDS */}
+        <div style={styles.effectsRow}>
+          <span style={{ ...styles.effectsCategory, backgroundColor: c.accent + '22', color: c.accent }}>📝 TITLE</span>
+          <div style={styles.effectGroup}>
+            <span style={styles.effectLabel}>Opacità</span>
+            <input type="range" min={0} max={1} step={0.05} value={titleState.opacity}
+              onChange={e => setTitleState(prev => ({ ...prev, enabled: true, opacity: parseFloat(e.target.value) }))} style={styles.quickSlider} />
+          </div>
+          <div style={styles.effectGroup}>
+            <span style={styles.effectLabel}>Fade</span>
+            <input type="range" min={1} max={20} step={1} value={titleState.fadeSpeed}
+              onChange={e => setTitleState(prev => ({ ...prev, enabled: true, fadeSpeed: parseFloat(e.target.value) }))} style={styles.quickSlider} />
+          </div>
+          <div style={styles.effectGroup}>
+            <button style={{ ...styles.quickBtn, backgroundColor: titleState.glowEnabled ? c.accent : c.card }}
+              onClick={() => setTitleState(prev => ({ ...prev, enabled: true, glowEnabled: !prev.glowEnabled }))}>💫 Glow</button>
+            {titleState.glowEnabled && <input type="color" value={titleState.glowColor} onChange={e => setTitleState(prev => ({ ...prev, glowColor: e.target.value }))} style={styles.colorPicker} />}
+          </div>
+          <select style={styles.selectBtn} value={titleState.animationType}
+            onChange={e => setTitleState(prev => ({ ...prev, enabled: true, animateEnabled: e.target.value !== 'none', animationType: e.target.value as 'none' | 'pulse' | 'wave' | 'typewriter' }))}>
+            <option value="none">No Anim</option>
+            <option value="pulse">Pulse</option>
+            <option value="wave">Wave</option>
+            <option value="typewriter">Type</option>
+          </select>
+
+          <div style={styles.effectDivider} />
+
+          <span style={{ ...styles.effectsCategory, backgroundColor: c.green + '22', color: c.green }}>🃏 CARDS</span>
+          <div style={styles.effectGroup}>
+            <span style={styles.effectLabel}>Opacità</span>
+            <input type="range" min={0} max={1} step={0.05} value={cardsState.globalOpacity}
+              onChange={e => setCardsState(prev => ({ ...prev, enabled: true, globalOpacity: parseFloat(e.target.value) }))} style={styles.quickSlider} />
+          </div>
+          <div style={styles.effectGroup}>
+            <span style={styles.effectLabel}>Blur</span>
+            <input type="range" min={0} max={40} step={2} value={cardsState.blur}
+              onChange={e => setCardsState(prev => ({ ...prev, enabled: true, blur: parseFloat(e.target.value) }))} style={styles.quickSlider} />
+          </div>
+          <div style={styles.effectGroup}>
+            <span style={styles.effectLabel}>Radius</span>
+            <input type="range" min={0} max={40} step={2} value={cardsState.borderRadius}
+              onChange={e => setCardsState(prev => ({ ...prev, enabled: true, borderRadius: parseFloat(e.target.value) }))} style={styles.quickSlider} />
+          </div>
+          <select style={styles.selectBtn} value={cardsState.animateIn}
+            onChange={e => setCardsState(prev => ({ ...prev, enabled: true, animateIn: e.target.value as 'fade' | 'slide' | 'scale' | 'flip' }))}>
+            <option value="fade">Fade</option>
+            <option value="slide">Slide</option>
+            <option value="scale">Scale</option>
+            <option value="flip">Flip</option>
+          </select>
+          <button style={{ ...styles.quickBtn, backgroundColor: cardsState.glowEnabled ? c.green : c.card }}
+            onClick={() => setCardsState(prev => ({ ...prev, enabled: true, glowEnabled: !prev.glowEnabled }))}>💫</button>
+          <input type="color" value={cardsState.accentColor} onChange={e => setCardsState(prev => ({ ...prev, enabled: true, accentColor: e.target.value }))} style={styles.colorPicker} title="Accent" />
         </div>
 
-        {/* Rimbalza */}
-        <div style={styles.effectGroup}>
-          <button
-            style={{ ...styles.quickBtn, backgroundColor: ferreroState.bounceEnabled ? c.gold : c.card, color: ferreroState.bounceEnabled ? '#000' : '#fff' }}
-            onClick={() => setFerreroState(prev => ({ ...prev, enabled: true, bounceEnabled: !prev.bounceEnabled }))}
-          >
-            ⬆️ Rimbalza
-          </button>
-          {ferreroState.bounceEnabled && (
-            <input type="range" min={0.05} max={0.5} step={0.05} value={ferreroState.bounceAmplitude}
-              onChange={e => setFerreroState(prev => ({ ...prev, bounceAmplitude: parseFloat(e.target.value) }))}
-              style={styles.quickSlider} title={`Ampiezza: ${ferreroState.bounceAmplitude.toFixed(2)}`} />
-          )}
+        {/* Row 3: LIGHTING + POST-PROCESSING */}
+        <div style={styles.effectsRow}>
+          <span style={{ ...styles.effectsCategory, backgroundColor: c.blue + '22', color: c.blue }}>💡 LIGHTS</span>
+          <div style={styles.effectGroup}>
+            <span style={styles.effectLabel}>Ambient</span>
+            <input type="range" min={0} max={2} step={0.05} value={lightingState.ambientIntensity}
+              onChange={e => setLightingState(prev => ({ ...prev, enabled: true, ambientIntensity: parseFloat(e.target.value) }))} style={styles.quickSlider} />
+          </div>
+          <div style={styles.effectGroup}>
+            <span style={styles.effectLabel}>Main</span>
+            <input type="range" min={0} max={10} step={0.5} value={lightingState.mainSpotIntensity}
+              onChange={e => setLightingState(prev => ({ ...prev, enabled: true, mainSpotIntensity: parseFloat(e.target.value) }))} style={styles.quickSlider} />
+            <input type="color" value={lightingState.mainSpotColor} onChange={e => setLightingState(prev => ({ ...prev, mainSpotColor: e.target.value }))} style={styles.colorPicker} />
+          </div>
+          <div style={styles.effectGroup}>
+            <span style={styles.effectLabel}>Rim</span>
+            <input type="range" min={0} max={10} step={0.5} value={lightingState.rimLightIntensity}
+              onChange={e => setLightingState(prev => ({ ...prev, enabled: true, rimLightIntensity: parseFloat(e.target.value) }))} style={styles.quickSlider} />
+            <input type="color" value={lightingState.rimLightColor} onChange={e => setLightingState(prev => ({ ...prev, rimLightColor: e.target.value }))} style={styles.colorPicker} />
+          </div>
+          <button style={{ ...styles.quickBtn, backgroundColor: lightingState.topLightEnabled ? c.blue : c.card }}
+            onClick={() => setLightingState(prev => ({ ...prev, enabled: true, topLightEnabled: !prev.topLightEnabled }))}>⬆️ Top</button>
+          <button style={{ ...styles.quickBtn, backgroundColor: lightingState.bottomLightEnabled ? c.blue : c.card }}
+            onClick={() => setLightingState(prev => ({ ...prev, enabled: true, bottomLightEnabled: !prev.bottomLightEnabled }))}>⬇️ Bot</button>
+
+          <div style={styles.effectDivider} />
+
+          <span style={{ ...styles.effectsCategory, backgroundColor: '#ff6b6b22', color: '#ff6b6b' }}>🎬 FX</span>
+          <button style={{ ...styles.quickBtn, backgroundColor: postProcessingState.bloomEnabled ? '#ff6b6b' : c.card }}
+            onClick={() => setPostProcessingState(prev => ({ ...prev, enabled: true, bloomEnabled: !prev.bloomEnabled }))}>Bloom</button>
+          {postProcessingState.bloomEnabled && <input type="range" min={0} max={3} step={0.1} value={postProcessingState.bloomIntensity}
+            onChange={e => setPostProcessingState(prev => ({ ...prev, bloomIntensity: parseFloat(e.target.value) }))} style={styles.quickSlider} />}
+          <button style={{ ...styles.quickBtn, backgroundColor: postProcessingState.vignetteEnabled ? '#ff6b6b' : c.card }}
+            onClick={() => setPostProcessingState(prev => ({ ...prev, enabled: true, vignetteEnabled: !prev.vignetteEnabled }))}>Vignette</button>
+          <button style={{ ...styles.quickBtn, backgroundColor: postProcessingState.chromaticAberrationEnabled ? '#ff6b6b' : c.card }}
+            onClick={() => setPostProcessingState(prev => ({ ...prev, enabled: true, chromaticAberrationEnabled: !prev.chromaticAberrationEnabled }))}>Chroma</button>
+          <button style={{ ...styles.quickBtn, backgroundColor: postProcessingState.noiseEnabled ? '#ff6b6b' : c.card }}
+            onClick={() => setPostProcessingState(prev => ({ ...prev, enabled: true, noiseEnabled: !prev.noiseEnabled }))}>Noise</button>
         </div>
 
-        {/* Brilla */}
-        <div style={styles.effectGroup}>
-          <button
-            style={{ ...styles.quickBtn, backgroundColor: ferreroState.emissiveIntensity > 0 ? c.gold : c.card, color: ferreroState.emissiveIntensity > 0 ? '#000' : '#fff' }}
-            onClick={() => setFerreroState(prev => ({ ...prev, enabled: true, emissiveIntensity: prev.emissiveIntensity > 0 ? 0 : 0.8 }))}
-          >
-            ✨ Brilla
-          </button>
-          {ferreroState.emissiveIntensity > 0 && (
-            <input type="range" min={0.1} max={2} step={0.1} value={ferreroState.emissiveIntensity}
-              onChange={e => setFerreroState(prev => ({ ...prev, emissiveIntensity: parseFloat(e.target.value) }))}
-              style={styles.quickSlider} title={`Intensità: ${ferreroState.emissiveIntensity.toFixed(1)}`} />
-          )}
+        {/* Row 4: CAMERA + PARTICLES + BACKGROUND */}
+        <div style={styles.effectsRow}>
+          <span style={{ ...styles.effectsCategory, backgroundColor: '#9b59b622', color: '#9b59b6' }}>📷 CAM</span>
+          <div style={styles.effectGroup}>
+            <span style={styles.effectLabel}>FOV</span>
+            <input type="range" min={10} max={120} step={5} value={cameraState.fov}
+              onChange={e => setCameraState(prev => ({ ...prev, enabled: true, fov: parseFloat(e.target.value) }))} style={styles.quickSlider} />
+            <span style={styles.effectValue}>{cameraState.fov}°</span>
+          </div>
+          <div style={styles.effectGroup}>
+            <span style={styles.effectLabel}>Z</span>
+            <input type="range" min={2} max={20} step={0.5} value={cameraState.positionZ}
+              onChange={e => setCameraState(prev => ({ ...prev, enabled: true, positionZ: parseFloat(e.target.value) }))} style={styles.quickSlider} />
+          </div>
+          <button style={{ ...styles.quickBtn, backgroundColor: cameraState.autoOrbit ? '#9b59b6' : c.card }}
+            onClick={() => setCameraState(prev => ({ ...prev, enabled: true, autoOrbit: !prev.autoOrbit }))}>🔄 Orbit</button>
+
+          <div style={styles.effectDivider} />
+
+          <span style={{ ...styles.effectsCategory, backgroundColor: '#f39c1222', color: '#f39c12' }}>✨ PARTICLES</span>
+          <button style={{ ...styles.quickBtn, backgroundColor: particlesState.enabled ? '#f39c12' : c.card, color: particlesState.enabled ? '#000' : '#fff' }}
+            onClick={() => setParticlesState(prev => ({ ...prev, enabled: !prev.enabled }))}>{particlesState.enabled ? 'ON' : 'OFF'}</button>
+          {particlesState.enabled && <>
+            <input type="range" min={10} max={300} step={10} value={particlesState.count}
+              onChange={e => setParticlesState(prev => ({ ...prev, count: parseFloat(e.target.value) }))} style={styles.quickSlider} title="Count" />
+            <select style={styles.selectBtn} value={particlesState.type}
+              onChange={e => setParticlesState(prev => ({ ...prev, type: e.target.value as 'dots' | 'sparkles' | 'snow' | 'stars' }))}>
+              <option value="sparkles">Sparkle</option>
+              <option value="dots">Dots</option>
+              <option value="snow">Snow</option>
+              <option value="stars">Stars</option>
+            </select>
+            <input type="color" value={particlesState.color} onChange={e => setParticlesState(prev => ({ ...prev, color: e.target.value }))} style={styles.colorPicker} />
+          </>}
+
+          <div style={styles.effectDivider} />
+
+          <span style={{ ...styles.effectsCategory, backgroundColor: '#1abc9c22', color: '#1abc9c' }}>🌌 BG</span>
+          <input type="color" value={backgroundState.color} onChange={e => setBackgroundState(prev => ({ ...prev, enabled: true, color: e.target.value }))} style={styles.colorPicker} title="BG Color" />
+          <button style={{ ...styles.quickBtn, backgroundColor: backgroundState.gradientEnabled ? '#1abc9c' : c.card }}
+            onClick={() => setBackgroundState(prev => ({ ...prev, enabled: true, gradientEnabled: !prev.gradientEnabled }))}>Gradient</button>
+          <button style={{ ...styles.quickBtn, backgroundColor: backgroundState.starsEnabled ? '#1abc9c' : c.card }}
+            onClick={() => setBackgroundState(prev => ({ ...prev, enabled: true, starsEnabled: !prev.starsEnabled }))}>⭐ Stars</button>
+
+          <div style={{ flex: 1 }} />
+          <button style={{ ...styles.quickBtn, backgroundColor: c.red + '33', color: c.red, border: `1px solid ${c.red}` }}
+            onClick={() => {
+              setFerreroState({ enabled: false, rotX: 0, rotY: 0, rotZ: 0, posX: 0, posY: 0, posZ: 0, scale: 2.2, autoRotate: false, autoRotateSpeed: 1, floatEnabled: false, floatAmplitude: 0.2, floatSpeed: 1, bounceEnabled: false, bounceAmplitude: 0.1, bounceSpeed: 2, metalness: 0.8, roughness: 0.2, emissiveIntensity: 0, emissiveColor: '#d4a853', wireframe: false, explodeEnabled: false, explodeAmount: 0 })
+              setTitleState({ enabled: false, opacity: 1, fadeSpeed: 7, titleText: 'FERRERO ROCHER', subtitleText: "L'arte del cioccolato", glowEnabled: false, glowColor: '#d4a853', glowIntensity: 10, animateEnabled: false, animationType: 'none' })
+              setCardsState({ enabled: false, globalOpacity: 1, backgroundColor: 'rgba(20, 20, 20, 0.85)', borderColor: 'rgba(255, 255, 255, 0.08)', accentColor: '#d4a853', padding: 28, borderRadius: 20, blur: 20, glowEnabled: false, glowColor: '#d4a853', animateIn: 'fade' })
+              setLightingState({ enabled: false, ambientIntensity: 0.15, mainSpotIntensity: 3, mainSpotColor: '#FFFFFF', rimLightIntensity: 2, rimLightColor: '#D4A853', fillLightIntensity: 1.5, fillLightColor: '#E8C878', topLightEnabled: false, topLightIntensity: 2, topLightColor: '#FFD700', bottomLightEnabled: false, bottomLightIntensity: 1, bottomLightColor: '#5A3A28' })
+              setPostProcessingState({ enabled: false, bloomEnabled: false, bloomIntensity: 1, bloomThreshold: 0.8, bloomRadius: 0.4, vignetteEnabled: false, vignetteIntensity: 0.5, vignetteOffset: 0.5, chromaticAberrationEnabled: false, chromaticAberrationOffset: 0.002, noiseEnabled: false, noiseIntensity: 0.1 })
+              setCameraState({ enabled: false, fov: 35, positionX: 0, positionY: 0, positionZ: 10, targetX: 0, targetY: 0, targetZ: 0, autoOrbit: false, orbitSpeed: 0.5 })
+              setParticlesState({ enabled: false, count: 100, size: 0.02, color: '#d4a853', speed: 0.5, spread: 10, opacity: 0.6, type: 'sparkles' })
+              setBackgroundState({ enabled: false, color: '#0A0A0A', gradientEnabled: false, gradientTop: '#1a1a2e', gradientBottom: '#0a0a0a', starsEnabled: false, starsCount: 200, starsSpeed: 0.1 })
+            }}>↺ RESET ALL</button>
         </div>
-
-        {/* Scala */}
-        <div style={styles.effectGroup}>
-          <button
-            style={{ ...styles.quickBtn, backgroundColor: ferreroState.scale !== 2.2 ? c.gold : c.card, color: ferreroState.scale !== 2.2 ? '#000' : '#fff' }}
-            onClick={() => setFerreroState(prev => ({ ...prev, enabled: true }))}
-          >
-            📐 Scala
-          </button>
-          <input type="range" min={0.5} max={4} step={0.1} value={ferreroState.scale}
-            onChange={e => setFerreroState(prev => ({ ...prev, enabled: true, scale: parseFloat(e.target.value) }))}
-            style={styles.quickSlider} title={`Scala: ${ferreroState.scale.toFixed(1)}`} />
-        </div>
-
-        {/* Wireframe */}
-        <button
-          style={{ ...styles.quickBtn, backgroundColor: ferreroState.wireframe ? c.gold : c.card, color: ferreroState.wireframe ? '#000' : '#fff' }}
-          onClick={() => setFerreroState(prev => ({ ...prev, enabled: true, wireframe: !prev.wireframe }))}
-        >
-          🔲 Wire
-        </button>
-
-        
-        {/* Separatore */}
-        <div style={{ width: 1, height: 24, backgroundColor: c.border, margin: '0 4px' }} />
-
-        {/* TITLE */}
-        <span style={{ ...styles.quickEffectsLabel, color: c.accent }}>TITLE:</span>
-        <div style={styles.effectGroup}>
-          <span style={{ fontSize: 10, color: c.muted }}>Opacità</span>
-          <input type="range" min={0} max={1} step={0.05} value={titleState.opacity}
-            onChange={e => setTitleState(prev => ({ ...prev, enabled: true, opacity: parseFloat(e.target.value) }))}
-            style={styles.quickSlider} title={`${(titleState.opacity * 100).toFixed(0)}%`} />
-        </div>
-        <button
-          style={{ ...styles.quickBtn, backgroundColor: titleState.glowEnabled ? c.accent : c.card, color: titleState.glowEnabled ? '#fff' : '#fff', fontSize: 10 }}
-          onClick={() => setTitleState(prev => ({ ...prev, enabled: true, glowEnabled: !prev.glowEnabled }))}
-        >
-          💫 Glow
-        </button>
-
-        {/* Separatore */}
-        <div style={{ width: 1, height: 24, backgroundColor: c.border, margin: '0 4px' }} />
-
-        {/* CARDS */}
-        <span style={{ ...styles.quickEffectsLabel, color: c.green }}>CARDS:</span>
-        <div style={styles.effectGroup}>
-          <span style={{ fontSize: 10, color: c.muted }}>Opacità</span>
-          <input type="range" min={0} max={1} step={0.05} value={cardsState.globalOpacity}
-            onChange={e => setCardsState(prev => ({ ...prev, enabled: true, globalOpacity: parseFloat(e.target.value) }))}
-            style={styles.quickSlider} title={`${(cardsState.globalOpacity * 100).toFixed(0)}%`} />
-        </div>
-        <div style={styles.effectGroup}>
-          <span style={{ fontSize: 10, color: c.muted }}>Blur</span>
-          <input type="range" min={0} max={40} step={2} value={cardsState.blur}
-            onChange={e => setCardsState(prev => ({ ...prev, enabled: true, blur: parseFloat(e.target.value) }))}
-            style={styles.quickSlider} title={`${cardsState.blur}px`} />
-        </div>
-        {/* Animazione entrata */}
-        <select
-          style={{ ...styles.quickBtn, padding: '4px 8px', fontSize: 10, backgroundColor: c.card, cursor: 'pointer' }}
-          value={cardsState.animateIn}
-          onChange={e => setCardsState(prev => ({ ...prev, enabled: true, animateIn: e.target.value as 'fade' | 'slide' | 'scale' | 'flip' }))}
-          title="Animazione entrata"
-        >
-          <option value="fade">Fade In</option>
-          <option value="slide">Slide In</option>
-          <option value="scale">Scale In</option>
-          <option value="flip">Flip In</option>
-        </select>
-        <button
-          style={{ ...styles.quickBtn, backgroundColor: cardsState.glowEnabled ? c.green : c.card, fontSize: 10 }}
-          onClick={() => setCardsState(prev => ({ ...prev, enabled: true, glowEnabled: !prev.glowEnabled }))}
-        >
-          💫 Glow
-        </button>
-
-        {/* Separatore */}
-        <div style={{ width: 1, height: 24, backgroundColor: c.border, margin: '0 4px' }} />
-
-        {/* TITLE animazioni */}
-        <span style={{ ...styles.quickEffectsLabel, color: c.blue }}>ANIM:</span>
-        <select
-          style={{ ...styles.quickBtn, padding: '4px 8px', fontSize: 10, backgroundColor: c.card, cursor: 'pointer' }}
-          value={titleState.animationType}
-          onChange={e => setTitleState(prev => ({ ...prev, enabled: true, animateEnabled: e.target.value !== 'none', animationType: e.target.value as 'none' | 'pulse' | 'wave' | 'typewriter' }))}
-          title="Animazione titolo"
-        >
-          <option value="none">Nessuna</option>
-          <option value="pulse">Pulse</option>
-          <option value="wave">Wave</option>
-          <option value="typewriter">Typewriter</option>
-        </select>
-
-        <div style={{ flex: 1 }} />
-
-        {/* Reset ALL */}
-        <button
-          style={{ ...styles.quickBtn, backgroundColor: c.red + '33', color: c.red, border: `1px solid ${c.red}` }}
-          onClick={() => {
-            setFerreroState({ enabled: false, rotX: 0, rotY: 0, rotZ: 0, posX: 0, posY: 0, posZ: 0, scale: 2.2, autoRotate: false, autoRotateSpeed: 1, floatEnabled: false, floatAmplitude: 0.2, floatSpeed: 1, bounceEnabled: false, bounceAmplitude: 0.1, bounceSpeed: 2, metalness: 0.8, roughness: 0.2, emissiveIntensity: 0, emissiveColor: '#d4a853', wireframe: false, explodeEnabled: false, explodeAmount: 0 })
-            setTitleState(prev => ({ ...prev, enabled: false, opacity: 1, glowEnabled: false }))
-            setCardsState(prev => ({ ...prev, enabled: false, globalOpacity: 1, blur: 20, glowEnabled: false }))
-          }}
-        >
-          ↺ Reset All
-        </button>
       </div>
 
       {/* Timeline - Canva Style */}
@@ -1829,12 +1862,18 @@ const styles: Record<string, CSSProperties> = {
   colorRow: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 },
   colorInput: { width: 40, height: 28, padding: 0, border: `1px solid ${c.border}`, borderRadius: 4, cursor: 'pointer' },
 
-  // Quick Effects Bar
-  quickEffectsBar: { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', backgroundColor: c.card, borderTop: `1px solid ${c.border}`, flexWrap: 'wrap' },
-  quickEffectsLabel: { fontSize: 10, color: c.dim, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, marginRight: 4 },
-  quickBtn: { padding: '6px 10px', borderRadius: 6, border: `1px solid ${c.border}`, color: '#fff', fontSize: 11, cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 4 },
-  effectGroup: { display: 'flex', alignItems: 'center', gap: 4 },
-  quickSlider: { width: 60, height: 4, accentColor: c.gold, cursor: 'pointer' },
+  // Complete Effects Panel
+  effectsPanel: { backgroundColor: c.card, borderTop: `1px solid ${c.border}`, display: 'flex', flexDirection: 'column', gap: 2, padding: '4px 0' },
+  effectsRow: { display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px', flexWrap: 'wrap' },
+  effectsCategory: { padding: '3px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, marginRight: 4 },
+  effectGroup: { display: 'flex', alignItems: 'center', gap: 3 },
+  effectLabel: { fontSize: 9, color: c.muted, minWidth: 35 },
+  effectValue: { fontSize: 9, color: c.text, fontFamily: 'monospace', minWidth: 25 },
+  effectDivider: { width: 1, height: 20, backgroundColor: c.border, margin: '0 8px' },
+  quickBtn: { padding: '4px 8px', borderRadius: 4, border: `1px solid ${c.border}`, color: '#fff', fontSize: 10, cursor: 'pointer', transition: 'all 0.1s' },
+  quickSlider: { width: 50, height: 3, accentColor: c.gold, cursor: 'pointer' },
+  selectBtn: { padding: '4px 6px', borderRadius: 4, border: `1px solid ${c.border}`, backgroundColor: c.card, color: '#fff', fontSize: 9, cursor: 'pointer' },
+  colorPicker: { width: 20, height: 20, padding: 0, border: `1px solid ${c.border}`, borderRadius: 3, cursor: 'pointer' },
 
   // Keyframe Timeline (Canva-style)
   keyframeTracks: { marginTop: 12, display: 'flex', flexDirection: 'column', gap: 4, backgroundColor: c.bg, borderRadius: 8, padding: 8 },
