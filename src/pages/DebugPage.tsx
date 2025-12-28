@@ -51,7 +51,7 @@ const speedOptions = [
   { label: '4x', value: 0.0006 },
 ]
 
-export function AnimationConsole() {
+export function DebugPage() {
   const [scroll, setScroll] = useState(0)
   const [playing, setPlaying] = useState(false)
   const [showPresets, setShowPresets] = useState(false)
@@ -1443,7 +1443,7 @@ export function AnimationConsole() {
 
           <div style={styles.effectDivider} />
 
-          {/* ANIMATION EFFECTS - Scroll, Mouse, Drag inspired */}
+          {/* ANIMATION EFFECTS */}
           <span style={{ ...styles.effectsCategory, backgroundColor: '#e67e2222', color: '#e67e22' }}>🎭 FX</span>
           <button style={{ ...styles.quickBtn, fontSize: 9 }}
             onClick={() => setTitleState(prev => ({ ...prev, enabled: true, animateEnabled: true, animationType: 'pulse' }))}>
