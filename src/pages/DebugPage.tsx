@@ -340,6 +340,73 @@ export function DebugPage() {
     setSelectedKeyframe(kf.id)
   }, [])
 
+  // Interpolate between two values
+  const lerp = (a: number, b: number, t: number) => a + (b - a) * t
+
+  // Interpolate keyframes for a track at current scroll position
+  const interpolateTrack = useCallback((track: Keyframe[], currentScroll: number): Record<string, unknown> | null => {
+    if (track.length === 0) return null
+    if (track.length === 1) return track[0].values
+
+    // Find surrounding keyframes
+    let before: Keyframe | null = null
+    let after: Keyframe | null = null
+
+    for (const kf of track) {
+      if (kf.scroll <= currentScroll) before = kf
+      if (kf.scroll > currentScroll && !after) after = kf
+    }
+
+    // Edge cases
+    if (!before) return track[0].values
+    if (!after) return before.values
+
+    // Calculate interpolation factor (0-1)
+    const t = (currentScroll - before.scroll) / (after.scroll - before.scroll)
+
+    // Interpolate numeric values
+    const result: Record<string, unknown> = {}
+    for (const key of Object.keys(before.values)) {
+      const valA = before.values[key]
+      const valB = after.values[key]
+
+      if (typeof valA === 'number' && typeof valB === 'number') {
+        result[key] = lerp(valA, valB, t)
+      } else if (typeof valA === 'boolean') {
+        // For booleans, use "before" value until halfway, then "after"
+        result[key] = t < 0.5 ? valA : valB
+      } else {
+        // For strings/other, use "before" until we pass the keyframe
+        result[key] = t < 0.5 ? valA : valB
+      }
+    }
+    return result
+  }, [])
+
+  // Auto-apply interpolated keyframes when playing
+  useEffect(() => {
+    if (!showAdvancedTimeline) return
+
+    // Interpolate each track and apply
+    const ferreroInterp = interpolateTrack(keyframes.ferrero, scroll)
+    const titleInterp = interpolateTrack(keyframes.title, scroll)
+    const cardsInterp = interpolateTrack(keyframes.cards, scroll)
+    const lightingInterp = interpolateTrack(keyframes.lighting, scroll)
+
+    if (ferreroInterp && keyframes.ferrero.length > 0) {
+      setFerreroState(prev => ({ ...prev, ...(ferreroInterp as Partial<typeof prev>), enabled: true }))
+    }
+    if (titleInterp && keyframes.title.length > 0) {
+      setTitleState(prev => ({ ...prev, ...(titleInterp as Partial<typeof prev>), enabled: true }))
+    }
+    if (cardsInterp && keyframes.cards.length > 0) {
+      setCardsState(prev => ({ ...prev, ...(cardsInterp as Partial<typeof prev>), enabled: true }))
+    }
+    if (lightingInterp && keyframes.lighting.length > 0) {
+      setLightingState(prev => ({ ...prev, ...(lightingInterp as Partial<typeof prev>), enabled: true }))
+    }
+  }, [scroll, showAdvancedTimeline, keyframes, interpolateTrack])
+
   const handleExport = () => {
     const currentSection = codeStructure?.sections.find(s => {
       const start = parseFloat(s.scrollRange.split('-')[0]) / 100
