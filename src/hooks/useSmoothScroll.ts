@@ -5,6 +5,10 @@ export function useSmoothScroll() {
   const lenisRef = useRef<Lenis | null>(null)
 
   useEffect(() => {
+    // Disable smooth scroll when loaded in debug iframe
+    const isDebugMode = new URLSearchParams(window.location.search).get('debug') === 'true'
+    if (isDebugMode) return
+
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),

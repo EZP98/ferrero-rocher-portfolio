@@ -1,1094 +1,1594 @@
-import { useState, useRef, Suspense, useEffect, CSSProperties } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
-import { useGLTF, Environment, OrbitControls } from '@react-three/drei'
-import * as THREE from 'three'
-import {
-  Layers,
-  CreditCard,
-  RotateCcw,
-  Move,
-  Maximize2,
-  Play,
-  Pause,
-  Home,
-  Download,
-  ChevronRight,
-  Settings,
-  Eye,
-  Sparkles
-} from 'lucide-react'
+import { useState, useRef, CSSProperties, useEffect, useCallback } from 'react'
+import { Play, Pause, Home, Download, RefreshCw, ChevronDown, Sliders, X, Plus, Trash2, Diamond } from 'lucide-react'
 
-// ReactBits-inspired design system
-const colors = {
-  bg: '#09090b',
-  bgCard: '#0f0f11',
-  bgHover: '#18181b',
-  bgActive: 'rgba(139, 92, 246, 0.1)',
-  border: 'rgba(255, 255, 255, 0.06)',
-  borderHover: 'rgba(255, 255, 255, 0.1)',
-  borderActive: 'rgba(139, 92, 246, 0.3)',
-  text: '#fafafa',
-  textMuted: 'rgba(255, 255, 255, 0.5)',
-  textDim: 'rgba(255, 255, 255, 0.3)',
-  accent: '#8b5cf6', // Purple glow
-  accentLight: '#a78bfa',
-  gold: '#f59e0b',
-  glow: '0 0 20px rgba(139, 92, 246, 0.15)',
-  glowStrong: '0 0 30px rgba(139, 92, 246, 0.25)',
+// Keyframe type
+interface Keyframe {
+  id: string
+  scroll: number
+  values: Record<string, unknown>
 }
 
-// Inline styles
-const s = {
-  page: {
-    height: '100vh',
-    backgroundColor: colors.bg,
-    display: 'flex',
-    overflow: 'hidden',
-    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-  } as CSSProperties,
-
-  sidebar: {
-    width: '260px',
-    minWidth: '260px',
-    backgroundColor: colors.bgCard,
-    borderRight: `1px solid ${colors.border}`,
-    display: 'flex',
-    flexDirection: 'column',
-    boxSizing: 'border-box',
-  } as CSSProperties,
-
-  sidebarHeader: {
-    padding: '24px 20px',
-    borderBottom: `1px solid ${colors.border}`,
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-  } as CSSProperties,
-
-  logo: {
-    width: '40px',
-    height: '40px',
-    borderRadius: '10px',
-    background: `linear-gradient(135deg, ${colors.accent} 0%, #7c3aed 100%)`,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: colors.glow,
-    flexShrink: 0,
-  } as CSSProperties,
-
-  logoText: {
-    color: '#fff',
-    fontWeight: 700,
-    fontSize: '16px',
-  } as CSSProperties,
-
-  title: {
-    fontSize: '15px',
-    fontWeight: 600,
-    color: colors.text,
-    margin: 0,
-    letterSpacing: '-0.01em',
-  } as CSSProperties,
-
-  subtitle: {
-    fontSize: '12px',
-    color: colors.textMuted,
-    marginTop: '2px',
-  } as CSSProperties,
-
-  nav: {
-    flex: 1,
-    padding: '12px',
-    overflowY: 'auto',
-    boxSizing: 'border-box',
-  } as CSSProperties,
-
-  section: {
-    marginBottom: '8px',
-  } as CSSProperties,
-
-  sectionTitle: {
-    fontSize: '11px',
-    color: colors.textDim,
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    fontWeight: 500,
-    padding: '8px 12px 8px',
-    margin: 0,
-  } as CSSProperties,
-
-  navBtn: {
-    width: '100%',
-    boxSizing: 'border-box',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    padding: '10px 12px',
-    borderRadius: '8px',
-    border: 'none',
-    background: 'transparent',
-    color: colors.textMuted,
-    fontSize: '13px',
-    fontWeight: 500,
-    cursor: 'pointer',
-    textAlign: 'left',
-    marginBottom: '2px',
-    transition: 'all 0.15s ease',
-  } as CSSProperties,
-
-  navBtnActive: {
-    background: colors.bgActive,
-    color: colors.accent,
-  } as CSSProperties,
-
-  stageBtn: {
-    width: '100%',
-    boxSizing: 'border-box',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '10px 12px',
-    borderRadius: '8px',
-    border: `1px solid transparent`,
-    background: 'transparent',
-    color: colors.textMuted,
-    fontSize: '13px',
-    fontWeight: 500,
-    cursor: 'pointer',
-    textAlign: 'left',
-    marginBottom: '2px',
-    transition: 'all 0.15s ease',
-  } as CSSProperties,
-
-  stageBtnActive: {
-    background: colors.bgActive,
-    borderColor: colors.borderActive,
-    color: colors.accent,
-    boxShadow: colors.glow,
-  } as CSSProperties,
-
-  percent: {
-    fontSize: '11px',
-    opacity: 0.6,
-    fontFamily: 'JetBrains Mono, monospace',
-  } as CSSProperties,
-
-  divider: {
-    height: '1px',
-    background: colors.border,
-    margin: '12px',
-  } as CSSProperties,
-
-  footer: {
-    padding: '12px',
-    borderTop: `1px solid ${colors.border}`,
-  } as CSSProperties,
-
-  footerBtn: {
-    width: '100%',
-    boxSizing: 'border-box',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    padding: '10px 12px',
-    borderRadius: '8px',
-    border: 'none',
-    background: 'transparent',
-    color: colors.textMuted,
-    fontSize: '13px',
-    cursor: 'pointer',
-    textAlign: 'left',
-    textDecoration: 'none',
-    marginBottom: '2px',
-    transition: 'all 0.15s ease',
-  } as CSSProperties,
-
-  main: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    backgroundColor: colors.bg,
-  } as CSSProperties,
-
-  topbar: {
-    height: '56px',
-    backgroundColor: colors.bgCard,
-    borderBottom: `1px solid ${colors.border}`,
-    display: 'flex',
-    alignItems: 'center',
-    padding: '0 20px',
-    gap: '16px',
-  } as CSSProperties,
-
-  controls: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-  } as CSSProperties,
-
-  playBtn: {
-    width: '40px',
-    height: '40px',
-    borderRadius: '10px',
-    border: `1px solid ${colors.border}`,
-    background: colors.bgCard,
-    color: colors.textMuted,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-    transition: 'all 0.15s ease',
-  } as CSSProperties,
-
-  playBtnActive: {
-    background: colors.accent,
-    borderColor: colors.accent,
-    color: '#fff',
-    boxShadow: colors.glowStrong,
-  } as CSSProperties,
-
-  timeline: {
-    flex: 1,
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-  } as CSSProperties,
-
-  rangeInput: {
-    flex: 1,
-    height: '4px',
-    borderRadius: '2px',
-    WebkitAppearance: 'none',
-    appearance: 'none',
-    background: `linear-gradient(90deg, ${colors.accent} 0%, rgba(255,255,255,0.1) 0%)`,
-    cursor: 'pointer',
-  } as CSSProperties,
-
-  percentText: {
-    fontSize: '13px',
-    fontFamily: 'JetBrains Mono, monospace',
-    color: colors.accent,
-    fontWeight: 500,
-    minWidth: '40px',
-    textAlign: 'right',
-  } as CSSProperties,
-
-  stageBadge: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '8px 14px',
-    borderRadius: '8px',
-    background: colors.bgHover,
-    border: `1px solid ${colors.border}`,
-  } as CSSProperties,
-
-  content: {
-    flex: 1,
-    display: 'flex',
-    overflow: 'hidden',
-  } as CSSProperties,
-
-  properties: {
-    width: '320px',
-    backgroundColor: colors.bgCard,
-    borderRight: `1px solid ${colors.border}`,
-    overflowY: 'auto',
-    padding: '20px',
-    boxSizing: 'border-box',
-  } as CSSProperties,
-
-  panelTitle: {
-    fontSize: '16px',
-    fontWeight: 600,
-    color: colors.text,
-    margin: '0 0 4px 0',
-    letterSpacing: '-0.01em',
-  } as CSSProperties,
-
-  panelDesc: {
-    fontSize: '13px',
-    color: colors.textMuted,
-    lineHeight: 1.5,
-    margin: '0 0 20px 0',
-  } as CSSProperties,
-
-  card: {
-    padding: '16px',
-    borderRadius: '12px',
-    background: colors.bg,
-    border: `1px solid ${colors.border}`,
-    marginBottom: '16px',
-  } as CSSProperties,
-
-  cardTitle: {
-    fontSize: '11px',
-    color: colors.textDim,
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    fontWeight: 500,
-    margin: '0 0 12px 0',
-  } as CSSProperties,
-
-  quickViews: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '8px',
-  } as CSSProperties,
-
-  quickBtn: {
-    padding: '10px 14px',
-    borderRadius: '8px',
-    border: `1px solid ${colors.border}`,
-    background: 'transparent',
-    color: colors.textMuted,
-    fontSize: '12px',
-    fontWeight: 500,
-    cursor: 'pointer',
-    transition: 'all 0.15s ease',
-  } as CSSProperties,
-
-  sliderRow: {
-    marginBottom: '16px',
-  } as CSSProperties,
-
-  sliderHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: '8px',
-  } as CSSProperties,
-
-  sliderLabel: {
-    fontSize: '12px',
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: '0.03em',
-    fontWeight: 500,
-  } as CSSProperties,
-
-  sliderInput: {
-    width: '60px',
-    padding: '6px 8px',
-    borderRadius: '6px',
-    border: `1px solid ${colors.border}`,
-    background: colors.bg,
-    color: colors.text,
-    fontSize: '12px',
-    fontFamily: 'JetBrains Mono, monospace',
-    textAlign: 'center',
-    outline: 'none',
-  } as CSSProperties,
-
-  slider: {
-    width: '100%',
-    height: '4px',
-    borderRadius: '2px',
-    WebkitAppearance: 'none',
-    appearance: 'none',
-    background: 'rgba(255,255,255,0.1)',
-    cursor: 'pointer',
-  } as CSSProperties,
-
-  cardEditor: {
-    padding: '16px',
-    borderRadius: '12px',
-    background: colors.bg,
-    border: `1px solid ${colors.border}`,
-    marginBottom: '12px',
-  } as CSSProperties,
-
-  cardEditorTitle: {
-    width: '100%',
-    padding: 0,
-    marginBottom: '12px',
-    border: 'none',
-    background: 'transparent',
-    color: colors.text,
-    fontSize: '14px',
-    fontWeight: 600,
-    outline: 'none',
-  } as CSSProperties,
-
-  cardEditorDesc: {
-    width: '100%',
-    boxSizing: 'border-box',
-    padding: '10px 12px',
-    marginBottom: '12px',
-    borderRadius: '8px',
-    border: `1px solid ${colors.border}`,
-    background: 'transparent',
-    color: colors.textMuted,
-    fontSize: '13px',
-    resize: 'none',
-    height: '70px',
-    outline: 'none',
-    fontFamily: 'inherit',
-  } as CSSProperties,
-
-  positionBtns: {
-    display: 'flex',
-    gap: '8px',
-    marginBottom: '16px',
-  } as CSSProperties,
-
-  positionBtn: {
-    flex: 1,
-    padding: '10px 12px',
-    borderRadius: '8px',
-    border: `1px solid ${colors.border}`,
-    background: 'transparent',
-    color: colors.textMuted,
-    fontSize: '12px',
-    fontWeight: 500,
-    cursor: 'pointer',
-    transition: 'all 0.15s ease',
-  } as CSSProperties,
-
-  positionBtnActive: {
-    background: colors.bgActive,
-    borderColor: colors.borderActive,
-    color: colors.accent,
-  } as CSSProperties,
-
-  cardDivider: {
-    borderTop: `1px solid ${colors.border}`,
-    paddingTop: '16px',
-    marginTop: '4px',
-  } as CSSProperties,
-
-  viewport: {
-    flex: 1,
-    position: 'relative',
-    backgroundColor: colors.bg,
-  } as CSSProperties,
-
-  viewportInfo: {
-    position: 'absolute',
-    bottom: '16px',
-    left: '16px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '8px 12px',
-    borderRadius: '8px',
-    backgroundColor: 'rgba(15, 15, 17, 0.9)',
-    backdropFilter: 'blur(8px)',
-    border: `1px solid ${colors.border}`,
-    color: colors.textDim,
-    fontSize: '11px',
-  } as CSSProperties,
-
-  introOverlay: {
-    position: 'absolute',
-    inset: 0,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    pointerEvents: 'none',
-  } as CSSProperties,
-
-  tagline: {
-    display: 'block',
-    color: 'rgba(139, 92, 246, 0.6)',
-    textTransform: 'uppercase',
-    letterSpacing: '4px',
-    fontSize: '11px',
-    marginBottom: '12px',
-  } as CSSProperties,
-
-  h1: {
-    fontSize: '40px',
-    fontWeight: 300,
-    letterSpacing: '2px',
-    margin: 0,
-  } as CSSProperties,
-
-  brand: {
-    display: 'block',
-    color: '#fff',
-  } as CSSProperties,
-
-  product: {
-    display: 'block',
-    color: colors.gold,
-    marginTop: '4px',
-  } as CSSProperties,
-
-  infoCard: {
-    position: 'absolute',
-    top: '50%',
-    transform: 'translateY(-50%)',
-  } as CSSProperties,
-
-  infoCardInner: {
-    backdropFilter: 'blur(20px)',
-    backgroundColor: 'rgba(15, 15, 17, 0.8)',
-    border: `1px solid ${colors.border}`,
-    borderRadius: '16px',
-    padding: '24px',
-    maxWidth: '260px',
-    boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
-  } as CSSProperties,
-
-  accent: {
-    width: '40px',
-    height: '3px',
-    background: `linear-gradient(90deg, ${colors.accent}, ${colors.accentLight})`,
-    borderRadius: '2px',
-    marginBottom: '16px',
-  } as CSSProperties,
-
-  infoH3: {
-    fontSize: '18px',
-    fontWeight: 600,
-    color: colors.text,
-    margin: '0 0 8px 0',
-    letterSpacing: '-0.01em',
-  } as CSSProperties,
-
-  infoP: {
-    fontSize: '13px',
-    color: colors.textMuted,
-    lineHeight: 1.5,
-    margin: 0,
-  } as CSSProperties,
+// Keyframes per component
+interface KeyframeTrack {
+  ferrero: Keyframe[]
+  title: Keyframe[]
+  cards: Keyframe[]
+  lighting: Keyframe[]
 }
 
-// Types
-interface AnimationStage {
-  name: string
-  scrollStart: number
-  scrollEnd: number
-  rotX: number
-  rotY: number
-  rotZ: number
-  posX: number
-  posY: number
-  posZ: number
-  scale: number
+// Colors
+const c = {
+  bg: '#0a0a0a',
+  card: '#141414',
+  border: 'rgba(255,255,255,0.08)',
+  text: '#fff',
+  muted: 'rgba(255,255,255,0.5)',
+  dim: 'rgba(255,255,255,0.3)',
+  accent: '#8b5cf6',
+  gold: '#d4a853',
+  red: '#ef4444',
+  green: '#22c55e',
+  blue: '#3b82f6',
 }
 
-interface InfoCard {
-  id: number
-  title: string
-  description: string
-  position: 'left' | 'right'
-  startScroll: number
-  endScroll: number
-}
-
-const defaultStages: AnimationStage[] = [
-  { name: "Intro", scrollStart: 0, scrollEnd: 0.15, rotX: 0, rotY: 0, rotZ: 0, posX: 0, posY: 0, posZ: 0, scale: 2.2 },
-  { name: "Vista Sopra", scrollStart: 0.15, scrollEnd: 0.30, rotX: -0.6, rotY: 1.57, rotZ: 0, posX: -2, posY: 0, posZ: 0, scale: 2.2 },
-  { name: "Vista Interna", scrollStart: 0.30, scrollEnd: 0.45, rotX: -0.3, rotY: 3.14, rotZ: 0, posX: 2, posY: 0, posZ: 0, scale: 2.2 },
-  { name: "Vista Eleganza", scrollStart: 0.45, scrollEnd: 0.60, rotX: 0, rotY: 4.08, rotZ: 0, posX: 0, posY: 0, posZ: 0, scale: 2.2 },
+// Animation presets for quick testing
+const presets = [
+  { name: 'Hero Start', scroll: 0.05 },
+  { name: 'La Copertura', scroll: 0.22 },
+  { name: 'Il Cuore', scroll: 0.37 },
+  { name: "L'Eleganza", scroll: 0.52 },
+  { name: 'Transition Start', scroll: 0.62 },
+  { name: 'Transition Mid', scroll: 0.80 },
+  { name: 'End', scroll: 0.98 },
 ]
 
-const defaultCards: InfoCard[] = [
-  { id: 1, title: 'La Copertura', description: 'Cioccolato al latte finissimo.', position: 'right', startScroll: 0.15, endScroll: 0.28 },
-  { id: 2, title: 'Il Cuore', description: 'Una nocciola intera tostata.', position: 'left', startScroll: 0.30, endScroll: 0.43 },
-  { id: 3, title: "L'Eleganza", description: "Avvolto in carta dorata.", position: 'right', startScroll: 0.45, endScroll: 0.58 },
+// Speed presets (scroll increment per 16ms frame)
+const speedOptions = [
+  { label: '0.25x', value: 0.00004 },
+  { label: '0.5x', value: 0.00008 },
+  { label: '1x', value: 0.00015 },
+  { label: '2x', value: 0.0003 },
+  { label: '4x', value: 0.0006 },
 ]
-
-function FerreroPreview({ stages, scroll }: { stages: AnimationStage[]; scroll: number }) {
-  const ref = useRef<THREE.Group>(null)
-  const { scene } = useGLTF('/models/ferrero.glb')
-
-  useFrame(() => {
-    if (!ref.current) return
-    const st = stages.find(x => scroll >= x.scrollStart && scroll <= x.scrollEnd) || stages[0]
-    ref.current.rotation.x = THREE.MathUtils.lerp(ref.current.rotation.x, st.rotX, 0.1)
-    ref.current.rotation.y = THREE.MathUtils.lerp(ref.current.rotation.y, st.rotY, 0.1)
-    ref.current.rotation.z = THREE.MathUtils.lerp(ref.current.rotation.z, st.rotZ, 0.1)
-    ref.current.position.x = THREE.MathUtils.lerp(ref.current.position.x, st.posX, 0.1)
-    ref.current.position.y = THREE.MathUtils.lerp(ref.current.position.y, st.posY, 0.1)
-    ref.current.position.z = THREE.MathUtils.lerp(ref.current.position.z, st.posZ, 0.1)
-    const sc = THREE.MathUtils.lerp(ref.current.scale.x, st.scale, 0.1)
-    ref.current.scale.setScalar(sc)
-  })
-
-  return <primitive ref={ref} object={scene.clone()} />
-}
 
 export function DebugPage() {
-  const [stages, setStages] = useState(defaultStages)
-  const [cards, setCards] = useState(defaultCards)
-  const [activeStage, setActiveStage] = useState(0)
   const [scroll, setScroll] = useState(0)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [panel, setPanel] = useState<'stages' | 'cards' | 'rotation' | 'position' | 'scale'>('stages')
+  const [playing, setPlaying] = useState(false)
+  const [showPresets, setShowPresets] = useState(false)
+  const [speed, setSpeed] = useState(0.00015) // 1x default
+  const [showSpeed, setShowSpeed] = useState(false)
+  const [showControls, setShowControls] = useState(false)
+  const [activeTab, setActiveTab] = useState<'ferrero' | 'title' | 'cards' | 'lighting' | 'effects' | 'camera' | 'particles' | 'background'>('ferrero')
+
+  // Component debug states
+  const [ferreroState, setFerreroState] = useState({
+    enabled: false,
+    rotX: 0, rotY: 0, rotZ: 0,
+    posX: 0, posY: 0, posZ: 0,
+    scale: 2.2,
+    // Animation effects
+    autoRotate: false,
+    autoRotateSpeed: 1,
+    floatEnabled: false,
+    floatAmplitude: 0.2,
+    floatSpeed: 1,
+    bounceEnabled: false,
+    bounceAmplitude: 0.1,
+    bounceSpeed: 2,
+    // Material properties
+    metalness: 0.8,
+    roughness: 0.2,
+    emissiveIntensity: 0,
+    emissiveColor: '#d4a853',
+    wireframe: false,
+    // Visual effects
+    explodeEnabled: false,
+    explodeAmount: 0,
+  })
+  const [titleState, setTitleState] = useState({
+    enabled: false,
+    opacity: 1,
+    fadeSpeed: 7,
+    titleText: 'FERRERO ROCHER',
+    subtitleText: "L'arte del cioccolato",
+    glowEnabled: false,
+    glowColor: '#d4a853',
+    glowIntensity: 10,
+    animateEnabled: false,
+    animationType: 'none' as 'none' | 'pulse' | 'wave' | 'typewriter',
+  })
+  const [cardsState, setCardsState] = useState({
+    enabled: false,
+    globalOpacity: 1,
+    backgroundColor: 'rgba(20, 20, 20, 0.85)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    accentColor: '#d4a853',
+    padding: 28,
+    borderRadius: 20,
+    blur: 20,
+    glowEnabled: false,
+    glowColor: '#d4a853',
+    animateIn: 'fade' as 'fade' | 'slide' | 'scale' | 'flip',
+  })
+  const [lightingState, setLightingState] = useState({
+    enabled: false,
+    ambientIntensity: 0.15,
+    mainSpotIntensity: 3,
+    mainSpotColor: '#FFFFFF',
+    rimLightIntensity: 2,
+    rimLightColor: '#D4A853',
+    fillLightIntensity: 1.5,
+    fillLightColor: '#E8C878',
+    topLightEnabled: false,
+    topLightIntensity: 2,
+    topLightColor: '#FFD700',
+    bottomLightEnabled: false,
+    bottomLightIntensity: 1,
+    bottomLightColor: '#5A3A28',
+  })
+  const [postProcessingState, setPostProcessingState] = useState({
+    enabled: false,
+    bloomEnabled: false,
+    bloomIntensity: 1,
+    bloomThreshold: 0.8,
+    bloomRadius: 0.4,
+    vignetteEnabled: false,
+    vignetteIntensity: 0.5,
+    vignetteOffset: 0.5,
+    chromaticAberrationEnabled: false,
+    chromaticAberrationOffset: 0.002,
+    noiseEnabled: false,
+    noiseIntensity: 0.1,
+  })
+  const [cameraState, setCameraState] = useState({
+    enabled: false,
+    fov: 35,
+    positionX: 0,
+    positionY: 0,
+    positionZ: 10,
+    targetX: 0,
+    targetY: 0,
+    targetZ: 0,
+    autoOrbit: false,
+    orbitSpeed: 0.5,
+  })
+  const [particlesState, setParticlesState] = useState({
+    enabled: false,
+    count: 100,
+    size: 0.02,
+    color: '#d4a853',
+    speed: 0.5,
+    spread: 10,
+    opacity: 0.6,
+    type: 'sparkles' as 'dots' | 'sparkles' | 'snow' | 'stars',
+  })
+  const [backgroundState, setBackgroundState] = useState({
+    enabled: false,
+    color: '#0A0A0A',
+    gradientEnabled: false,
+    gradientTop: '#1a1a2e',
+    gradientBottom: '#0a0a0a',
+    starsEnabled: false,
+    starsCount: 200,
+    starsSpeed: 0.1,
+  })
+
+  // Keyframe animation system
+  const [keyframes, setKeyframes] = useState<KeyframeTrack>({
+    ferrero: [],
+    title: [],
+    cards: [],
+    lighting: [],
+  })
+  const [showAdvancedTimeline, setShowAdvancedTimeline] = useState(false)
+  const [selectedKeyframe, setSelectedKeyframe] = useState<string | null>(null)
+
+  const timelineRef = useRef<HTMLDivElement>(null)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+  const [iframeReady, setIframeReady] = useState(false)
+  const [ferreroLive, setFerreroLive] = useState<{
+    rotX: number
+    rotY: number
+    rotZ: number
+    posX: number
+    posY: number
+    posZ: number
+    scale: number
+    scrollProgress: number
+    activeCard: string | null
+  } | null>(null)
+
+  // Code structure from iframe
+  const [codeStructure, setCodeStructure] = useState<{
+    sections: { id: string; name: string; component: string; file: string; height: string; scrollRange: string }[]
+    cards: { id: number; title: string; startScroll: number; endScroll: number; position: string }[]
+    ferreroStages: { name: string; range: string; rotX: number | string; rotY: number | string; posX: number | string }[]
+  } | null>(null)
+
+  // Listen for messages from iframe
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (event.data?.type === 'FERRERO_STATE') {
+        setFerreroLive(event.data.state)
+      }
+      if (event.data?.type === 'CODE_STRUCTURE') {
+        setCodeStructure(event.data.data)
+      }
+      // Handle component selection from iframe clicks
+      if (event.data?.type === 'COMPONENT_SELECTED') {
+        const componentId = event.data.componentId as 'ferrero' | 'title' | 'cards' | 'lighting'
+        setActiveTab(componentId)
+        setShowControls(true)
+        // Auto-enable override for the selected component
+        if (componentId === 'ferrero') {
+          setFerreroState(prev => ({ ...prev, enabled: true }))
+        } else if (componentId === 'title') {
+          setTitleState(prev => ({ ...prev, enabled: true }))
+        } else if (componentId === 'cards') {
+          setCardsState(prev => ({ ...prev, enabled: true }))
+        } else if (componentId === 'lighting') {
+          setLightingState(prev => ({ ...prev, enabled: true }))
+        }
+      }
+    }
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
+  }, [])
+
+
+  // Send debug update to iframe
+  const sendDebugUpdate = useCallback((component: string, values: Record<string, unknown>) => {
+    if (!iframeRef.current?.contentWindow) return
+    iframeRef.current.contentWindow.postMessage({
+      type: 'DEBUG_UPDATE',
+      component,
+      values
+    }, '*')
+  }, [])
+
+  // When component states change, send to iframe
+  useEffect(() => {
+    sendDebugUpdate('ferrero', ferreroState)
+  }, [ferreroState, sendDebugUpdate])
 
   useEffect(() => {
-    if (!isPlaying) return
-    const i = setInterval(() => {
-      setScroll(p => p >= 1 ? (setIsPlaying(false), 0) : p + 0.003)
-    }, 16)
-    return () => clearInterval(i)
-  }, [isPlaying])
+    sendDebugUpdate('title', titleState)
+  }, [titleState, sendDebugUpdate])
 
-  const update = (key: keyof AnimationStage, val: number) => {
-    setStages(p => p.map((st, i) => i === activeStage ? { ...st, [key]: val } : st))
+  useEffect(() => {
+    sendDebugUpdate('cards', cardsState)
+  }, [cardsState, sendDebugUpdate])
+
+  useEffect(() => {
+    sendDebugUpdate('lighting', lightingState)
+  }, [lightingState, sendDebugUpdate])
+
+  useEffect(() => {
+    sendDebugUpdate('postProcessing', postProcessingState)
+  }, [postProcessingState, sendDebugUpdate])
+
+  useEffect(() => {
+    sendDebugUpdate('camera', cameraState)
+  }, [cameraState, sendDebugUpdate])
+
+  useEffect(() => {
+    sendDebugUpdate('particles', particlesState)
+  }, [particlesState, sendDebugUpdate])
+
+  useEffect(() => {
+    sendDebugUpdate('background', backgroundState)
+  }, [backgroundState, sendDebugUpdate])
+
+
+  // Sync scroll to iframe
+  const syncScrollToIframe = useCallback((scrollValue: number) => {
+    if (!iframeRef.current?.contentWindow?.document) return
+    const doc = iframeRef.current.contentWindow.document
+    const maxScroll = doc.documentElement.scrollHeight - iframeRef.current.contentWindow.innerHeight
+    iframeRef.current.contentWindow.scrollTo(0, scrollValue * maxScroll)
+  }, [])
+
+  // When scroll changes, sync to iframe
+  useEffect(() => {
+    if (iframeReady) {
+      syncScrollToIframe(scroll)
+    }
+  }, [scroll, iframeReady, syncScrollToIframe])
+
+  // Play animation with selected speed
+  useEffect(() => {
+    if (!playing) return
+    const i = setInterval(() => setScroll(p => p >= 1 ? (setPlaying(false), 0) : p + speed), 16)
+    return () => clearInterval(i)
+  }, [playing, speed])
+
+  // Timeline click/drag
+  const handleTimeline = (e: React.MouseEvent) => {
+    if (!timelineRef.current) return
+    const rect = timelineRef.current.getBoundingClientRect()
+    setScroll(Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)))
   }
 
-  const current = stages[activeStage]
+  // Add keyframe at current scroll position
+  const addKeyframe = useCallback((track: keyof KeyframeTrack) => {
+    const id = `${track}-${Date.now()}`
+    let values: Record<string, unknown> = {}
+
+    if (track === 'ferrero') values = { ...ferreroState }
+    else if (track === 'title') values = { ...titleState }
+    else if (track === 'cards') values = { ...cardsState }
+    else if (track === 'lighting') values = { ...lightingState }
+
+    setKeyframes(prev => ({
+      ...prev,
+      [track]: [...prev[track], { id, scroll, values }].sort((a, b) => a.scroll - b.scroll)
+    }))
+  }, [scroll, ferreroState, titleState, cardsState, lightingState])
+
+  // Remove keyframe
+  const removeKeyframe = useCallback((track: keyof KeyframeTrack, id: string) => {
+    setKeyframes(prev => ({
+      ...prev,
+      [track]: prev[track].filter(k => k.id !== id)
+    }))
+    if (selectedKeyframe === id) setSelectedKeyframe(null)
+  }, [selectedKeyframe])
+
+  // Jump to keyframe
+  const jumpToKeyframe = useCallback((kf: Keyframe) => {
+    setScroll(kf.scroll)
+    setSelectedKeyframe(kf.id)
+  }, [])
 
   const handleExport = () => {
-    navigator.clipboard.writeText(JSON.stringify({ stages, cards }, null, 2))
-    alert('Config copied!')
+    const currentSection = codeStructure?.sections.find(s => {
+      const start = parseFloat(s.scrollRange.split('-')[0]) / 100
+      const end = parseFloat(s.scrollRange.split('-')[1].replace('%', '')) / 100
+      return scroll >= start && scroll < end
+    })
+    const data = {
+      scroll,
+      section: currentSection?.name,
+      card: ferreroLive?.activeCard,
+      ferreroState: ferreroLive,
+      timestamp: new Date().toISOString(),
+    }
+    navigator.clipboard.writeText(JSON.stringify(data, null, 2))
+    alert('Scroll state copied!')
   }
 
   return (
-    <div style={s.page}>
-      {/* Sidebar */}
-      <aside style={s.sidebar}>
-        <div style={s.sidebarHeader}>
-          <div style={s.logo}>
-            <Sparkles size={18} color="#fff" />
-          </div>
-          <div>
-            <div style={s.title}>Animation Editor</div>
-            <div style={s.subtitle}>Ferrero Rocher</div>
-          </div>
-        </div>
+    <div style={styles.page}>
+      {/* Toolbar */}
+      <div style={styles.toolbar}>
+        <a href="/" style={styles.homeBtn}><Home size={18} /></a>
 
-        <nav style={s.nav}>
-          <div style={s.section}>
-            <div style={s.sectionTitle}>Editor</div>
-            <button
-              onClick={() => setPanel('stages')}
-              style={{ ...s.navBtn, ...(panel === 'stages' ? s.navBtnActive : {}) }}
-            >
-              <Layers size={16} />
-              <span style={{ flex: 1 }}>Animation Stages</span>
-              {panel === 'stages' && <ChevronRight size={14} style={{ opacity: 0.5 }} />}
-            </button>
-            <button
-              onClick={() => setPanel('cards')}
-              style={{ ...s.navBtn, ...(panel === 'cards' ? s.navBtnActive : {}) }}
-            >
-              <CreditCard size={16} />
-              <span style={{ flex: 1 }}>Info Cards</span>
-              {panel === 'cards' && <ChevronRight size={14} style={{ opacity: 0.5 }} />}
-            </button>
-          </div>
+        <button
+          style={{ ...styles.btn, ...(playing ? styles.btnActive : {}) }}
+          onClick={() => setPlaying(!playing)}
+        >
+          {playing ? <Pause size={16} /> : <Play size={16} />}
+        </button>
 
-          <div style={s.divider} />
-
-          <div style={s.section}>
-            <div style={s.sectionTitle}>Transform</div>
-            <button
-              onClick={() => setPanel('rotation')}
-              style={{ ...s.navBtn, ...(panel === 'rotation' ? s.navBtnActive : {}) }}
-            >
-              <RotateCcw size={16} />
-              <span style={{ flex: 1 }}>Rotation</span>
-            </button>
-            <button
-              onClick={() => setPanel('position')}
-              style={{ ...s.navBtn, ...(panel === 'position' ? s.navBtnActive : {}) }}
-            >
-              <Move size={16} />
-              <span style={{ flex: 1 }}>Position</span>
-            </button>
-            <button
-              onClick={() => setPanel('scale')}
-              style={{ ...s.navBtn, ...(panel === 'scale' ? s.navBtnActive : {}) }}
-            >
-              <Maximize2 size={16} />
-              <span style={{ flex: 1 }}>Scale</span>
-            </button>
-          </div>
-
-          <div style={s.divider} />
-
-          <div style={s.section}>
-            <div style={s.sectionTitle}>Stages</div>
-            {stages.map((st, i) => (
-              <button
-                key={i}
-                onClick={() => { setActiveStage(i); setScroll((st.scrollStart + st.scrollEnd) / 2) }}
-                style={{ ...s.stageBtn, ...(activeStage === i ? s.stageBtnActive : {}) }}
-              >
-                <span>{st.name}</span>
-                <span style={s.percent}>
-                  {(st.scrollStart * 100).toFixed(0)}–{(st.scrollEnd * 100).toFixed(0)}%
-                </span>
-              </button>
-            ))}
-          </div>
-        </nav>
-
-        <div style={s.footer}>
-          <a href="/" style={s.footerBtn}>
-            <Home size={16} />
-            <span>Home</span>
-          </a>
-          <button onClick={handleExport} style={s.footerBtn}>
-            <Download size={16} />
-            <span>Export</span>
+        <div style={styles.presetWrap}>
+          <button style={styles.presetBtn} onClick={() => setShowPresets(!showPresets)}>
+            Jump to <ChevronDown size={14} />
           </button>
+          {showPresets && (
+            <div style={styles.presetMenu}>
+              {presets.map(p => (
+                <button
+                  key={p.name}
+                  style={styles.presetItem}
+                  onClick={() => { setScroll(p.scroll); setShowPresets(false) }}
+                >
+                  {p.name} ({(p.scroll * 100).toFixed(0)}%)
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-      </aside>
 
-      {/* Main */}
-      <main style={s.main}>
-        <header style={s.topbar}>
-          <div style={s.controls}>
-            <button
-              onClick={() => setIsPlaying(!isPlaying)}
-              style={{ ...s.playBtn, ...(isPlaying ? s.playBtnActive : {}) }}
-            >
-              {isPlaying ? <Pause size={16} /> : <Play size={16} />}
-            </button>
-          </div>
+        {/* Speed selector */}
+        <div style={styles.presetWrap}>
+          <button style={styles.presetBtn} onClick={() => setShowSpeed(!showSpeed)}>
+            Speed: {speedOptions.find(s => s.value === speed)?.label || '1x'} <ChevronDown size={14} />
+          </button>
+          {showSpeed && (
+            <div style={styles.presetMenu}>
+              {speedOptions.map(s => (
+                <button
+                  key={s.label}
+                  style={{
+                    ...styles.presetItem,
+                    backgroundColor: s.value === speed ? c.accent + '33' : 'transparent',
+                  }}
+                  onClick={() => { setSpeed(s.value); setShowSpeed(false) }}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
-          <div style={s.timeline}>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              step={0.1}
-              value={scroll * 100}
-              onChange={(e) => setScroll(parseFloat(e.target.value) / 100)}
-              style={{ ...s.rangeInput, background: `linear-gradient(90deg, ${colors.accent} ${scroll * 100}%, rgba(255,255,255,0.1) ${scroll * 100}%)` }}
-            />
-            <div style={s.percentText}>{(scroll * 100).toFixed(0)}%</div>
-          </div>
+        <button style={styles.btn} onClick={handleExport}><Download size={16} /></button>
+        <button style={styles.btn} onClick={() => setScroll(0)}><RefreshCw size={16} /></button>
 
-          <div style={s.stageBadge}>
-            <Eye size={14} style={{ color: colors.textDim }} />
-            <span style={{ fontSize: '12px', color: colors.text, fontWeight: 500 }}>{current.name}</span>
-          </div>
-        </header>
+        {/* Ferrero Controls toggle */}
+        <button
+          style={{ ...styles.btn, ...(showControls ? styles.btnActive : {}) }}
+          onClick={() => setShowControls(!showControls)}
+          title="Ferrero Controls"
+        >
+          <Sliders size={16} />
+        </button>
 
-        <div style={s.content}>
-          <div style={s.properties}>
-            {panel === 'stages' && (
-              <>
-                <h2 style={s.panelTitle}>Animation Stages</h2>
-                <p style={s.panelDesc}>Configure 3D transitions for each scroll section.</p>
+        <div style={styles.spacer} />
 
-                <div style={s.card}>
-                  <div style={s.cardTitle}>Quick Views</div>
-                  <div style={s.quickViews}>
-                    {[
-                      { n: 'Front', r: [0, 0, 0] },
-                      { n: 'Top', r: [-1.57, 0, 0] },
-                      { n: 'Side', r: [0, 1.57, 0] },
-                      { n: 'Back', r: [0, 3.14, 0] },
-                    ].map(p => (
-                      <button
-                        key={p.n}
-                        onClick={() => setStages(prev => prev.map((st, i) =>
-                          i === activeStage ? { ...st, rotX: p.r[0], rotY: p.r[1], rotZ: p.r[2] } : st
-                        ))}
-                        style={s.quickBtn}
-                      >
-                        {p.n}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+        <div style={styles.scrollDisplay}>{(scroll * 100).toFixed(1)}%</div>
+      </div>
 
-                <div style={s.card}>
-                  <div style={s.cardTitle}>Scroll Range</div>
-                  <div style={s.sliderRow}>
-                    <div style={s.sliderHeader}>
-                      <label style={s.sliderLabel}>Start</label>
-                      <input
-                        type="number"
-                        value={current.scrollStart.toFixed(2)}
-                        onChange={(e) => update('scrollStart', parseFloat(e.target.value) || 0)}
-                        step={0.01}
-                        style={s.sliderInput}
-                      />
+      {/* Main content */}
+      <div style={styles.main}>
+        {/* Left: Sections from iframe */}
+        <div style={styles.pagePreview}>
+          {/* Sections */}
+          <div style={styles.previewLabel}>SECTIONS</div>
+          <div style={styles.sectionList}>
+            {codeStructure ? (
+              codeStructure.sections.map(sec => {
+                const start = parseFloat(sec.scrollRange.split('-')[0]) / 100
+                const end = parseFloat(sec.scrollRange.split('-')[1].replace('%', '')) / 100
+                const isActive = scroll >= start && scroll < end
+                return (
+                  <div
+                    key={sec.id}
+                    style={{
+                      ...styles.sectionItem,
+                      backgroundColor: isActive ? `${c.accent}22` : 'transparent',
+                      borderColor: isActive ? c.accent : c.border,
+                    }}
+                    onClick={() => setScroll((start + end) / 2)}
+                  >
+                    <div style={styles.sectionHeader}>
+                      <span style={styles.sectionName}>{sec.name}</span>
+                      <span style={styles.sectionFile}>{sec.file}</span>
                     </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={1}
-                      step={0.01}
-                      value={current.scrollStart}
-                      onChange={(e) => update('scrollStart', parseFloat(e.target.value))}
-                      style={s.slider}
-                    />
+                    <span style={styles.sectionRange}>{sec.scrollRange}</span>
                   </div>
-                  <div style={{ ...s.sliderRow, marginBottom: 0 }}>
-                    <div style={s.sliderHeader}>
-                      <label style={s.sliderLabel}>End</label>
-                      <input
-                        type="number"
-                        value={current.scrollEnd.toFixed(2)}
-                        onChange={(e) => update('scrollEnd', parseFloat(e.target.value) || 0)}
-                        step={0.01}
-                        style={s.sliderInput}
-                      />
-                    </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={1}
-                      step={0.01}
-                      value={current.scrollEnd}
-                      onChange={(e) => update('scrollEnd', parseFloat(e.target.value))}
-                      style={s.slider}
-                    />
-                  </div>
-                </div>
-              </>
-            )}
-
-            {panel === 'rotation' && (
-              <>
-                <h2 style={s.panelTitle}>Rotation</h2>
-                <p style={s.panelDesc}>Control model rotation on each axis.</p>
-                <div style={s.card}>
-                  {['X', 'Y', 'Z'].map((axis, idx) => {
-                    const key = `rot${axis}` as 'rotX' | 'rotY' | 'rotZ'
-                    const max = axis === 'Y' ? 6.28 : 3.14
-                    return (
-                      <div key={axis} style={{ ...s.sliderRow, marginBottom: idx === 2 ? 0 : 16 }}>
-                        <div style={s.sliderHeader}>
-                          <label style={s.sliderLabel}>{axis} Axis</label>
-                          <input
-                            type="number"
-                            value={current[key].toFixed(2)}
-                            onChange={(e) => update(key, parseFloat(e.target.value) || 0)}
-                            step={0.01}
-                            style={s.sliderInput}
-                          />
-                        </div>
-                        <input
-                          type="range"
-                          min={-max}
-                          max={max}
-                          step={0.01}
-                          value={current[key]}
-                          onChange={(e) => update(key, parseFloat(e.target.value))}
-                          style={s.slider}
-                        />
-                      </div>
-                    )
-                  })}
-                </div>
-              </>
-            )}
-
-            {panel === 'position' && (
-              <>
-                <h2 style={s.panelTitle}>Position</h2>
-                <p style={s.panelDesc}>Move the model in 3D space.</p>
-                <div style={s.card}>
-                  {['X', 'Y', 'Z'].map((axis, idx) => {
-                    const key = `pos${axis}` as 'posX' | 'posY' | 'posZ'
-                    return (
-                      <div key={axis} style={{ ...s.sliderRow, marginBottom: idx === 2 ? 0 : 16 }}>
-                        <div style={s.sliderHeader}>
-                          <label style={s.sliderLabel}>{axis} Axis</label>
-                          <input
-                            type="number"
-                            value={current[key].toFixed(2)}
-                            onChange={(e) => update(key, parseFloat(e.target.value) || 0)}
-                            step={0.1}
-                            style={s.sliderInput}
-                          />
-                        </div>
-                        <input
-                          type="range"
-                          min={-5}
-                          max={5}
-                          step={0.1}
-                          value={current[key]}
-                          onChange={(e) => update(key, parseFloat(e.target.value))}
-                          style={s.slider}
-                        />
-                      </div>
-                    )
-                  })}
-                </div>
-              </>
-            )}
-
-            {panel === 'scale' && (
-              <>
-                <h2 style={s.panelTitle}>Scale</h2>
-                <p style={s.panelDesc}>Resize the model uniformly.</p>
-                <div style={s.card}>
-                  <div style={{ ...s.sliderRow, marginBottom: 0 }}>
-                    <div style={s.sliderHeader}>
-                      <label style={s.sliderLabel}>Size</label>
-                      <input
-                        type="number"
-                        value={current.scale.toFixed(2)}
-                        onChange={(e) => update('scale', parseFloat(e.target.value) || 0)}
-                        step={0.1}
-                        style={s.sliderInput}
-                      />
-                    </div>
-                    <input
-                      type="range"
-                      min={0.5}
-                      max={5}
-                      step={0.1}
-                      value={current.scale}
-                      onChange={(e) => update('scale', parseFloat(e.target.value))}
-                      style={s.slider}
-                    />
-                  </div>
-                </div>
-              </>
-            )}
-
-            {panel === 'cards' && (
-              <>
-                <h2 style={s.panelTitle}>Info Cards</h2>
-                <p style={s.panelDesc}>Edit card content and timing.</p>
-
-                {cards.map((card, i) => (
-                  <div key={card.id} style={s.cardEditor}>
-                    <input
-                      type="text"
-                      value={card.title}
-                      onChange={(e) => setCards(p => p.map((c, j) => j === i ? { ...c, title: e.target.value } : c))}
-                      placeholder="Title"
-                      style={s.cardEditorTitle}
-                    />
-                    <textarea
-                      value={card.description}
-                      onChange={(e) => setCards(p => p.map((c, j) => j === i ? { ...c, description: e.target.value } : c))}
-                      placeholder="Description..."
-                      style={s.cardEditorDesc}
-                    />
-
-                    <div style={s.positionBtns}>
-                      <button
-                        onClick={() => setCards(p => p.map((c, j) => j === i ? { ...c, position: 'left' } : c))}
-                        style={{ ...s.positionBtn, ...(card.position === 'left' ? s.positionBtnActive : {}) }}
-                      >
-                        ← Left
-                      </button>
-                      <button
-                        onClick={() => setCards(p => p.map((c, j) => j === i ? { ...c, position: 'right' } : c))}
-                        style={{ ...s.positionBtn, ...(card.position === 'right' ? s.positionBtnActive : {}) }}
-                      >
-                        Right →
-                      </button>
-                    </div>
-
-                    <div style={s.cardDivider}>
-                      <div style={s.sliderRow}>
-                        <div style={s.sliderHeader}>
-                          <label style={s.sliderLabel}>Fade In</label>
-                          <input
-                            type="number"
-                            value={card.startScroll.toFixed(2)}
-                            onChange={(e) => setCards(p => p.map((c, j) => j === i ? { ...c, startScroll: parseFloat(e.target.value) || 0 } : c))}
-                            step={0.01}
-                            style={s.sliderInput}
-                          />
-                        </div>
-                        <input
-                          type="range"
-                          min={0}
-                          max={1}
-                          step={0.01}
-                          value={card.startScroll}
-                          onChange={(e) => setCards(p => p.map((c, j) => j === i ? { ...c, startScroll: parseFloat(e.target.value) } : c))}
-                          style={s.slider}
-                        />
-                      </div>
-                      <div style={{ ...s.sliderRow, marginBottom: 0 }}>
-                        <div style={s.sliderHeader}>
-                          <label style={s.sliderLabel}>Fade Out</label>
-                          <input
-                            type="number"
-                            value={card.endScroll.toFixed(2)}
-                            onChange={(e) => setCards(p => p.map((c, j) => j === i ? { ...c, endScroll: parseFloat(e.target.value) || 0 } : c))}
-                            step={0.01}
-                            style={s.sliderInput}
-                          />
-                        </div>
-                        <input
-                          type="range"
-                          min={0}
-                          max={1}
-                          step={0.01}
-                          value={card.endScroll}
-                          onChange={(e) => setCards(p => p.map((c, j) => j === i ? { ...c, endScroll: parseFloat(e.target.value) } : c))}
-                          style={s.slider}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </>
+                )
+              })
+            ) : (
+              <div style={styles.loadingText}>Loading from iframe...</div>
             )}
           </div>
 
-          <div style={s.viewport}>
-            <Canvas camera={{ position: [0, 0, 10], fov: 35 }} dpr={[1, 2]}>
-              <color attach="background" args={['#09090b']} />
-              <ambientLight intensity={0.15} />
-              <spotLight position={[0, 12, 5]} angle={0.4} penumbra={0.8} intensity={3} />
-              <spotLight position={[8, 2, 4]} angle={0.5} penumbra={1} intensity={2} color="#D4A853" />
-              <spotLight position={[-8, 0, 4]} angle={0.5} penumbra={1} intensity={1.5} color="#E8C878" />
-              <pointLight position={[0, -8, 2]} intensity={0.4} color="#5A3A28" />
-              <Suspense fallback={null}>
-                <FerreroPreview stages={stages} scroll={scroll} />
-                <Environment preset="apartment" />
-              </Suspense>
-              <OrbitControls enableZoom enablePan />
-            </Canvas>
+          {/* Info Cards */}
+          <div style={{ marginTop: 16 }}>
+            <div style={styles.previewLabel}>INFO CARDS</div>
+            <div style={styles.sectionList}>
+              {codeStructure ? (
+                codeStructure.cards.map(card => {
+                  const isActive = scroll >= card.startScroll && scroll < card.endScroll
+                  return (
+                    <div
+                      key={card.id}
+                      style={{
+                        ...styles.sectionItem,
+                        backgroundColor: isActive ? `${c.gold}22` : 'transparent',
+                        borderColor: isActive ? c.gold : c.border,
+                      }}
+                      onClick={() => setScroll((card.startScroll + card.endScroll) / 2)}
+                    >
+                      <span style={styles.sectionName}>{card.title}</span>
+                      <span style={styles.sectionRange}>
+                        {(card.startScroll * 100).toFixed(0)}-{(card.endScroll * 100).toFixed(0)}%
+                      </span>
+                    </div>
+                  )
+                })
+              ) : (
+                <div style={styles.loadingText}>Loading...</div>
+              )}
+            </div>
+          </div>
 
-            {scroll < 0.15 && (
-              <div style={{ ...s.introOverlay, opacity: Math.max(0, 1 - scroll * 7) }}>
-                <div style={{ textAlign: 'center' }}>
-                  <span style={s.tagline}>L'arte del cioccolato</span>
-                  <h1 style={s.h1}>
-                    <span style={s.brand}>FERRERO</span>
-                    <span style={s.product}>ROCHER</span>
-                  </h1>
+          {/* Live Ferrero Data */}
+          {ferreroLive && (
+            <div style={styles.liveData}>
+              <div style={styles.previewLabel}>LIVE DATA</div>
+
+              {ferreroLive.activeCard && (
+                <div style={styles.liveCard}>
+                  <span style={styles.liveCardLabel}>Card:</span>
+                  <span style={styles.liveCardValue}>{ferreroLive.activeCard}</span>
+                </div>
+              )}
+
+              <div style={styles.liveGroup}>
+                <span style={styles.liveGroupLabel}>Rotation</span>
+                <div style={styles.liveRow}>
+                  <span>X:</span><span style={styles.liveValue}>{ferreroLive.rotX.toFixed(2)}</span>
+                </div>
+                <div style={styles.liveRow}>
+                  <span>Y:</span><span style={styles.liveValue}>{ferreroLive.rotY.toFixed(2)}</span>
+                </div>
+                <div style={styles.liveRow}>
+                  <span>Z:</span><span style={styles.liveValue}>{ferreroLive.rotZ.toFixed(2)}</span>
                 </div>
               </div>
-            )}
 
-            {cards.map(card => {
-              if (scroll < card.startScroll || scroll > card.endScroll) return null
-              const fadeIn = card.startScroll + 0.03
-              const fadeOut = card.endScroll - 0.03
-              let opacity = 1
-              if (scroll <= fadeIn) opacity = (scroll - card.startScroll) / 0.03
-              else if (scroll >= fadeOut) opacity = 1 - (scroll - fadeOut) / 0.03
+              <div style={styles.liveGroup}>
+                <span style={styles.liveGroupLabel}>Position</span>
+                <div style={styles.liveRow}>
+                  <span>X:</span><span style={styles.liveValue}>{ferreroLive.posX.toFixed(2)}</span>
+                </div>
+                <div style={styles.liveRow}>
+                  <span>Y:</span><span style={styles.liveValue}>{ferreroLive.posY.toFixed(2)}</span>
+                </div>
+                <div style={styles.liveRow}>
+                  <span>Z:</span><span style={styles.liveValue}>{ferreroLive.posZ.toFixed(2)}</span>
+                </div>
+              </div>
 
-              return (
-                <div
-                  key={card.id}
-                  style={{
-                    ...s.infoCard,
-                    ...(card.position === 'left' ? { left: 40 } : { right: 40 }),
-                    opacity,
-                  }}
-                >
-                  <div style={s.infoCardInner}>
-                    <div style={s.accent} />
-                    <h3 style={s.infoH3}>{card.title}</h3>
-                    <p style={s.infoP}>{card.description}</p>
+              <div style={styles.liveGroup}>
+                <span style={styles.liveGroupLabel}>Scale</span>
+                <div style={styles.liveRow}>
+                  <span style={styles.liveValue}>{ferreroLive.scale.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right: ACTUAL Frontend in iframe */}
+        <div style={styles.preview3d}>
+          <iframe
+            ref={iframeRef}
+            src="/?debug=true"
+            style={{
+              width: '100%',
+              height: '100%',
+              border: 'none',
+              backgroundColor: c.bg,
+            }}
+            onLoad={() => {
+              setIframeReady(true)
+              // Initial sync
+              syncScrollToIframe(scroll)
+            }}
+          />
+          {!iframeReady && (
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: c.muted,
+            }}>
+              Loading...
+            </div>
+          )}
+
+          {/* Component Control Panel */}
+          {showControls && (
+            <div style={styles.controlPanel}>
+              <div style={styles.controlHeader}>
+                <span style={styles.controlTitle}>Component Controls</span>
+                <button style={styles.closeBtn} onClick={() => setShowControls(false)}>
+                  <X size={14} />
+                </button>
+              </div>
+
+              {/* Tabs - Two Rows */}
+              <div style={{ marginBottom: 8 }}>
+                <div style={styles.tabBar}>
+                  {(['ferrero', 'title', 'cards', 'lighting'] as const).map(tab => (
+                    <button
+                      key={tab}
+                      style={{
+                        ...styles.tab,
+                        backgroundColor: activeTab === tab ? c.accent : 'transparent',
+                        color: activeTab === tab ? '#fff' : c.muted,
+                      }}
+                      onClick={() => setActiveTab(tab)}
+                    >
+                      {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ ...styles.tabBar, marginTop: 4 }}>
+                  {(['effects', 'camera', 'particles', 'background'] as const).map(tab => (
+                    <button
+                      key={tab}
+                      style={{
+                        ...styles.tab,
+                        backgroundColor: activeTab === tab ? c.gold : 'transparent',
+                        color: activeTab === tab ? '#000' : c.muted,
+                      }}
+                      onClick={() => setActiveTab(tab)}
+                    >
+                      {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* FERRERO TAB */}
+              {activeTab === 'ferrero' && (
+                <div style={styles.tabContent}>
+                  <div style={styles.controlRow}>
+                    <label style={styles.controlLabel}>Override</label>
+                    <button
+                      style={{ ...styles.toggleBtn, backgroundColor: ferreroState.enabled ? c.accent : c.bg }}
+                      onClick={() => setFerreroState(prev => ({ ...prev, enabled: !prev.enabled }))}
+                    >
+                      {ferreroState.enabled ? 'ON' : 'OFF'}
+                    </button>
                   </div>
+                  <div style={{ opacity: ferreroState.enabled ? 1 : 0.4, pointerEvents: ferreroState.enabled ? 'auto' : 'none' }}>
+                    {/* Transform */}
+                    <div style={styles.controlGroup}>
+                      <span style={styles.groupLabel}>Rotation</span>
+                      {(['rotX', 'rotY', 'rotZ'] as const).map(key => (
+                        <div key={key} style={styles.sliderRow}>
+                          <span style={styles.sliderLabel}>{key}</span>
+                          <input type="range" min={-Math.PI} max={Math.PI} step={0.01}
+                            value={ferreroState[key]}
+                            onChange={e => setFerreroState(prev => ({ ...prev, [key]: parseFloat(e.target.value) }))}
+                            style={styles.slider} />
+                          <span style={styles.sliderValue}>{ferreroState[key].toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={styles.controlGroup}>
+                      <span style={styles.groupLabel}>Position</span>
+                      {(['posX', 'posY', 'posZ'] as const).map(key => (
+                        <div key={key} style={styles.sliderRow}>
+                          <span style={styles.sliderLabel}>{key}</span>
+                          <input type="range" min={-5} max={5} step={0.1}
+                            value={ferreroState[key]}
+                            onChange={e => setFerreroState(prev => ({ ...prev, [key]: parseFloat(e.target.value) }))}
+                            style={styles.slider} />
+                          <span style={styles.sliderValue}>{ferreroState[key].toFixed(1)}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={styles.sliderRow}>
+                      <span style={styles.sliderLabel}>Scale</span>
+                      <input type="range" min={0.5} max={5} step={0.1}
+                        value={ferreroState.scale}
+                        onChange={e => setFerreroState(prev => ({ ...prev, scale: parseFloat(e.target.value) }))}
+                        style={styles.slider} />
+                      <span style={styles.sliderValue}>{ferreroState.scale.toFixed(1)}</span>
+                    </div>
+
+                    {/* Animation Effects */}
+                    <div style={{ ...styles.controlGroup, marginTop: 12 }}>
+                      <span style={styles.groupLabel}>Animation</span>
+                      <div style={styles.controlRow}>
+                        <span style={styles.sliderLabel}>Auto Rotate</span>
+                        <button
+                          style={{ ...styles.miniToggle, backgroundColor: ferreroState.autoRotate ? c.green : c.bg }}
+                          onClick={() => setFerreroState(prev => ({ ...prev, autoRotate: !prev.autoRotate }))}
+                        >{ferreroState.autoRotate ? 'ON' : 'OFF'}</button>
+                      </div>
+                      {ferreroState.autoRotate && (
+                        <div style={styles.sliderRow}>
+                          <span style={styles.sliderLabel}>Speed</span>
+                          <input type="range" min={0.1} max={5} step={0.1}
+                            value={ferreroState.autoRotateSpeed}
+                            onChange={e => setFerreroState(prev => ({ ...prev, autoRotateSpeed: parseFloat(e.target.value) }))}
+                            style={styles.slider} />
+                          <span style={styles.sliderValue}>{ferreroState.autoRotateSpeed.toFixed(1)}</span>
+                        </div>
+                      )}
+                      <div style={styles.controlRow}>
+                        <span style={styles.sliderLabel}>Float</span>
+                        <button
+                          style={{ ...styles.miniToggle, backgroundColor: ferreroState.floatEnabled ? c.green : c.bg }}
+                          onClick={() => setFerreroState(prev => ({ ...prev, floatEnabled: !prev.floatEnabled }))}
+                        >{ferreroState.floatEnabled ? 'ON' : 'OFF'}</button>
+                      </div>
+                      {ferreroState.floatEnabled && (
+                        <>
+                          <div style={styles.sliderRow}>
+                            <span style={styles.sliderLabel}>Amplitude</span>
+                            <input type="range" min={0.05} max={1} step={0.05}
+                              value={ferreroState.floatAmplitude}
+                              onChange={e => setFerreroState(prev => ({ ...prev, floatAmplitude: parseFloat(e.target.value) }))}
+                              style={styles.slider} />
+                            <span style={styles.sliderValue}>{ferreroState.floatAmplitude.toFixed(2)}</span>
+                          </div>
+                          <div style={styles.sliderRow}>
+                            <span style={styles.sliderLabel}>Speed</span>
+                            <input type="range" min={0.1} max={3} step={0.1}
+                              value={ferreroState.floatSpeed}
+                              onChange={e => setFerreroState(prev => ({ ...prev, floatSpeed: parseFloat(e.target.value) }))}
+                              style={styles.slider} />
+                            <span style={styles.sliderValue}>{ferreroState.floatSpeed.toFixed(1)}</span>
+                          </div>
+                        </>
+                      )}
+                      <div style={styles.controlRow}>
+                        <span style={styles.sliderLabel}>Bounce</span>
+                        <button
+                          style={{ ...styles.miniToggle, backgroundColor: ferreroState.bounceEnabled ? c.green : c.bg }}
+                          onClick={() => setFerreroState(prev => ({ ...prev, bounceEnabled: !prev.bounceEnabled }))}
+                        >{ferreroState.bounceEnabled ? 'ON' : 'OFF'}</button>
+                      </div>
+                    </div>
+
+                    {/* Material Properties */}
+                    <div style={{ ...styles.controlGroup, marginTop: 12 }}>
+                      <span style={styles.groupLabel}>Material</span>
+                      <div style={styles.sliderRow}>
+                        <span style={styles.sliderLabel}>Metalness</span>
+                        <input type="range" min={0} max={1} step={0.05}
+                          value={ferreroState.metalness}
+                          onChange={e => setFerreroState(prev => ({ ...prev, metalness: parseFloat(e.target.value) }))}
+                          style={styles.slider} />
+                        <span style={styles.sliderValue}>{ferreroState.metalness.toFixed(2)}</span>
+                      </div>
+                      <div style={styles.sliderRow}>
+                        <span style={styles.sliderLabel}>Roughness</span>
+                        <input type="range" min={0} max={1} step={0.05}
+                          value={ferreroState.roughness}
+                          onChange={e => setFerreroState(prev => ({ ...prev, roughness: parseFloat(e.target.value) }))}
+                          style={styles.slider} />
+                        <span style={styles.sliderValue}>{ferreroState.roughness.toFixed(2)}</span>
+                      </div>
+                      <div style={styles.sliderRow}>
+                        <span style={styles.sliderLabel}>Emissive</span>
+                        <input type="range" min={0} max={2} step={0.1}
+                          value={ferreroState.emissiveIntensity}
+                          onChange={e => setFerreroState(prev => ({ ...prev, emissiveIntensity: parseFloat(e.target.value) }))}
+                          style={styles.slider} />
+                        <span style={styles.sliderValue}>{ferreroState.emissiveIntensity.toFixed(1)}</span>
+                      </div>
+                      <div style={styles.colorRow}>
+                        <span style={styles.sliderLabel}>Glow Color</span>
+                        <input type="color" value={ferreroState.emissiveColor}
+                          onChange={e => setFerreroState(prev => ({ ...prev, emissiveColor: e.target.value }))}
+                          style={styles.colorInput} />
+                      </div>
+                      <div style={styles.controlRow}>
+                        <span style={styles.sliderLabel}>Wireframe</span>
+                        <button
+                          style={{ ...styles.miniToggle, backgroundColor: ferreroState.wireframe ? c.blue : c.bg }}
+                          onClick={() => setFerreroState(prev => ({ ...prev, wireframe: !prev.wireframe }))}
+                        >{ferreroState.wireframe ? 'ON' : 'OFF'}</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TITLE TAB */}
+              {activeTab === 'title' && (
+                <div style={styles.tabContent}>
+                  <div style={styles.controlRow}>
+                    <label style={styles.controlLabel}>Override</label>
+                    <button
+                      style={{ ...styles.toggleBtn, backgroundColor: titleState.enabled ? c.accent : c.bg }}
+                      onClick={() => setTitleState(prev => ({ ...prev, enabled: !prev.enabled }))}
+                    >
+                      {titleState.enabled ? 'ON' : 'OFF'}
+                    </button>
+                  </div>
+                  <div style={{ opacity: titleState.enabled ? 1 : 0.4, pointerEvents: titleState.enabled ? 'auto' : 'none' }}>
+                    <div style={styles.sliderRow}>
+                      <span style={styles.sliderLabel}>Opacity</span>
+                      <input type="range" min={0} max={1} step={0.01}
+                        value={titleState.opacity}
+                        onChange={e => setTitleState(prev => ({ ...prev, opacity: parseFloat(e.target.value) }))}
+                        style={styles.slider} />
+                      <span style={styles.sliderValue}>{titleState.opacity.toFixed(2)}</span>
+                    </div>
+                    <div style={styles.sliderRow}>
+                      <span style={styles.sliderLabel}>Fade Speed</span>
+                      <input type="range" min={1} max={20} step={0.5}
+                        value={titleState.fadeSpeed}
+                        onChange={e => setTitleState(prev => ({ ...prev, fadeSpeed: parseFloat(e.target.value) }))}
+                        style={styles.slider} />
+                      <span style={styles.sliderValue}>{titleState.fadeSpeed.toFixed(1)}</span>
+                    </div>
+                    <div style={styles.inputRow}>
+                      <span style={styles.sliderLabel}>Title</span>
+                      <input type="text" value={titleState.titleText}
+                        onChange={e => setTitleState(prev => ({ ...prev, titleText: e.target.value }))}
+                        style={styles.textInput} />
+                    </div>
+                    <div style={styles.inputRow}>
+                      <span style={styles.sliderLabel}>Subtitle</span>
+                      <input type="text" value={titleState.subtitleText}
+                        onChange={e => setTitleState(prev => ({ ...prev, subtitleText: e.target.value }))}
+                        style={styles.textInput} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* CARDS TAB */}
+              {activeTab === 'cards' && (
+                <div style={styles.tabContent}>
+                  <div style={styles.controlRow}>
+                    <label style={styles.controlLabel}>Override</label>
+                    <button
+                      style={{ ...styles.toggleBtn, backgroundColor: cardsState.enabled ? c.accent : c.bg }}
+                      onClick={() => setCardsState(prev => ({ ...prev, enabled: !prev.enabled }))}
+                    >
+                      {cardsState.enabled ? 'ON' : 'OFF'}
+                    </button>
+                  </div>
+                  <div style={{ opacity: cardsState.enabled ? 1 : 0.4, pointerEvents: cardsState.enabled ? 'auto' : 'none' }}>
+                    <div style={styles.sliderRow}>
+                      <span style={styles.sliderLabel}>Opacity</span>
+                      <input type="range" min={0} max={1} step={0.01}
+                        value={cardsState.globalOpacity}
+                        onChange={e => setCardsState(prev => ({ ...prev, globalOpacity: parseFloat(e.target.value) }))}
+                        style={styles.slider} />
+                      <span style={styles.sliderValue}>{cardsState.globalOpacity.toFixed(2)}</span>
+                    </div>
+                    <div style={styles.sliderRow}>
+                      <span style={styles.sliderLabel}>Padding</span>
+                      <input type="range" min={8} max={64} step={2}
+                        value={cardsState.padding}
+                        onChange={e => setCardsState(prev => ({ ...prev, padding: parseFloat(e.target.value) }))}
+                        style={styles.slider} />
+                      <span style={styles.sliderValue}>{cardsState.padding}px</span>
+                    </div>
+                    <div style={styles.sliderRow}>
+                      <span style={styles.sliderLabel}>Radius</span>
+                      <input type="range" min={0} max={40} step={2}
+                        value={cardsState.borderRadius}
+                        onChange={e => setCardsState(prev => ({ ...prev, borderRadius: parseFloat(e.target.value) }))}
+                        style={styles.slider} />
+                      <span style={styles.sliderValue}>{cardsState.borderRadius}px</span>
+                    </div>
+                    <div style={styles.sliderRow}>
+                      <span style={styles.sliderLabel}>Blur</span>
+                      <input type="range" min={0} max={50} step={2}
+                        value={cardsState.blur}
+                        onChange={e => setCardsState(prev => ({ ...prev, blur: parseFloat(e.target.value) }))}
+                        style={styles.slider} />
+                      <span style={styles.sliderValue}>{cardsState.blur}px</span>
+                    </div>
+                    <div style={styles.colorRow}>
+                      <span style={styles.sliderLabel}>Accent</span>
+                      <input type="color" value={cardsState.accentColor}
+                        onChange={e => setCardsState(prev => ({ ...prev, accentColor: e.target.value }))}
+                        style={styles.colorInput} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* LIGHTING TAB */}
+              {activeTab === 'lighting' && (
+                <div style={styles.tabContent}>
+                  <div style={styles.controlRow}>
+                    <label style={styles.controlLabel}>Override</label>
+                    <button
+                      style={{ ...styles.toggleBtn, backgroundColor: lightingState.enabled ? c.accent : c.bg }}
+                      onClick={() => setLightingState(prev => ({ ...prev, enabled: !prev.enabled }))}
+                    >
+                      {lightingState.enabled ? 'ON' : 'OFF'}
+                    </button>
+                  </div>
+                  <div style={{ opacity: lightingState.enabled ? 1 : 0.4, pointerEvents: lightingState.enabled ? 'auto' : 'none' }}>
+                    <div style={styles.sliderRow}>
+                      <span style={styles.sliderLabel}>Ambient</span>
+                      <input type="range" min={0} max={2} step={0.05}
+                        value={lightingState.ambientIntensity}
+                        onChange={e => setLightingState(prev => ({ ...prev, ambientIntensity: parseFloat(e.target.value) }))}
+                        style={styles.slider} />
+                      <span style={styles.sliderValue}>{lightingState.ambientIntensity.toFixed(2)}</span>
+                    </div>
+                    <div style={styles.sliderRow}>
+                      <span style={styles.sliderLabel}>Main Spot</span>
+                      <input type="range" min={0} max={10} step={0.1}
+                        value={lightingState.mainSpotIntensity}
+                        onChange={e => setLightingState(prev => ({ ...prev, mainSpotIntensity: parseFloat(e.target.value) }))}
+                        style={styles.slider} />
+                      <span style={styles.sliderValue}>{lightingState.mainSpotIntensity.toFixed(1)}</span>
+                    </div>
+                    <div style={styles.colorRow}>
+                      <span style={styles.sliderLabel}>Main Color</span>
+                      <input type="color" value={lightingState.mainSpotColor}
+                        onChange={e => setLightingState(prev => ({ ...prev, mainSpotColor: e.target.value }))}
+                        style={styles.colorInput} />
+                    </div>
+                    <div style={styles.sliderRow}>
+                      <span style={styles.sliderLabel}>Rim Light</span>
+                      <input type="range" min={0} max={10} step={0.1}
+                        value={lightingState.rimLightIntensity}
+                        onChange={e => setLightingState(prev => ({ ...prev, rimLightIntensity: parseFloat(e.target.value) }))}
+                        style={styles.slider} />
+                      <span style={styles.sliderValue}>{lightingState.rimLightIntensity.toFixed(1)}</span>
+                    </div>
+                    <div style={styles.colorRow}>
+                      <span style={styles.sliderLabel}>Rim Color</span>
+                      <input type="color" value={lightingState.rimLightColor}
+                        onChange={e => setLightingState(prev => ({ ...prev, rimLightColor: e.target.value }))}
+                        style={styles.colorInput} />
+                    </div>
+                    <div style={styles.sliderRow}>
+                      <span style={styles.sliderLabel}>Fill Light</span>
+                      <input type="range" min={0} max={10} step={0.1}
+                        value={lightingState.fillLightIntensity}
+                        onChange={e => setLightingState(prev => ({ ...prev, fillLightIntensity: parseFloat(e.target.value) }))}
+                        style={styles.slider} />
+                      <span style={styles.sliderValue}>{lightingState.fillLightIntensity.toFixed(1)}</span>
+                    </div>
+                    <div style={styles.colorRow}>
+                      <span style={styles.sliderLabel}>Fill Color</span>
+                      <input type="color" value={lightingState.fillLightColor}
+                        onChange={e => setLightingState(prev => ({ ...prev, fillLightColor: e.target.value }))}
+                        style={styles.colorInput} />
+                    </div>
+
+                    {/* Additional Lights */}
+                    <div style={{ ...styles.controlGroup, marginTop: 12 }}>
+                      <span style={styles.groupLabel}>Extra Lights</span>
+                      <div style={styles.controlRow}>
+                        <span style={styles.sliderLabel}>Top Light</span>
+                        <button
+                          style={{ ...styles.miniToggle, backgroundColor: lightingState.topLightEnabled ? c.green : c.bg }}
+                          onClick={() => setLightingState(prev => ({ ...prev, topLightEnabled: !prev.topLightEnabled }))}
+                        >{lightingState.topLightEnabled ? 'ON' : 'OFF'}</button>
+                      </div>
+                      {lightingState.topLightEnabled && (
+                        <>
+                          <div style={styles.sliderRow}>
+                            <span style={styles.sliderLabel}>Intensity</span>
+                            <input type="range" min={0} max={10} step={0.1}
+                              value={lightingState.topLightIntensity}
+                              onChange={e => setLightingState(prev => ({ ...prev, topLightIntensity: parseFloat(e.target.value) }))}
+                              style={styles.slider} />
+                            <span style={styles.sliderValue}>{lightingState.topLightIntensity.toFixed(1)}</span>
+                          </div>
+                          <div style={styles.colorRow}>
+                            <span style={styles.sliderLabel}>Color</span>
+                            <input type="color" value={lightingState.topLightColor}
+                              onChange={e => setLightingState(prev => ({ ...prev, topLightColor: e.target.value }))}
+                              style={styles.colorInput} />
+                          </div>
+                        </>
+                      )}
+                      <div style={styles.controlRow}>
+                        <span style={styles.sliderLabel}>Bottom Light</span>
+                        <button
+                          style={{ ...styles.miniToggle, backgroundColor: lightingState.bottomLightEnabled ? c.green : c.bg }}
+                          onClick={() => setLightingState(prev => ({ ...prev, bottomLightEnabled: !prev.bottomLightEnabled }))}
+                        >{lightingState.bottomLightEnabled ? 'ON' : 'OFF'}</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* EFFECTS TAB (Post-Processing) */}
+              {activeTab === 'effects' && (
+                <div style={styles.tabContent}>
+                  <div style={styles.controlRow}>
+                    <label style={styles.controlLabel}>Enable Effects</label>
+                    <button
+                      style={{ ...styles.toggleBtn, backgroundColor: postProcessingState.enabled ? c.gold : c.bg }}
+                      onClick={() => setPostProcessingState(prev => ({ ...prev, enabled: !prev.enabled }))}
+                    >
+                      {postProcessingState.enabled ? 'ON' : 'OFF'}
+                    </button>
+                  </div>
+                  <div style={{ opacity: postProcessingState.enabled ? 1 : 0.4, pointerEvents: postProcessingState.enabled ? 'auto' : 'none' }}>
+                    {/* Bloom */}
+                    <div style={styles.controlGroup}>
+                      <div style={styles.controlRow}>
+                        <span style={styles.groupLabel}>Bloom</span>
+                        <button
+                          style={{ ...styles.miniToggle, backgroundColor: postProcessingState.bloomEnabled ? c.green : c.bg }}
+                          onClick={() => setPostProcessingState(prev => ({ ...prev, bloomEnabled: !prev.bloomEnabled }))}
+                        >{postProcessingState.bloomEnabled ? 'ON' : 'OFF'}</button>
+                      </div>
+                      {postProcessingState.bloomEnabled && (
+                        <>
+                          <div style={styles.sliderRow}>
+                            <span style={styles.sliderLabel}>Intensity</span>
+                            <input type="range" min={0} max={5} step={0.1}
+                              value={postProcessingState.bloomIntensity}
+                              onChange={e => setPostProcessingState(prev => ({ ...prev, bloomIntensity: parseFloat(e.target.value) }))}
+                              style={styles.slider} />
+                            <span style={styles.sliderValue}>{postProcessingState.bloomIntensity.toFixed(1)}</span>
+                          </div>
+                          <div style={styles.sliderRow}>
+                            <span style={styles.sliderLabel}>Threshold</span>
+                            <input type="range" min={0} max={1} step={0.05}
+                              value={postProcessingState.bloomThreshold}
+                              onChange={e => setPostProcessingState(prev => ({ ...prev, bloomThreshold: parseFloat(e.target.value) }))}
+                              style={styles.slider} />
+                            <span style={styles.sliderValue}>{postProcessingState.bloomThreshold.toFixed(2)}</span>
+                          </div>
+                          <div style={styles.sliderRow}>
+                            <span style={styles.sliderLabel}>Radius</span>
+                            <input type="range" min={0} max={1} step={0.05}
+                              value={postProcessingState.bloomRadius}
+                              onChange={e => setPostProcessingState(prev => ({ ...prev, bloomRadius: parseFloat(e.target.value) }))}
+                              style={styles.slider} />
+                            <span style={styles.sliderValue}>{postProcessingState.bloomRadius.toFixed(2)}</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Vignette */}
+                    <div style={styles.controlGroup}>
+                      <div style={styles.controlRow}>
+                        <span style={styles.groupLabel}>Vignette</span>
+                        <button
+                          style={{ ...styles.miniToggle, backgroundColor: postProcessingState.vignetteEnabled ? c.green : c.bg }}
+                          onClick={() => setPostProcessingState(prev => ({ ...prev, vignetteEnabled: !prev.vignetteEnabled }))}
+                        >{postProcessingState.vignetteEnabled ? 'ON' : 'OFF'}</button>
+                      </div>
+                      {postProcessingState.vignetteEnabled && (
+                        <>
+                          <div style={styles.sliderRow}>
+                            <span style={styles.sliderLabel}>Darkness</span>
+                            <input type="range" min={0} max={1} step={0.05}
+                              value={postProcessingState.vignetteIntensity}
+                              onChange={e => setPostProcessingState(prev => ({ ...prev, vignetteIntensity: parseFloat(e.target.value) }))}
+                              style={styles.slider} />
+                            <span style={styles.sliderValue}>{postProcessingState.vignetteIntensity.toFixed(2)}</span>
+                          </div>
+                          <div style={styles.sliderRow}>
+                            <span style={styles.sliderLabel}>Offset</span>
+                            <input type="range" min={0} max={1} step={0.05}
+                              value={postProcessingState.vignetteOffset}
+                              onChange={e => setPostProcessingState(prev => ({ ...prev, vignetteOffset: parseFloat(e.target.value) }))}
+                              style={styles.slider} />
+                            <span style={styles.sliderValue}>{postProcessingState.vignetteOffset.toFixed(2)}</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Chromatic Aberration */}
+                    <div style={styles.controlGroup}>
+                      <div style={styles.controlRow}>
+                        <span style={styles.groupLabel}>Chromatic</span>
+                        <button
+                          style={{ ...styles.miniToggle, backgroundColor: postProcessingState.chromaticAberrationEnabled ? c.green : c.bg }}
+                          onClick={() => setPostProcessingState(prev => ({ ...prev, chromaticAberrationEnabled: !prev.chromaticAberrationEnabled }))}
+                        >{postProcessingState.chromaticAberrationEnabled ? 'ON' : 'OFF'}</button>
+                      </div>
+                      {postProcessingState.chromaticAberrationEnabled && (
+                        <div style={styles.sliderRow}>
+                          <span style={styles.sliderLabel}>Offset</span>
+                          <input type="range" min={0} max={0.02} step={0.001}
+                            value={postProcessingState.chromaticAberrationOffset}
+                            onChange={e => setPostProcessingState(prev => ({ ...prev, chromaticAberrationOffset: parseFloat(e.target.value) }))}
+                            style={styles.slider} />
+                          <span style={styles.sliderValue}>{postProcessingState.chromaticAberrationOffset.toFixed(3)}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* CAMERA TAB */}
+              {activeTab === 'camera' && (
+                <div style={styles.tabContent}>
+                  <div style={styles.controlRow}>
+                    <label style={styles.controlLabel}>Override Camera</label>
+                    <button
+                      style={{ ...styles.toggleBtn, backgroundColor: cameraState.enabled ? c.gold : c.bg }}
+                      onClick={() => setCameraState(prev => ({ ...prev, enabled: !prev.enabled }))}
+                    >
+                      {cameraState.enabled ? 'ON' : 'OFF'}
+                    </button>
+                  </div>
+                  <div style={{ opacity: cameraState.enabled ? 1 : 0.4, pointerEvents: cameraState.enabled ? 'auto' : 'none' }}>
+                    <div style={styles.sliderRow}>
+                      <span style={styles.sliderLabel}>FOV</span>
+                      <input type="range" min={10} max={120} step={1}
+                        value={cameraState.fov}
+                        onChange={e => setCameraState(prev => ({ ...prev, fov: parseFloat(e.target.value) }))}
+                        style={styles.slider} />
+                      <span style={styles.sliderValue}>{cameraState.fov}</span>
+                    </div>
+                    <div style={styles.controlGroup}>
+                      <span style={styles.groupLabel}>Position</span>
+                      {(['positionX', 'positionY', 'positionZ'] as const).map(key => (
+                        <div key={key} style={styles.sliderRow}>
+                          <span style={styles.sliderLabel}>{key.replace('position', '')}</span>
+                          <input type="range" min={-20} max={20} step={0.5}
+                            value={cameraState[key]}
+                            onChange={e => setCameraState(prev => ({ ...prev, [key]: parseFloat(e.target.value) }))}
+                            style={styles.slider} />
+                          <span style={styles.sliderValue}>{cameraState[key].toFixed(1)}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={styles.controlGroup}>
+                      <span style={styles.groupLabel}>Look At</span>
+                      {(['targetX', 'targetY', 'targetZ'] as const).map(key => (
+                        <div key={key} style={styles.sliderRow}>
+                          <span style={styles.sliderLabel}>{key.replace('target', '')}</span>
+                          <input type="range" min={-10} max={10} step={0.5}
+                            value={cameraState[key]}
+                            onChange={e => setCameraState(prev => ({ ...prev, [key]: parseFloat(e.target.value) }))}
+                            style={styles.slider} />
+                          <span style={styles.sliderValue}>{cameraState[key].toFixed(1)}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={styles.controlRow}>
+                      <span style={styles.sliderLabel}>Auto Orbit</span>
+                      <button
+                        style={{ ...styles.miniToggle, backgroundColor: cameraState.autoOrbit ? c.green : c.bg }}
+                        onClick={() => setCameraState(prev => ({ ...prev, autoOrbit: !prev.autoOrbit }))}
+                      >{cameraState.autoOrbit ? 'ON' : 'OFF'}</button>
+                    </div>
+                    {cameraState.autoOrbit && (
+                      <div style={styles.sliderRow}>
+                        <span style={styles.sliderLabel}>Speed</span>
+                        <input type="range" min={0.1} max={2} step={0.1}
+                          value={cameraState.orbitSpeed}
+                          onChange={e => setCameraState(prev => ({ ...prev, orbitSpeed: parseFloat(e.target.value) }))}
+                          style={styles.slider} />
+                        <span style={styles.sliderValue}>{cameraState.orbitSpeed.toFixed(1)}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* PARTICLES TAB */}
+              {activeTab === 'particles' && (
+                <div style={styles.tabContent}>
+                  <div style={styles.controlRow}>
+                    <label style={styles.controlLabel}>Enable Particles</label>
+                    <button
+                      style={{ ...styles.toggleBtn, backgroundColor: particlesState.enabled ? c.gold : c.bg }}
+                      onClick={() => setParticlesState(prev => ({ ...prev, enabled: !prev.enabled }))}
+                    >
+                      {particlesState.enabled ? 'ON' : 'OFF'}
+                    </button>
+                  </div>
+                  <div style={{ opacity: particlesState.enabled ? 1 : 0.4, pointerEvents: particlesState.enabled ? 'auto' : 'none' }}>
+                    <div style={styles.sliderRow}>
+                      <span style={styles.sliderLabel}>Count</span>
+                      <input type="range" min={10} max={500} step={10}
+                        value={particlesState.count}
+                        onChange={e => setParticlesState(prev => ({ ...prev, count: parseFloat(e.target.value) }))}
+                        style={styles.slider} />
+                      <span style={styles.sliderValue}>{particlesState.count}</span>
+                    </div>
+                    <div style={styles.sliderRow}>
+                      <span style={styles.sliderLabel}>Size</span>
+                      <input type="range" min={0.01} max={0.2} step={0.01}
+                        value={particlesState.size}
+                        onChange={e => setParticlesState(prev => ({ ...prev, size: parseFloat(e.target.value) }))}
+                        style={styles.slider} />
+                      <span style={styles.sliderValue}>{particlesState.size.toFixed(2)}</span>
+                    </div>
+                    <div style={styles.sliderRow}>
+                      <span style={styles.sliderLabel}>Speed</span>
+                      <input type="range" min={0.1} max={3} step={0.1}
+                        value={particlesState.speed}
+                        onChange={e => setParticlesState(prev => ({ ...prev, speed: parseFloat(e.target.value) }))}
+                        style={styles.slider} />
+                      <span style={styles.sliderValue}>{particlesState.speed.toFixed(1)}</span>
+                    </div>
+                    <div style={styles.sliderRow}>
+                      <span style={styles.sliderLabel}>Spread</span>
+                      <input type="range" min={2} max={30} step={1}
+                        value={particlesState.spread}
+                        onChange={e => setParticlesState(prev => ({ ...prev, spread: parseFloat(e.target.value) }))}
+                        style={styles.slider} />
+                      <span style={styles.sliderValue}>{particlesState.spread}</span>
+                    </div>
+                    <div style={styles.sliderRow}>
+                      <span style={styles.sliderLabel}>Opacity</span>
+                      <input type="range" min={0.1} max={1} step={0.1}
+                        value={particlesState.opacity}
+                        onChange={e => setParticlesState(prev => ({ ...prev, opacity: parseFloat(e.target.value) }))}
+                        style={styles.slider} />
+                      <span style={styles.sliderValue}>{particlesState.opacity.toFixed(1)}</span>
+                    </div>
+                    <div style={styles.colorRow}>
+                      <span style={styles.sliderLabel}>Color</span>
+                      <input type="color" value={particlesState.color}
+                        onChange={e => setParticlesState(prev => ({ ...prev, color: e.target.value }))}
+                        style={styles.colorInput} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* BACKGROUND TAB */}
+              {activeTab === 'background' && (
+                <div style={styles.tabContent}>
+                  <div style={styles.controlRow}>
+                    <label style={styles.controlLabel}>Override Background</label>
+                    <button
+                      style={{ ...styles.toggleBtn, backgroundColor: backgroundState.enabled ? c.gold : c.bg }}
+                      onClick={() => setBackgroundState(prev => ({ ...prev, enabled: !prev.enabled }))}
+                    >
+                      {backgroundState.enabled ? 'ON' : 'OFF'}
+                    </button>
+                  </div>
+                  <div style={{ opacity: backgroundState.enabled ? 1 : 0.4, pointerEvents: backgroundState.enabled ? 'auto' : 'none' }}>
+                    <div style={styles.colorRow}>
+                      <span style={styles.sliderLabel}>Color</span>
+                      <input type="color" value={backgroundState.color}
+                        onChange={e => setBackgroundState(prev => ({ ...prev, color: e.target.value }))}
+                        style={styles.colorInput} />
+                    </div>
+
+                    {/* Gradient */}
+                    <div style={styles.controlGroup}>
+                      <div style={styles.controlRow}>
+                        <span style={styles.groupLabel}>Gradient</span>
+                        <button
+                          style={{ ...styles.miniToggle, backgroundColor: backgroundState.gradientEnabled ? c.green : c.bg }}
+                          onClick={() => setBackgroundState(prev => ({ ...prev, gradientEnabled: !prev.gradientEnabled }))}
+                        >{backgroundState.gradientEnabled ? 'ON' : 'OFF'}</button>
+                      </div>
+                      {backgroundState.gradientEnabled && (
+                        <>
+                          <div style={styles.colorRow}>
+                            <span style={styles.sliderLabel}>Top</span>
+                            <input type="color" value={backgroundState.gradientTop}
+                              onChange={e => setBackgroundState(prev => ({ ...prev, gradientTop: e.target.value }))}
+                              style={styles.colorInput} />
+                          </div>
+                          <div style={styles.colorRow}>
+                            <span style={styles.sliderLabel}>Bottom</span>
+                            <input type="color" value={backgroundState.gradientBottom}
+                              onChange={e => setBackgroundState(prev => ({ ...prev, gradientBottom: e.target.value }))}
+                              style={styles.colorInput} />
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Stars */}
+                    <div style={styles.controlGroup}>
+                      <div style={styles.controlRow}>
+                        <span style={styles.groupLabel}>Stars</span>
+                        <button
+                          style={{ ...styles.miniToggle, backgroundColor: backgroundState.starsEnabled ? c.green : c.bg }}
+                          onClick={() => setBackgroundState(prev => ({ ...prev, starsEnabled: !prev.starsEnabled }))}
+                        >{backgroundState.starsEnabled ? 'ON' : 'OFF'}</button>
+                      </div>
+                      {backgroundState.starsEnabled && (
+                        <>
+                          <div style={styles.sliderRow}>
+                            <span style={styles.sliderLabel}>Count</span>
+                            <input type="range" min={50} max={1000} step={50}
+                              value={backgroundState.starsCount}
+                              onChange={e => setBackgroundState(prev => ({ ...prev, starsCount: parseFloat(e.target.value) }))}
+                              style={styles.slider} />
+                            <span style={styles.sliderValue}>{backgroundState.starsCount}</span>
+                          </div>
+                          <div style={styles.sliderRow}>
+                            <span style={styles.sliderLabel}>Speed</span>
+                            <input type="range" min={0} max={1} step={0.05}
+                              value={backgroundState.starsSpeed}
+                              onChange={e => setBackgroundState(prev => ({ ...prev, starsSpeed: parseFloat(e.target.value) }))}
+                              style={styles.slider} />
+                            <span style={styles.sliderValue}>{backgroundState.starsSpeed.toFixed(2)}</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Timeline - Canva Style */}
+      <div style={styles.timelineWrap}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <div style={styles.timelineLabel}>TIMELINE</div>
+          <button
+            style={{ ...styles.miniToggle, backgroundColor: showAdvancedTimeline ? c.gold : c.bg, color: showAdvancedTimeline ? '#000' : c.muted }}
+            onClick={() => setShowAdvancedTimeline(!showAdvancedTimeline)}
+          >
+            {showAdvancedTimeline ? 'Keyframes ON' : 'Keyframes OFF'}
+          </button>
+        </div>
+
+        {/* Main Scrubber */}
+        <div
+          ref={timelineRef}
+          style={styles.timeline}
+          onClick={handleTimeline}
+          onMouseDown={(e) => {
+            handleTimeline(e)
+            const move = (ev: MouseEvent) => handleTimeline(ev as unknown as React.MouseEvent)
+            const up = () => {
+              window.removeEventListener('mousemove', move)
+              window.removeEventListener('mouseup', up)
+            }
+            window.addEventListener('mousemove', move)
+            window.addEventListener('mouseup', up)
+          }}
+        >
+          {/* Sections from codeStructure */}
+          {codeStructure?.sections.map((sec, i) => {
+            const start = parseFloat(sec.scrollRange.split('-')[0]) / 100
+            const end = parseFloat(sec.scrollRange.split('-')[1].replace('%', '')) / 100
+            const colors = [c.accent, c.red]
+            return (
+              <div
+                key={sec.id}
+                style={{
+                  ...styles.timelineSec,
+                  left: `${start * 100}%`,
+                  width: `${(end - start) * 100}%`,
+                  backgroundColor: `${colors[i % colors.length]}22`
+                }}
+              >
+                <span style={styles.timelineSecName}>{sec.name}</span>
+              </div>
+            )
+          })}
+          {/* Info Cards markers */}
+          {codeStructure?.cards.map(card => (
+            <div
+              key={card.id}
+              style={{
+                position: 'absolute',
+                left: `${card.startScroll * 100}%`,
+                width: `${(card.endScroll - card.startScroll) * 100}%`,
+                height: '4px',
+                bottom: 0,
+                backgroundColor: c.gold,
+                opacity: 0.6,
+              }}
+            />
+          ))}
+          {/* Playhead */}
+          <div style={{ ...styles.playhead, left: `${scroll * 100}%` }}>
+            <div style={styles.playheadLine} />
+            <div style={styles.playheadDot} />
+          </div>
+        </div>
+
+        {/* Keyframe Tracks - Canva Style */}
+        {showAdvancedTimeline && (
+          <div style={styles.keyframeTracks}>
+            {/* Track Labels + Tracks */}
+            {(['ferrero', 'title', 'cards', 'lighting'] as const).map(track => {
+              const trackColors: Record<string, string> = {
+                ferrero: c.gold,
+                title: c.accent,
+                cards: c.green,
+                lighting: c.blue,
+              }
+              const trackLabels: Record<string, string> = {
+                ferrero: 'Ferrero',
+                title: 'Title',
+                cards: 'Cards',
+                lighting: 'Lights',
+              }
+              return (
+                <div key={track} style={styles.keyframeTrackRow}>
+                  {/* Track Label */}
+                  <div style={styles.trackLabel}>
+                    <span style={{ color: trackColors[track], fontWeight: 600 }}>{trackLabels[track]}</span>
+                    <button
+                      style={styles.addKeyframeBtn}
+                      onClick={() => addKeyframe(track)}
+                      title="Add keyframe at current position"
+                    >
+                      <Plus size={12} />
+                    </button>
+                  </div>
+                  {/* Track */}
+                  <div style={styles.keyframeTrack}>
+                    {/* Keyframes */}
+                    {keyframes[track].map(kf => (
+                      <div
+                        key={kf.id}
+                        style={{
+                          position: 'absolute',
+                          left: `${kf.scroll * 100}%`,
+                          top: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          cursor: 'pointer',
+                        }}
+                        onClick={() => jumpToKeyframe(kf)}
+                      >
+                        <Diamond
+                          size={14}
+                          fill={selectedKeyframe === kf.id ? trackColors[track] : 'transparent'}
+                          stroke={trackColors[track]}
+                          strokeWidth={2}
+                        />
+                      </div>
+                    ))}
+                    {/* Current position indicator */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        left: `${scroll * 100}%`,
+                        top: 0,
+                        bottom: 0,
+                        width: 1,
+                        backgroundColor: c.red,
+                        opacity: 0.5,
+                      }}
+                    />
+                  </div>
+                  {/* Delete selected keyframe */}
+                  {selectedKeyframe?.startsWith(track) && (
+                    <button
+                      style={styles.deleteKeyframeBtn}
+                      onClick={() => removeKeyframe(track, selectedKeyframe)}
+                      title="Delete keyframe"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  )}
                 </div>
               )
             })}
-
-            <div style={s.viewportInfo}>
-              <Settings size={12} />
-              <span>Drag to rotate • Scroll to zoom</span>
-            </div>
           </div>
+        )}
+
+        <div style={styles.timelineMarkers}>
+          {[0, 25, 50, 75, 100].map(p => <span key={p} style={styles.marker}>{p}%</span>)}
         </div>
-      </main>
+      </div>
+
+      {/* Info Bar */}
+      <div style={styles.infoBar}>
+        <div style={styles.infoGroup}>
+          <span style={styles.infoLabel}>Section:</span>
+          <span style={{ ...styles.infoValue, color: c.accent }}>
+            {codeStructure?.sections.find(s => {
+              const start = parseFloat(s.scrollRange.split('-')[0]) / 100
+              const end = parseFloat(s.scrollRange.split('-')[1].replace('%', '')) / 100
+              return scroll >= start && scroll < end
+            })?.name || 'Loading...'}
+          </span>
+        </div>
+        {ferreroLive?.activeCard && (
+          <div style={styles.infoGroup}>
+            <span style={styles.infoLabel}>Card:</span>
+            <span style={{ ...styles.infoValue, color: c.gold }}>{ferreroLive.activeCard}</span>
+          </div>
+        )}
+        <div style={styles.infoDivider} />
+        <div style={styles.infoGroup}>
+          <span style={styles.infoLabel}>Scroll:</span>
+          <input
+            type="number"
+            value={(scroll * 100).toFixed(1)}
+            onChange={e => setScroll(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)) / 100)}
+            style={styles.infoInput}
+            step={0.1}
+          />
+          <span style={styles.infoLabel}>%</span>
+        </div>
+      </div>
     </div>
   )
 }
 
-useGLTF.preload('/models/ferrero.glb')
+const styles: Record<string, CSSProperties> = {
+  page: { height: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: c.bg, fontFamily: 'Inter, sans-serif', color: c.text, overflow: 'hidden' },
+
+  // Toolbar
+  toolbar: { height: 56, backgroundColor: c.card, borderBottom: `1px solid ${c.border}`, display: 'flex', alignItems: 'center', padding: '0 16px', gap: 12 },
+  homeBtn: { width: 40, height: 40, borderRadius: 8, border: `1px solid ${c.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, textDecoration: 'none' },
+  btn: { width: 40, height: 40, borderRadius: 8, border: `1px solid ${c.border}`, background: 'transparent', color: c.muted, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' },
+  btnActive: { backgroundColor: c.accent, borderColor: c.accent, color: '#fff' },
+  presetWrap: { position: 'relative' },
+  presetBtn: { height: 40, padding: '0 16px', borderRadius: 8, border: `1px solid ${c.border}`, background: 'transparent', color: c.muted, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 },
+  presetMenu: { position: 'absolute', top: '100%', left: 0, marginTop: 4, backgroundColor: c.card, border: `1px solid ${c.border}`, borderRadius: 8, overflow: 'hidden', zIndex: 100, minWidth: 180 },
+  presetItem: { width: '100%', padding: '12px 16px', border: 'none', background: 'transparent', color: c.text, textAlign: 'left', cursor: 'pointer', fontSize: 13 },
+  spacer: { flex: 1 },
+  scrollDisplay: { padding: '8px 16px', borderRadius: 8, backgroundColor: c.card, border: `1px solid ${c.border}`, fontFamily: 'JetBrains Mono, monospace', fontSize: 14, color: c.accent, fontWeight: 600 },
+
+  // Main
+  main: { flex: 1, display: 'flex', minHeight: 0 },
+
+  // Page Preview
+  pagePreview: { width: 220, backgroundColor: c.card, borderRight: `1px solid ${c.border}`, padding: 16, display: 'flex', flexDirection: 'column', overflowY: 'auto' },
+  previewLabel: { fontSize: 10, color: c.dim, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8, fontWeight: 600 },
+  sectionList: { display: 'flex', flexDirection: 'column', gap: 6 },
+  sectionItem: { padding: '10px 12px', borderRadius: 8, border: `1px solid ${c.border}`, cursor: 'pointer', transition: 'all 0.15s' },
+  sectionHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  sectionName: { fontSize: 12, fontWeight: 600, color: '#fff' },
+  sectionFile: { fontSize: 9, color: c.dim, fontFamily: 'JetBrains Mono, monospace' },
+  sectionRange: { fontSize: 10, color: c.muted },
+  loadingText: { fontSize: 11, color: c.dim, fontStyle: 'italic', padding: '8px 0' },
+
+  // 3D Preview - contains ACTUAL Scene3D
+  preview3d: { flex: 1, position: 'relative', backgroundColor: c.bg, overflow: 'hidden' },
+
+  // Timeline
+  timelineWrap: { backgroundColor: c.card, borderTop: `1px solid ${c.border}`, padding: '12px 16px' },
+  timelineLabel: { fontSize: 11, color: c.dim, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8, fontWeight: 600 },
+  timeline: { position: 'relative', height: 48, backgroundColor: c.bg, borderRadius: 8, cursor: 'pointer', overflow: 'hidden' },
+  timelineSec: { position: 'absolute', top: 0, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: `1px solid ${c.border}` },
+  timelineSecName: { fontSize: 10, color: c.muted, fontWeight: 500 },
+  playhead: { position: 'absolute', top: 0, bottom: 0, width: 2, zIndex: 10 },
+  playheadLine: { position: 'absolute', top: 0, bottom: 0, left: '50%', width: 2, marginLeft: -1, backgroundColor: c.red, boxShadow: `0 0 8px ${c.red}` },
+  playheadDot: { position: 'absolute', top: -4, left: '50%', width: 10, height: 10, marginLeft: -5, backgroundColor: c.red, borderRadius: '50%', boxShadow: `0 0 8px ${c.red}` },
+  timelineMarkers: { display: 'flex', justifyContent: 'space-between', marginTop: 6, padding: '0 4px' },
+  marker: { fontSize: 10, color: c.dim, fontFamily: 'JetBrains Mono, monospace' },
+
+  // Info Bar
+  infoBar: { height: 48, backgroundColor: c.card, borderTop: `1px solid ${c.border}`, display: 'flex', alignItems: 'center', padding: '0 16px', gap: 16 },
+  infoGroup: { display: 'flex', alignItems: 'center', gap: 8 },
+  infoLabel: { fontSize: 11, color: c.dim, textTransform: 'uppercase', fontWeight: 600 },
+  infoValue: { fontSize: 13, color: c.accent, fontWeight: 600 },
+  infoInput: { width: 70, padding: '6px 8px', borderRadius: 6, border: `1px solid ${c.border}`, backgroundColor: c.bg, color: c.text, fontSize: 12, fontFamily: 'JetBrains Mono, monospace', textAlign: 'center' },
+  infoDivider: { width: 1, height: 24, backgroundColor: c.border },
+
+  // Live Data
+  liveData: { marginTop: 16, padding: 12, backgroundColor: c.bg, borderRadius: 8, fontSize: 11 },
+  liveCard: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: `1px solid ${c.border}`, marginBottom: 8 },
+  liveCardLabel: { color: c.dim, fontSize: 10 },
+  liveCardValue: { color: c.gold, fontWeight: 600 },
+  liveGroup: { marginBottom: 8 },
+  liveGroupLabel: { display: 'block', color: c.dim, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 },
+  liveRow: { display: 'flex', justifyContent: 'space-between', color: c.muted, fontSize: 10, padding: '2px 0' },
+  liveValue: { color: c.text, fontFamily: 'JetBrains Mono, monospace' },
+
+  // Control Panel
+  controlPanel: { position: 'absolute', top: 16, right: 16, width: 280, backgroundColor: c.card, border: `1px solid ${c.border}`, borderRadius: 12, padding: 16, zIndex: 100 },
+  controlHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  controlTitle: { fontSize: 14, fontWeight: 600, color: c.gold },
+  closeBtn: { width: 24, height: 24, borderRadius: 6, border: 'none', background: 'transparent', color: c.muted, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  controlRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  controlLabel: { fontSize: 12, color: c.text },
+  toggleBtn: { padding: '6px 16px', borderRadius: 6, border: `1px solid ${c.border}`, color: c.text, fontSize: 11, fontWeight: 600, cursor: 'pointer' },
+  miniToggle: { padding: '4px 12px', borderRadius: 4, border: `1px solid ${c.border}`, color: c.text, fontSize: 10, fontWeight: 600, cursor: 'pointer' },
+  controlDivider: { height: 1, backgroundColor: c.border, margin: '12px 0' },
+  controlGroup: { marginBottom: 16 },
+  groupLabel: { display: 'block', fontSize: 10, color: c.dim, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 },
+  sliderRow: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 },
+  sliderLabel: { width: 40, fontSize: 10, color: c.muted, fontFamily: 'JetBrains Mono, monospace' },
+  slider: { flex: 1, accentColor: c.gold },
+  sliderValue: { width: 50, fontSize: 11, color: c.text, fontFamily: 'JetBrains Mono, monospace', textAlign: 'right' },
+  resetBtn: { width: '100%', padding: '8px 12px', borderRadius: 6, border: `1px solid ${c.border}`, background: 'transparent', color: c.muted, fontSize: 12, cursor: 'pointer', marginBottom: 8 },
+  exportBtn: { width: '100%', padding: '8px 12px', borderRadius: 6, border: 'none', background: c.accent, color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' },
+
+  // Code Structure
+  codeStructure: { marginTop: 16, padding: 12, backgroundColor: c.bg, borderRadius: 8 },
+  codeSection: { marginTop: 8 },
+  codeSectionTitle: { display: 'block', fontSize: 10, color: c.dim, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 },
+  codeItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', marginBottom: 4, borderRadius: 6, border: `1px solid ${c.border}`, cursor: 'pointer', transition: 'all 0.15s' },
+  codeItemTitle: { fontSize: 11, color: c.text, fontWeight: 500 },
+  codeItemRange: { fontSize: 10, color: c.muted, fontFamily: 'JetBrains Mono, monospace' },
+
+  // Tabs
+  tabBar: { display: 'flex', gap: 4, marginBottom: 16, padding: 4, backgroundColor: c.bg, borderRadius: 8 },
+  tab: { flex: 1, padding: '8px 12px', borderRadius: 6, border: 'none', fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' },
+  tabContent: { maxHeight: 400, overflowY: 'auto' },
+
+  // New input styles
+  inputRow: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 },
+  textInput: { flex: 1, padding: '6px 10px', borderRadius: 6, border: `1px solid ${c.border}`, backgroundColor: c.bg, color: c.text, fontSize: 12 },
+  colorRow: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 },
+  colorInput: { width: 40, height: 28, padding: 0, border: `1px solid ${c.border}`, borderRadius: 4, cursor: 'pointer' },
+
+  // Keyframe Timeline (Canva-style)
+  keyframeTracks: { marginTop: 12, display: 'flex', flexDirection: 'column', gap: 4, backgroundColor: c.bg, borderRadius: 8, padding: 8 },
+  keyframeTrackRow: { display: 'flex', alignItems: 'center', gap: 8, height: 28 },
+  trackLabel: { width: 70, display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11 },
+  addKeyframeBtn: { width: 18, height: 18, borderRadius: 4, border: `1px solid ${c.border}`, background: 'transparent', color: c.muted, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' },
+  keyframeTrack: { flex: 1, height: 24, backgroundColor: c.card, borderRadius: 4, border: `1px solid ${c.border}`, position: 'relative' },
+  deleteKeyframeBtn: { width: 24, height: 24, borderRadius: 4, border: 'none', background: c.red + '33', color: c.red, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+}

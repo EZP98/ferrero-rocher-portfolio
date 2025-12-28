@@ -9,8 +9,14 @@ import { CustomCursor } from './components/CustomCursor'
 import { Hero } from './sections/Hero'
 import { Transition } from './sections/Transition'
 import { DraggableFooter } from './components/DraggableFooter'
+import { ScrollProvider } from './contexts/ScrollContext'
+import { DebugProvider } from './contexts/DebugContext'
 
 gsap.registerPlugin(ScrollTrigger)
+
+// Check if in debug mode
+const isDebugMode = typeof window !== 'undefined' &&
+  new URLSearchParams(window.location.search).get('debug') === 'true'
 
 export default function App() {
   useSmoothScroll()
@@ -28,8 +34,8 @@ export default function App() {
     }
   }, [])
 
-  return (
-    <>
+  const content = (
+    <ScrollProvider>
       {/* Custom cursor (desktop only) */}
       <div className="hidden md:block">
         <CustomCursor />
@@ -55,6 +61,13 @@ export default function App() {
 
       {/* Noise overlay */}
       <div className="noise-overlay" />
-    </>
+    </ScrollProvider>
   )
+
+  // Wrap with DebugProvider when in debug mode
+  if (isDebugMode) {
+    return <DebugProvider>{content}</DebugProvider>
+  }
+
+  return content
 }
