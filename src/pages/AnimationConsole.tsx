@@ -51,7 +51,7 @@ const speedOptions = [
   { label: '4x', value: 0.0006 },
 ]
 
-export function DebugPage() {
+export function AnimationConsole() {
   const [scroll, setScroll] = useState(0)
   const [playing, setPlaying] = useState(false)
   const [showPresets, setShowPresets] = useState(false)
@@ -1373,39 +1373,106 @@ export function DebugPage() {
 
       {/* Complete Effects Panel - ALL PARAMETERS */}
       <div style={styles.effectsPanel}>
-        {/* Row 0: GSAP PRESETS - Quick stage buttons */}
+        {/* Row 0: GSAP PRESETS - Stage presets + Scroll effects */}
         <div style={styles.effectsRow}>
-          <span style={{ ...styles.effectsCategory, backgroundColor: '#88b04b22', color: '#88b04b' }}>⚡ GSAP PRESET</span>
+          <span style={{ ...styles.effectsCategory, backgroundColor: '#88b04b22', color: '#88b04b' }}>⚡ STAGES</span>
           <button style={{ ...styles.quickBtn, backgroundColor: '#88b04b33', border: `1px solid #88b04b` }}
-            onClick={() => { setScroll(0.05); setFerreroState(prev => ({ ...prev, enabled: true, rotX: 0, rotY: 0, rotZ: 0, posX: 0, posY: 0, posZ: 0 })) }}>
+            onClick={() => { setScroll(0.05); setFerreroState(prev => ({ ...prev, enabled: true, rotX: 0, rotY: 0, rotZ: 0, posX: 0, posY: 0, posZ: 0, autoRotate: false })) }}>
             ⭕ Idle
           </button>
           <button style={{ ...styles.quickBtn, backgroundColor: '#88b04b33', border: `1px solid #88b04b` }}
-            onClick={() => { setScroll(0.22); setFerreroState(prev => ({ ...prev, enabled: true, rotX: -0.6, rotY: Math.PI / 2, rotZ: 0, posX: -2, posY: 0, posZ: 0 })) }}>
+            onClick={() => { setScroll(0.22); setFerreroState(prev => ({ ...prev, enabled: true, rotX: -0.6, rotY: Math.PI / 2, rotZ: 0, posX: -2, posY: 0, posZ: 0, autoRotate: false })) }}>
             🔶 Copertura
           </button>
           <button style={{ ...styles.quickBtn, backgroundColor: '#88b04b33', border: `1px solid #88b04b` }}
-            onClick={() => { setScroll(0.37); setFerreroState(prev => ({ ...prev, enabled: true, rotX: -0.3, rotY: Math.PI, rotZ: 0, posX: 2, posY: 0, posZ: 0 })) }}>
+            onClick={() => { setScroll(0.37); setFerreroState(prev => ({ ...prev, enabled: true, rotX: -0.3, rotY: Math.PI, rotZ: 0, posX: 2, posY: 0, posZ: 0, autoRotate: false })) }}>
             ❤️ Cuore
           </button>
           <button style={{ ...styles.quickBtn, backgroundColor: '#88b04b33', border: `1px solid #88b04b` }}
-            onClick={() => { setScroll(0.52); setFerreroState(prev => ({ ...prev, enabled: true, rotX: 0, rotY: Math.PI * 1.3, rotZ: 0, posX: 0, posY: 0, posZ: 0 })) }}>
+            onClick={() => { setScroll(0.52); setFerreroState(prev => ({ ...prev, enabled: true, rotX: 0, rotY: Math.PI * 1.3, rotZ: 0, posX: 0, posY: 0, posZ: 0, autoRotate: false })) }}>
             ✨ Eleganza
           </button>
           <button style={{ ...styles.quickBtn, backgroundColor: '#88b04b33', border: `1px solid #88b04b` }}
             onClick={() => { setScroll(0.75); setFerreroState(prev => ({ ...prev, enabled: true, rotX: 0, rotY: 0, rotZ: 0, posX: 0, posY: 0, posZ: 0, autoRotate: true, autoRotateSpeed: 1.5 })) }}>
             🔄 Spin
           </button>
+
           <div style={styles.effectDivider} />
-          <span style={{ fontSize: 9, color: c.muted }}>Easing:</span>
-          <select style={styles.selectBtn} title="GSAP Easing presets">
-            <option value="power1">Power1</option>
-            <option value="power2">Power2</option>
-            <option value="power3">Power3</option>
-            <option value="power4">Power4</option>
-            <option value="elastic">Elastic</option>
-            <option value="bounce">Bounce</option>
-            <option value="back">Back</option>
+
+          <span style={{ ...styles.effectsCategory, backgroundColor: '#3498db22', color: '#3498db' }}>🎬 SCROLL FX</span>
+          <button style={{ ...styles.quickBtn, backgroundColor: '#3498db22', border: `1px solid #3498db` }}
+            onClick={() => { setFerreroState(prev => ({ ...prev, enabled: true, floatEnabled: true, floatAmplitude: 0.3, floatSpeed: 1.2 })) }}>
+            〰️ Float
+          </button>
+          <button style={{ ...styles.quickBtn, backgroundColor: '#3498db22', border: `1px solid #3498db` }}
+            onClick={() => { setFerreroState(prev => ({ ...prev, enabled: true, bounceEnabled: true, bounceAmplitude: 0.2, bounceSpeed: 2 })) }}>
+            ⬆️ Bounce
+          </button>
+          <button style={{ ...styles.quickBtn, backgroundColor: '#3498db22', border: `1px solid #3498db` }}
+            onClick={() => { setFerreroState(prev => ({ ...prev, enabled: true, scale: 3, emissiveIntensity: 0.5 })); setPostProcessingState(prev => ({ ...prev, enabled: true, bloomEnabled: true, bloomIntensity: 1.5 })) }}>
+            🔍 Zoom
+          </button>
+          <button style={{ ...styles.quickBtn, backgroundColor: '#3498db22', border: `1px solid #3498db` }}
+            onClick={() => { setFerreroState(prev => ({ ...prev, enabled: true, explodeEnabled: true, explodeAmount: 2 })) }}>
+            💥 Explode
+          </button>
+          <button style={{ ...styles.quickBtn, backgroundColor: '#3498db22', border: `1px solid #3498db` }}
+            onClick={() => { setFerreroState(prev => ({ ...prev, enabled: true, wireframe: true, emissiveIntensity: 0.3, emissiveColor: '#00ff00' })) }}>
+            🔲 Wireframe
+          </button>
+        </div>
+
+        {/* Row 0.5: GSAP Easing + Animation Modes */}
+        <div style={styles.effectsRow}>
+          <span style={{ ...styles.effectsCategory, backgroundColor: '#9b59b622', color: '#9b59b6' }}>📈 EASING</span>
+          <select style={{ ...styles.selectBtn, width: 90 }} title="GSAP Easing - controls animation curve">
+            <option value="none">Linear</option>
+            <option value="power1.out">Power1.out</option>
+            <option value="power1.in">Power1.in</option>
+            <option value="power1.inOut">Power1.inOut</option>
+            <option value="power2.out">Power2.out</option>
+            <option value="power2.inOut">Power2.inOut</option>
+            <option value="power3.out">Power3.out</option>
+            <option value="power4.out">Power4.out</option>
+            <option value="back.out">Back.out</option>
+            <option value="back.inOut">Back.inOut</option>
+            <option value="elastic.out">Elastic.out</option>
+            <option value="bounce.out">Bounce.out</option>
+            <option value="circ.out">Circ.out</option>
+            <option value="expo.out">Expo.out</option>
+            <option value="sine.out">Sine.out</option>
+          </select>
+
+          <div style={styles.effectDivider} />
+
+          <span style={{ ...styles.effectsCategory, backgroundColor: '#e67e2222', color: '#e67e22' }}>⏱️ SCRUB</span>
+          <select style={{ ...styles.selectBtn, width: 70 }} title="ScrollTrigger scrub - sync animation to scroll">
+            <option value="false">Off</option>
+            <option value="true">Instant</option>
+            <option value="0.5">0.5s</option>
+            <option value="1">1s</option>
+            <option value="2">2s</option>
+            <option value="3">3s smooth</option>
+          </select>
+
+          <div style={styles.effectDivider} />
+
+          <span style={{ ...styles.effectsCategory, backgroundColor: '#1abc9c22', color: '#1abc9c' }}>📌 PIN</span>
+          <select style={{ ...styles.selectBtn, width: 80 }} title="ScrollTrigger pin - lock element during scroll">
+            <option value="false">No Pin</option>
+            <option value="true">Pin</option>
+            <option value="pinSpacing">Pin+Space</option>
+          </select>
+
+          <div style={styles.effectDivider} />
+
+          <span style={{ ...styles.effectsCategory, backgroundColor: '#e74c3c22', color: '#e74c3c' }}>🎭 STAGGER</span>
+          <select style={{ ...styles.selectBtn, width: 70 }} title="Stagger delay between elements">
+            <option value="0">None</option>
+            <option value="0.02">0.02s</option>
+            <option value="0.05">0.05s</option>
+            <option value="0.1">0.1s</option>
+            <option value="0.2">0.2s</option>
           </select>
         </div>
 
