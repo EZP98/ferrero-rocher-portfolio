@@ -172,6 +172,13 @@ export function DebugPage() {
     starsCount: 200,
     starsSpeed: 0.1,
   })
+  const [transitionState, setTransitionState] = useState({
+    enabled: false,
+    backgroundColor: '#0a0a0a',
+    glowColor: '#d4a853',
+    glowIntensity: 0.3,
+    textColor: '#ffffff',
+  })
 
   // Keyframe animation system
   const [keyframes, setKeyframes] = useState<KeyframeTrack>({
@@ -278,6 +285,10 @@ export function DebugPage() {
   useEffect(() => {
     sendDebugUpdate('background', backgroundState)
   }, [backgroundState, sendDebugUpdate])
+
+  useEffect(() => {
+    sendDebugUpdate('transition', transitionState)
+  }, [transitionState, sendDebugUpdate])
 
 
   // Sync scroll to iframe
@@ -1716,7 +1727,7 @@ export function DebugPage() {
           </>}
         </div>
 
-        {/* Row 9: BACKGROUND - All params */}
+        {/* Row 9: BACKGROUND + TRANSITION - All params */}
         <div style={styles.effectsRow}>
           <span style={{ ...styles.effectsCategory, backgroundColor: '#1abc9c22', color: '#1abc9c' }}>🌌 BG</span>
           <div style={styles.effectGroup}>
@@ -1742,6 +1753,24 @@ export function DebugPage() {
             </>}
           </div>
 
+          <div style={styles.effectDivider} />
+
+          <span style={{ ...styles.effectsCategory, backgroundColor: '#e74c3c22', color: '#e74c3c' }}>🔀 TRANSITION</span>
+          <div style={styles.effectGroup}>
+            <span style={styles.effectLabel}>BG</span>
+            <input type="color" value={transitionState.backgroundColor} onChange={e => setTransitionState(prev => ({ ...prev, enabled: true, backgroundColor: e.target.value }))} style={styles.colorPicker} />
+          </div>
+          <div style={styles.effectGroup}>
+            <span style={styles.effectLabel}>Text</span>
+            <input type="color" value={transitionState.textColor} onChange={e => setTransitionState(prev => ({ ...prev, enabled: true, textColor: e.target.value }))} style={styles.colorPicker} />
+          </div>
+          <div style={styles.effectGroup}>
+            <span style={styles.effectLabel}>Glow</span>
+            <input type="color" value={transitionState.glowColor} onChange={e => setTransitionState(prev => ({ ...prev, enabled: true, glowColor: e.target.value }))} style={styles.colorPicker} />
+            <input type="range" min={0} max={1} step={0.05} value={transitionState.glowIntensity}
+              onChange={e => setTransitionState(prev => ({ ...prev, enabled: true, glowIntensity: parseFloat(e.target.value) }))} style={styles.quickSlider} />
+          </div>
+
           <div style={{ flex: 1 }} />
           <button style={{ ...styles.quickBtn, backgroundColor: c.red + '33', color: c.red, border: `1px solid ${c.red}` }}
             onClick={() => {
@@ -1753,6 +1782,7 @@ export function DebugPage() {
               setCameraState({ enabled: false, fov: 35, positionX: 0, positionY: 0, positionZ: 10, targetX: 0, targetY: 0, targetZ: 0, autoOrbit: false, orbitSpeed: 0.5 })
               setParticlesState({ enabled: false, count: 100, size: 0.02, color: '#d4a853', speed: 0.5, spread: 10, opacity: 0.6, type: 'sparkles' })
               setBackgroundState({ enabled: false, color: '#0A0A0A', gradientEnabled: false, gradientTop: '#1a1a2e', gradientBottom: '#0a0a0a', starsEnabled: false, starsCount: 200, starsSpeed: 0.1 })
+              setTransitionState({ enabled: false, backgroundColor: '#0a0a0a', glowColor: '#d4a853', glowIntensity: 0.3, textColor: '#ffffff' })
             }}>↺ RESET ALL</button>
         </div>
       </div>
