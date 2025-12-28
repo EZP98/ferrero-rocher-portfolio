@@ -1373,6 +1373,42 @@ export function DebugPage() {
 
       {/* Complete Effects Panel - ALL PARAMETERS */}
       <div style={styles.effectsPanel}>
+        {/* Row 0: GSAP PRESETS - Quick stage buttons */}
+        <div style={styles.effectsRow}>
+          <span style={{ ...styles.effectsCategory, backgroundColor: '#88b04b22', color: '#88b04b' }}>⚡ GSAP PRESET</span>
+          <button style={{ ...styles.quickBtn, backgroundColor: '#88b04b33', border: `1px solid #88b04b` }}
+            onClick={() => { setScroll(0.05); setFerreroState(prev => ({ ...prev, enabled: true, rotX: 0, rotY: 0, rotZ: 0, posX: 0, posY: 0, posZ: 0 })) }}>
+            ⭕ Idle
+          </button>
+          <button style={{ ...styles.quickBtn, backgroundColor: '#88b04b33', border: `1px solid #88b04b` }}
+            onClick={() => { setScroll(0.22); setFerreroState(prev => ({ ...prev, enabled: true, rotX: -0.6, rotY: Math.PI / 2, rotZ: 0, posX: -2, posY: 0, posZ: 0 })) }}>
+            🔶 Copertura
+          </button>
+          <button style={{ ...styles.quickBtn, backgroundColor: '#88b04b33', border: `1px solid #88b04b` }}
+            onClick={() => { setScroll(0.37); setFerreroState(prev => ({ ...prev, enabled: true, rotX: -0.3, rotY: Math.PI, rotZ: 0, posX: 2, posY: 0, posZ: 0 })) }}>
+            ❤️ Cuore
+          </button>
+          <button style={{ ...styles.quickBtn, backgroundColor: '#88b04b33', border: `1px solid #88b04b` }}
+            onClick={() => { setScroll(0.52); setFerreroState(prev => ({ ...prev, enabled: true, rotX: 0, rotY: Math.PI * 1.3, rotZ: 0, posX: 0, posY: 0, posZ: 0 })) }}>
+            ✨ Eleganza
+          </button>
+          <button style={{ ...styles.quickBtn, backgroundColor: '#88b04b33', border: `1px solid #88b04b` }}
+            onClick={() => { setScroll(0.75); setFerreroState(prev => ({ ...prev, enabled: true, rotX: 0, rotY: 0, rotZ: 0, posX: 0, posY: 0, posZ: 0, autoRotate: true, autoRotateSpeed: 1.5 })) }}>
+            🔄 Spin
+          </button>
+          <div style={styles.effectDivider} />
+          <span style={{ fontSize: 9, color: c.muted }}>Easing:</span>
+          <select style={styles.selectBtn} title="GSAP Easing presets">
+            <option value="power1">Power1</option>
+            <option value="power2">Power2</option>
+            <option value="power3">Power3</option>
+            <option value="power4">Power4</option>
+            <option value="elastic">Elastic</option>
+            <option value="bounce">Bounce</option>
+            <option value="back">Back</option>
+          </select>
+        </div>
+
         {/* Row 1: FERRERO - Transform */}
         <div style={styles.effectsRow}>
           <span style={{ ...styles.effectsCategory, backgroundColor: c.gold + '22', color: c.gold }}>🍫 FERRERO</span>
