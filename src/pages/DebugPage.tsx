@@ -1360,6 +1360,47 @@ export function DebugPage() {
         </div>
       </div>
 
+      {/* Quick Effects Bar */}
+      <div style={styles.quickEffectsBar}>
+        <span style={styles.quickEffectsLabel}>EFFETTI RAPIDI:</span>
+        <button
+          style={{ ...styles.quickBtn, backgroundColor: ferreroState.autoRotate ? c.gold : c.card }}
+          onClick={() => setFerreroState(prev => ({ ...prev, enabled: true, autoRotate: !prev.autoRotate, autoRotateSpeed: 1 }))}
+        >
+          🔄 Ruota
+        </button>
+        <button
+          style={{ ...styles.quickBtn, backgroundColor: ferreroState.floatEnabled ? c.gold : c.card }}
+          onClick={() => setFerreroState(prev => ({ ...prev, enabled: true, floatEnabled: !prev.floatEnabled, floatAmplitude: 0.3, floatSpeed: 1 }))}
+        >
+          🎈 Fluttua
+        </button>
+        <button
+          style={{ ...styles.quickBtn, backgroundColor: ferreroState.bounceEnabled ? c.gold : c.card }}
+          onClick={() => setFerreroState(prev => ({ ...prev, enabled: true, bounceEnabled: !prev.bounceEnabled, bounceAmplitude: 0.15, bounceSpeed: 2 }))}
+        >
+          ⬆️ Rimbalza
+        </button>
+        <button
+          style={{ ...styles.quickBtn, backgroundColor: ferreroState.emissiveIntensity > 0 ? c.gold : c.card }}
+          onClick={() => setFerreroState(prev => ({ ...prev, enabled: true, emissiveIntensity: prev.emissiveIntensity > 0 ? 0 : 0.8 }))}
+        >
+          ✨ Brilla
+        </button>
+        <button
+          style={{ ...styles.quickBtn, backgroundColor: ferreroState.wireframe ? c.gold : c.card }}
+          onClick={() => setFerreroState(prev => ({ ...prev, enabled: true, wireframe: !prev.wireframe }))}
+        >
+          🔲 Wireframe
+        </button>
+        <button
+          style={{ ...styles.quickBtn, backgroundColor: c.red + '33', color: c.red, border: `1px solid ${c.red}` }}
+          onClick={() => setFerreroState({ enabled: false, rotX: 0, rotY: 0, rotZ: 0, posX: 0, posY: 0, posZ: 0, scale: 2.2, autoRotate: false, autoRotateSpeed: 1, floatEnabled: false, floatAmplitude: 0.2, floatSpeed: 1, bounceEnabled: false, bounceAmplitude: 0.1, bounceSpeed: 2, metalness: 0.8, roughness: 0.2, emissiveIntensity: 0, emissiveColor: '#d4a853', wireframe: false, explodeEnabled: false, explodeAmount: 0 })}
+        >
+          ↺ Reset
+        </button>
+      </div>
+
       {/* Timeline - Canva Style */}
       <div style={styles.timelineWrap}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
@@ -1656,6 +1697,11 @@ const styles: Record<string, CSSProperties> = {
   textInput: { flex: 1, padding: '6px 10px', borderRadius: 6, border: `1px solid ${c.border}`, backgroundColor: c.bg, color: c.text, fontSize: 12 },
   colorRow: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 },
   colorInput: { width: 40, height: 28, padding: 0, border: `1px solid ${c.border}`, borderRadius: 4, cursor: 'pointer' },
+
+  // Quick Effects Bar
+  quickEffectsBar: { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', backgroundColor: c.card, borderTop: `1px solid ${c.border}` },
+  quickEffectsLabel: { fontSize: 10, color: c.dim, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, marginRight: 8 },
+  quickBtn: { padding: '6px 12px', borderRadius: 6, border: `1px solid ${c.border}`, color: '#fff', fontSize: 12, cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 4 },
 
   // Keyframe Timeline (Canva-style)
   keyframeTracks: { marginTop: 12, display: 'flex', flexDirection: 'column', gap: 4, backgroundColor: c.bg, borderRadius: 8, padding: 8 },
