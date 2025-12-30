@@ -1,10 +1,125 @@
 import { useState, useRef, CSSProperties, useEffect, useCallback } from 'react'
 import {
   Play, Pause, RotateCcw, Maximize2, ZoomIn, ZoomOut, Sun, Sparkles, Move, RotateCw,
-  Home, Download, Settings, X, ChevronRight, Eye, Zap, Camera, Layers, Diamond, Plus, Trash2
+  Home, Download, Settings, X, Eye, Zap, Camera, Layers, Diamond, Trash2, Circle
 } from 'lucide-react'
 
-// Presets
+// ========================
+// TYPES
+// ========================
+
+// Easing types
+type EasingType = 'linear' | 'easeIn' | 'easeOut' | 'easeInOut'
+
+// All animatable properties
+interface AnimatableValues {
+  rotX: number
+  rotY: number
+  rotZ: number
+  posX: number
+  posY: number
+  posZ: number
+  scale: number
+  metalness: number
+  roughness: number
+  fov: number
+  bloomIntensity: number
+}
+
+// Keyframe with values
+interface AnimationKeyframe {
+  id: string
+  scroll: number
+  easing: EasingType
+  values: AnimatableValues
+  label?: string
+}
+
+// ========================
+// EASING FUNCTIONS
+// ========================
+
+const easings: Record<EasingType, (t: number) => number> = {
+  linear: (t) => t,
+  easeIn: (t) => t * t,
+  easeOut: (t) => t * (2 - t),
+  easeInOut: (t) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t,
+}
+
+// Interpolate single value
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t
+}
+
+// Interpolate all values between two keyframes
+function interpolateValues(
+  from: AnimatableValues,
+  to: AnimatableValues,
+  t: number,
+  easing: EasingType
+): AnimatableValues {
+  const easedT = easings[easing](t)
+  return {
+    rotX: lerp(from.rotX, to.rotX, easedT),
+    rotY: lerp(from.rotY, to.rotY, easedT),
+    rotZ: lerp(from.rotZ, to.rotZ, easedT),
+    posX: lerp(from.posX, to.posX, easedT),
+    posY: lerp(from.posY, to.posY, easedT),
+    posZ: lerp(from.posZ, to.posZ, easedT),
+    scale: lerp(from.scale, to.scale, easedT),
+    metalness: lerp(from.metalness, to.metalness, easedT),
+    roughness: lerp(from.roughness, to.roughness, easedT),
+    fov: lerp(from.fov, to.fov, easedT),
+    bloomIntensity: lerp(from.bloomIntensity, to.bloomIntensity, easedT),
+  }
+}
+
+// Get interpolated values at scroll position
+function getValuesAtScroll(keyframes: AnimationKeyframe[], scroll: number): AnimatableValues | null {
+  if (keyframes.length === 0) return null
+
+  // Sort by scroll
+  const sorted = [...keyframes].sort((a, b) => a.scroll - b.scroll)
+
+  // Before first keyframe
+  if (scroll <= sorted[0].scroll) return sorted[0].values
+
+  // After last keyframe
+  if (scroll >= sorted[sorted.length - 1].scroll) return sorted[sorted.length - 1].values
+
+  // Find surrounding keyframes
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const from = sorted[i]
+    const to = sorted[i + 1]
+
+    if (scroll >= from.scroll && scroll <= to.scroll) {
+      const t = (scroll - from.scroll) / (to.scroll - from.scroll)
+      return interpolateValues(from.values, to.values, t, to.easing)
+    }
+  }
+
+  return null
+}
+
+// Default values
+const defaultValues: AnimatableValues = {
+  rotX: 0,
+  rotY: 0,
+  rotZ: 0,
+  posX: 0,
+  posY: 0,
+  posZ: 0,
+  scale: 2.2,
+  metalness: 0.8,
+  roughness: 0.2,
+  fov: 35,
+  bloomIntensity: 1.5,
+}
+
+// ========================
+// PRESETS & EFFECTS
+// ========================
+
 const presets = [
   { name: 'Hero', scroll: 0.05, emoji: '🏠' },
   { name: 'Copertura', scroll: 0.22, emoji: '🍫' },
@@ -14,7 +129,6 @@ const presets = [
   { name: 'End', scroll: 0.98, emoji: '🎬' },
 ]
 
-// Quick effects (always visible)
 const quickEffects = [
   { id: 'rotate', name: 'Ruota', icon: RotateCw },
   { id: 'float', name: 'Float', icon: Move },
@@ -22,7 +136,6 @@ const quickEffects = [
   { id: 'bloom', name: 'Bloom', icon: Sparkles },
 ]
 
-// Advanced effects (in panel)
 const advancedEffects = [
   { id: 'bounce', name: 'Bounce', category: 'ferrero' },
   { id: 'explode', name: 'Explode', category: 'ferrero' },
@@ -36,12 +149,9 @@ const advancedEffects = [
   { id: 'orbit', name: 'Camera Orbit', category: 'camera' },
 ]
 
-// Keyframe type
-interface Keyframe {
-  id: string
-  scroll: number
-  label?: string
-}
+// ========================
+// COMPONENT
+// ========================
 
 export function AnimationConsole() {
   // Core state
@@ -50,25 +160,22 @@ export function AnimationConsole() {
   const [speed, setSpeed] = useState(1)
   const [activeEffects, setActiveEffects] = useState<Set<string>>(new Set())
 
+  // Current values (editable directly or via keyframes)
+  const [currentValues, setCurrentValues] = useState<AnimatableValues>({ ...defaultValues })
+
   // Direct manipulation
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
-  const [rotation, setRotation] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
 
   // Panels
   const [showAdvanced, setShowAdvanced] = useState(false)
-  const [advancedTab, setAdvancedTab] = useState<'effects' | 'keyframes' | 'live'>('effects')
+  const [advancedTab, setAdvancedTab] = useState<'effects' | 'keyframes' | 'live'>('keyframes')
 
   // Keyframes
-  const [keyframes, setKeyframes] = useState<Keyframe[]>([])
+  const [keyframes, setKeyframes] = useState<AnimationKeyframe[]>([])
   const [selectedKeyframe, setSelectedKeyframe] = useState<string | null>(null)
-
-  // Advanced values
-  const [fov, setFov] = useState(35)
-  const [particleType, setParticleType] = useState<'sparkles' | 'snow' | 'stars'>('sparkles')
-  const [metalness, setMetalness] = useState(0.8)
-  const [roughness, setRoughness] = useState(0.2)
+  const [keyframeMode, setKeyframeMode] = useState(false) // When true, scroll interpolates
 
   // Live data from iframe
   const [liveData, setLiveData] = useState<{
@@ -80,6 +187,9 @@ export function AnimationConsole() {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const timelineRef = useRef<HTMLDivElement>(null)
   const [iframeReady, setIframeReady] = useState(false)
+
+  // Particle type
+  const [particleType, setParticleType] = useState<'sparkles' | 'snow' | 'stars'>('sparkles')
 
   // Listen for messages from iframe
   useEffect(() => {
@@ -98,6 +208,33 @@ export function AnimationConsole() {
     iframeRef.current.contentWindow.postMessage({ type, ...data }, '*')
   }, [])
 
+  // Apply values to iframe
+  const applyValues = useCallback((values: AnimatableValues) => {
+    sendToIframe('DEBUG_UPDATE', {
+      component: 'ferrero',
+      values: {
+        enabled: true,
+        rotX: values.rotX,
+        rotY: values.rotY,
+        rotZ: values.rotZ,
+        posX: values.posX,
+        posY: values.posY,
+        posZ: values.posZ,
+        scale: values.scale,
+        metalness: values.metalness,
+        roughness: values.roughness,
+      }
+    })
+    sendToIframe('DEBUG_UPDATE', {
+      component: 'camera',
+      values: { enabled: true, fov: values.fov }
+    })
+    sendToIframe('DEBUG_UPDATE', {
+      component: 'postProcessing',
+      values: { enabled: true, bloomIntensity: values.bloomIntensity }
+    })
+  }, [sendToIframe])
+
   // Sync scroll
   const syncScroll = useCallback((value: number) => {
     if (!iframeRef.current?.contentWindow?.document) return
@@ -106,9 +243,19 @@ export function AnimationConsole() {
     iframeRef.current.contentWindow.scrollTo(0, value * max)
   }, [])
 
+  // When scroll changes, interpolate if keyframe mode is active
   useEffect(() => {
     if (iframeReady) syncScroll(scroll)
-  }, [scroll, iframeReady, syncScroll])
+
+    // Interpolate keyframe values
+    if (keyframeMode && keyframes.length >= 2) {
+      const interpolated = getValuesAtScroll(keyframes, scroll)
+      if (interpolated) {
+        setCurrentValues(interpolated)
+        applyValues(interpolated)
+      }
+    }
+  }, [scroll, iframeReady, syncScroll, keyframeMode, keyframes, applyValues])
 
   // Playback
   useEffect(() => {
@@ -130,7 +277,6 @@ export function AnimationConsole() {
       if (isActive) next.delete(id)
       else next.add(id)
 
-      // Send appropriate message to iframe
       const effectMap: Record<string, { component: string, values: Record<string, unknown> }> = {
         rotate: { component: 'ferrero', values: { autoRotate: !isActive, autoRotateSpeed: 1.5 } },
         float: { component: 'ferrero', values: { floatEnabled: !isActive, floatAmplitude: 0.3 } },
@@ -168,11 +314,15 @@ export function AnimationConsole() {
     if (!isDragging) return
     const dx = e.clientX - dragStart.x
     const dy = e.clientY - dragStart.y
-    const newRot = { x: rotation.x + dy * 0.01, y: rotation.y + dx * 0.01 }
-    setRotation(newRot)
+    const newValues = {
+      ...currentValues,
+      rotX: currentValues.rotX + dy * 0.01,
+      rotY: currentValues.rotY + dx * 0.01,
+    }
+    setCurrentValues(newValues)
     setDragStart({ x: e.clientX, y: e.clientY })
-    sendToIframe('DEBUG_UPDATE', { component: 'ferrero', values: { enabled: true, rotX: newRot.x, rotY: newRot.y } })
-  }, [isDragging, dragStart, rotation, sendToIframe])
+    applyValues(newValues)
+  }, [isDragging, dragStart, currentValues, applyValues])
 
   const handleMouseUp = useCallback(() => setIsDragging(false), [])
 
@@ -191,7 +341,9 @@ export function AnimationConsole() {
     e.preventDefault()
     const newZoom = Math.max(0.5, Math.min(3, zoom + (e.deltaY > 0 ? -0.1 : 0.1)))
     setZoom(newZoom)
-    sendToIframe('DEBUG_UPDATE', { component: 'ferrero', values: { enabled: true, scale: 2.2 * newZoom } })
+    const newValues = { ...currentValues, scale: 2.2 * newZoom }
+    setCurrentValues(newValues)
+    applyValues(newValues)
   }
 
   // Timeline click
@@ -204,7 +356,15 @@ export function AnimationConsole() {
   // Keyframe functions
   const addKeyframe = () => {
     const id = `kf-${Date.now()}`
-    setKeyframes(prev => [...prev, { id, scroll, label: `${(scroll * 100).toFixed(0)}%` }].sort((a, b) => a.scroll - b.scroll))
+    const newKf: AnimationKeyframe = {
+      id,
+      scroll,
+      easing: 'easeInOut',
+      values: { ...currentValues },
+      label: `${(scroll * 100).toFixed(0)}%`
+    }
+    setKeyframes(prev => [...prev, newKf].sort((a, b) => a.scroll - b.scroll))
+    setSelectedKeyframe(id)
   }
 
   const removeKeyframe = (id: string) => {
@@ -212,12 +372,29 @@ export function AnimationConsole() {
     if (selectedKeyframe === id) setSelectedKeyframe(null)
   }
 
+  const updateKeyframeEasing = (id: string, easing: EasingType) => {
+    setKeyframes(prev => prev.map(k => k.id === id ? { ...k, easing } : k))
+  }
+
+  const updateKeyframeValue = (id: string, prop: keyof AnimatableValues, value: number) => {
+    setKeyframes(prev => prev.map(k =>
+      k.id === id ? { ...k, values: { ...k.values, [prop]: value } } : k
+    ))
+  }
+
+  // Update current value and apply
+  const updateCurrentValue = (prop: keyof AnimatableValues, value: number) => {
+    const newValues = { ...currentValues, [prop]: value }
+    setCurrentValues(newValues)
+    applyValues(newValues)
+  }
+
   // Reset
   const handleReset = () => {
     setScroll(0)
     setPlaying(false)
     setActiveEffects(new Set())
-    setRotation({ x: 0, y: 0 })
+    setCurrentValues({ ...defaultValues })
     setZoom(1)
     sendToIframe('DEBUG_RESET', {})
   }
@@ -225,29 +402,16 @@ export function AnimationConsole() {
   // Export
   const handleExport = () => {
     const data = {
-      scroll,
-      activeEffects: Array.from(activeEffects),
-      rotation,
-      zoom,
-      fov,
       keyframes,
+      activeEffects: Array.from(activeEffects),
+      currentValues,
       timestamp: new Date().toISOString(),
     }
     navigator.clipboard.writeText(JSON.stringify(data, null, 2))
-    alert('State copied to clipboard!')
+    alert('Animation exported to clipboard!')
   }
 
-  // Update advanced values
-  const updateFov = (value: number) => {
-    setFov(value)
-    sendToIframe('DEBUG_UPDATE', { component: 'camera', values: { enabled: true, fov: value } })
-  }
-
-  const updateMaterial = (prop: 'metalness' | 'roughness', value: number) => {
-    if (prop === 'metalness') setMetalness(value)
-    else setRoughness(value)
-    sendToIframe('DEBUG_UPDATE', { component: 'ferrero', values: { enabled: true, [prop]: value } })
-  }
+  const selectedKf = keyframes.find(k => k.id === selectedKeyframe)
 
   return (
     <div style={styles.container}>
@@ -296,7 +460,7 @@ export function AnimationConsole() {
           {keyframes.map(kf => (
             <div key={kf.id} style={{ ...styles.keyframeMarker, left: `${kf.scroll * 100}%` }}
               onClick={e => { e.stopPropagation(); setScroll(kf.scroll); setSelectedKeyframe(kf.id) }}>
-              <Diamond size={10} fill={selectedKeyframe === kf.id ? '#d4a853' : 'transparent'} stroke="#d4a853" />
+              <Diamond size={10} fill={selectedKeyframe === kf.id ? '#d4a853' : '#d4a853'} stroke="#d4a853" />
             </div>
           ))}
 
@@ -304,6 +468,14 @@ export function AnimationConsole() {
         </div>
 
         <div style={styles.scrollValue}>{(scroll * 100).toFixed(0)}%</div>
+
+        {/* Keyframe Mode Toggle */}
+        <button
+          style={{ ...styles.iconBtn, ...(keyframeMode ? styles.iconBtnActive : {}), marginRight: 4 }}
+          onClick={() => setKeyframeMode(!keyframeMode)}
+          title={keyframeMode ? 'Keyframe Mode: ON' : 'Keyframe Mode: OFF'}>
+          <Circle size={14} fill={keyframeMode ? '#d4a853' : 'transparent'} />
+        </button>
 
         <button style={styles.iconBtn} onClick={handleExport} title="Export"><Download size={16} /></button>
         <button style={{ ...styles.iconBtn, ...(showAdvanced ? styles.iconBtnActive : {}) }}
@@ -315,7 +487,7 @@ export function AnimationConsole() {
       {/* Main Area */}
       <div style={styles.mainArea}>
         {/* Preview */}
-        <div style={{ ...styles.preview, marginRight: showAdvanced ? 300 : 0 }}
+        <div style={{ ...styles.preview, marginRight: showAdvanced ? 320 : 0 }}
           onMouseDown={handleMouseDown} onWheel={handleWheel}>
           <iframe ref={iframeRef} src="/?debug=true" style={styles.iframe}
             onLoad={() => { setIframeReady(true); syncScroll(scroll) }} />
@@ -329,19 +501,26 @@ export function AnimationConsole() {
           {isDragging && (
             <div style={styles.dragHint}><Move size={16} /> Trascina per ruotare</div>
           )}
+
+          {/* Keyframe mode indicator */}
+          {keyframeMode && keyframes.length >= 2 && (
+            <div style={styles.keyframeModeIndicator}>
+              <Diamond size={12} /> INTERPOLATION MODE
+            </div>
+          )}
         </div>
 
         {/* Advanced Panel */}
         {showAdvanced && (
           <div style={styles.advancedPanel} className="no-drag">
             <div style={styles.panelHeader}>
-              <span style={styles.panelTitle}>Avanzate</span>
+              <span style={styles.panelTitle}>Controlli</span>
               <button style={styles.closeBtn} onClick={() => setShowAdvanced(false)}><X size={16} /></button>
             </div>
 
             {/* Tabs */}
             <div style={styles.tabs}>
-              {(['effects', 'keyframes', 'live'] as const).map(tab => (
+              {(['keyframes', 'effects', 'live'] as const).map(tab => (
                 <button key={tab} style={{ ...styles.tab, ...(advancedTab === tab ? styles.tabActive : {}) }}
                   onClick={() => setAdvancedTab(tab)}>
                   {tab === 'effects' && <Zap size={12} />}
@@ -353,6 +532,188 @@ export function AnimationConsole() {
             </div>
 
             <div style={styles.panelContent}>
+              {/* Keyframes Tab - Now Primary */}
+              {advancedTab === 'keyframes' && (
+                <>
+                  <div style={styles.keyframeHeader}>
+                    <div>
+                      <span style={styles.kfCount}>{keyframes.length} keyframes</span>
+                      {keyframeMode && keyframes.length >= 2 && (
+                        <span style={styles.kfInterpolating}> - Interpolating</span>
+                      )}
+                    </div>
+                    <button style={styles.recordBtn} onClick={addKeyframe}>
+                      <Circle size={10} fill="#ff4444" /> REC
+                    </button>
+                  </div>
+
+                  {/* Keyframe List */}
+                  <div style={styles.keyframeList}>
+                    {keyframes.map((kf, i) => (
+                      <div
+                        key={kf.id}
+                        style={{
+                          ...styles.keyframeItem,
+                          ...(selectedKeyframe === kf.id ? styles.keyframeItemActive : {})
+                        }}
+                        onClick={() => { setScroll(kf.scroll); setSelectedKeyframe(kf.id) }}>
+                        <div style={styles.kfLeft}>
+                          <Diamond size={12} fill="#d4a853" />
+                          <span style={styles.kfIndex}>#{i + 1}</span>
+                          <span style={styles.kfScroll}>{(kf.scroll * 100).toFixed(0)}%</span>
+                        </div>
+                        <select
+                          style={styles.easingSelect}
+                          value={kf.easing}
+                          onClick={e => e.stopPropagation()}
+                          onChange={e => updateKeyframeEasing(kf.id, e.target.value as EasingType)}>
+                          <option value="linear">Linear</option>
+                          <option value="easeIn">Ease In</option>
+                          <option value="easeOut">Ease Out</option>
+                          <option value="easeInOut">Ease InOut</option>
+                        </select>
+                        <button
+                          style={styles.deleteKfBtn}
+                          onClick={e => { e.stopPropagation(); removeKeyframe(kf.id) }}>
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Selected Keyframe Editor */}
+                  {selectedKf && (
+                    <div style={styles.keyframeEditor}>
+                      <div style={styles.editorTitle}>
+                        Keyframe @ {(selectedKf.scroll * 100).toFixed(0)}%
+                      </div>
+
+                      <div style={styles.propertyGroup}>
+                        <div style={styles.groupTitle}>Rotation</div>
+                        {(['rotX', 'rotY', 'rotZ'] as const).map(prop => (
+                          <div key={prop} style={styles.propRow}>
+                            <span style={styles.propLabel}>{prop}</span>
+                            <input
+                              type="range"
+                              min={-Math.PI}
+                              max={Math.PI}
+                              step={0.01}
+                              value={selectedKf.values[prop]}
+                              onChange={e => updateKeyframeValue(selectedKf.id, prop, parseFloat(e.target.value))}
+                              style={styles.propSlider}
+                            />
+                            <span style={styles.propValue}>{selectedKf.values[prop].toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div style={styles.propertyGroup}>
+                        <div style={styles.groupTitle}>Position</div>
+                        {(['posX', 'posY', 'posZ'] as const).map(prop => (
+                          <div key={prop} style={styles.propRow}>
+                            <span style={styles.propLabel}>{prop}</span>
+                            <input
+                              type="range"
+                              min={-5}
+                              max={5}
+                              step={0.1}
+                              value={selectedKf.values[prop]}
+                              onChange={e => updateKeyframeValue(selectedKf.id, prop, parseFloat(e.target.value))}
+                              style={styles.propSlider}
+                            />
+                            <span style={styles.propValue}>{selectedKf.values[prop].toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div style={styles.propertyGroup}>
+                        <div style={styles.groupTitle}>Transform</div>
+                        <div style={styles.propRow}>
+                          <span style={styles.propLabel}>scale</span>
+                          <input
+                            type="range"
+                            min={0.5}
+                            max={5}
+                            step={0.1}
+                            value={selectedKf.values.scale}
+                            onChange={e => updateKeyframeValue(selectedKf.id, 'scale', parseFloat(e.target.value))}
+                            style={styles.propSlider}
+                          />
+                          <span style={styles.propValue}>{selectedKf.values.scale.toFixed(2)}</span>
+                        </div>
+                      </div>
+
+                      <div style={styles.propertyGroup}>
+                        <div style={styles.groupTitle}>Material</div>
+                        {(['metalness', 'roughness'] as const).map(prop => (
+                          <div key={prop} style={styles.propRow}>
+                            <span style={styles.propLabel}>{prop}</span>
+                            <input
+                              type="range"
+                              min={0}
+                              max={1}
+                              step={0.05}
+                              value={selectedKf.values[prop]}
+                              onChange={e => updateKeyframeValue(selectedKf.id, prop, parseFloat(e.target.value))}
+                              style={styles.propSlider}
+                            />
+                            <span style={styles.propValue}>{selectedKf.values[prop].toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div style={styles.propertyGroup}>
+                        <div style={styles.groupTitle}>Camera & FX</div>
+                        <div style={styles.propRow}>
+                          <span style={styles.propLabel}>fov</span>
+                          <input
+                            type="range"
+                            min={15}
+                            max={90}
+                            step={1}
+                            value={selectedKf.values.fov}
+                            onChange={e => updateKeyframeValue(selectedKf.id, 'fov', parseFloat(e.target.value))}
+                            style={styles.propSlider}
+                          />
+                          <span style={styles.propValue}>{selectedKf.values.fov.toFixed(0)}°</span>
+                        </div>
+                        <div style={styles.propRow}>
+                          <span style={styles.propLabel}>bloom</span>
+                          <input
+                            type="range"
+                            min={0}
+                            max={5}
+                            step={0.1}
+                            value={selectedKf.values.bloomIntensity}
+                            onChange={e => updateKeyframeValue(selectedKf.id, 'bloomIntensity', parseFloat(e.target.value))}
+                            style={styles.propSlider}
+                          />
+                          <span style={styles.propValue}>{selectedKf.values.bloomIntensity.toFixed(1)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* No keyframes state */}
+                  {keyframes.length === 0 && (
+                    <div style={styles.emptyState}>
+                      <Diamond size={24} stroke="#444" />
+                      <div style={styles.emptyTitle}>Nessun keyframe</div>
+                      <div style={styles.emptyText}>
+                        Premi REC per salvare la posizione e i valori correnti come keyframe.
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Quick current values editor */}
+                  {!selectedKf && keyframes.length > 0 && (
+                    <div style={styles.currentValuesHint}>
+                      Seleziona un keyframe per modificarne i valori
+                    </div>
+                  )}
+                </>
+              )}
+
               {/* Effects Tab */}
               {advancedTab === 'effects' && (
                 <>
@@ -366,15 +727,15 @@ export function AnimationConsole() {
 
                   <div style={styles.sliderRow}>
                     <span>Metalness</span>
-                    <input type="range" min={0} max={1} step={0.05} value={metalness}
-                      onChange={e => updateMaterial('metalness', parseFloat(e.target.value))} style={styles.slider} />
-                    <span style={styles.sliderValue}>{metalness.toFixed(2)}</span>
+                    <input type="range" min={0} max={1} step={0.05} value={currentValues.metalness}
+                      onChange={e => updateCurrentValue('metalness', parseFloat(e.target.value))} style={styles.slider} />
+                    <span style={styles.sliderValue}>{currentValues.metalness.toFixed(2)}</span>
                   </div>
                   <div style={styles.sliderRow}>
                     <span>Roughness</span>
-                    <input type="range" min={0} max={1} step={0.05} value={roughness}
-                      onChange={e => updateMaterial('roughness', parseFloat(e.target.value))} style={styles.slider} />
-                    <span style={styles.sliderValue}>{roughness.toFixed(2)}</span>
+                    <input type="range" min={0} max={1} step={0.05} value={currentValues.roughness}
+                      onChange={e => updateCurrentValue('roughness', parseFloat(e.target.value))} style={styles.slider} />
+                    <span style={styles.sliderValue}>{currentValues.roughness.toFixed(2)}</span>
                   </div>
 
                   <div style={styles.sectionTitle}><Sparkles size={12} /> Post FX</div>
@@ -414,42 +775,9 @@ export function AnimationConsole() {
                   </div>
                   <div style={styles.sliderRow}>
                     <span>FOV</span>
-                    <input type="range" min={15} max={90} step={5} value={fov}
-                      onChange={e => updateFov(parseInt(e.target.value))} style={styles.slider} />
-                    <span style={styles.sliderValue}>{fov}°</span>
-                  </div>
-                </>
-              )}
-
-              {/* Keyframes Tab */}
-              {advancedTab === 'keyframes' && (
-                <>
-                  <div style={styles.keyframeHeader}>
-                    <span>Keyframes ({keyframes.length})</span>
-                    <button style={styles.addKfBtn} onClick={addKeyframe}><Plus size={14} /> Add</button>
-                  </div>
-
-                  {keyframes.length === 0 ? (
-                    <div style={styles.emptyState}>
-                      Nessun keyframe.<br/>Clicca "Add" per aggiungerne uno alla posizione corrente.
-                    </div>
-                  ) : (
-                    <div style={styles.keyframeList}>
-                      {keyframes.map(kf => (
-                        <div key={kf.id} style={{ ...styles.keyframeItem, ...(selectedKeyframe === kf.id ? styles.keyframeItemActive : {}) }}
-                          onClick={() => { setScroll(kf.scroll); setSelectedKeyframe(kf.id) }}>
-                          <Diamond size={12} stroke="#d4a853" fill={selectedKeyframe === kf.id ? '#d4a853' : 'transparent'} />
-                          <span style={styles.keyframeLabel}>{(kf.scroll * 100).toFixed(0)}%</span>
-                          <button style={styles.deleteKfBtn} onClick={e => { e.stopPropagation(); removeKeyframe(kf.id) }}>
-                            <Trash2 size={12} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <div style={styles.keyframeTip}>
-                    <ChevronRight size={12} /> I keyframe sono marker visivi sulla timeline
+                    <input type="range" min={15} max={90} step={5} value={currentValues.fov}
+                      onChange={e => updateCurrentValue('fov', parseInt(e.target.value))} style={styles.slider} />
+                    <span style={styles.sliderValue}>{currentValues.fov}°</span>
                   </div>
                 </>
               )}
@@ -457,7 +785,7 @@ export function AnimationConsole() {
               {/* Live Tab */}
               {advancedTab === 'live' && (
                 <>
-                  <div style={styles.sectionTitle}><Eye size={12} /> Live Data</div>
+                  <div style={styles.sectionTitle}><Eye size={12} /> Iframe Data</div>
                   {liveData ? (
                     <div style={styles.liveGrid}>
                       <div style={styles.liveRow}><span>Rot X</span><span>{liveData.rotX.toFixed(2)}</span></div>
@@ -473,12 +801,14 @@ export function AnimationConsole() {
                     <div style={styles.emptyState}>In attesa di dati dall'iframe...</div>
                   )}
 
-                  <div style={{ ...styles.sectionTitle, marginTop: 16 }}>Console State</div>
+                  <div style={{ ...styles.sectionTitle, marginTop: 16 }}>Current Values</div>
                   <div style={styles.liveGrid}>
-                    <div style={styles.liveRow}><span>Zoom</span><span>{(zoom * 100).toFixed(0)}%</span></div>
-                    <div style={styles.liveRow}><span>Rotation X</span><span>{rotation.x.toFixed(2)}</span></div>
-                    <div style={styles.liveRow}><span>Rotation Y</span><span>{rotation.y.toFixed(2)}</span></div>
-                    <div style={styles.liveRow}><span>Active FX</span><span>{activeEffects.size}</span></div>
+                    <div style={styles.liveRow}><span>Rot X</span><span>{currentValues.rotX.toFixed(2)}</span></div>
+                    <div style={styles.liveRow}><span>Rot Y</span><span>{currentValues.rotY.toFixed(2)}</span></div>
+                    <div style={styles.liveRow}><span>Scale</span><span>{currentValues.scale.toFixed(2)}</span></div>
+                    <div style={styles.liveRow}><span>FOV</span><span>{currentValues.fov}°</span></div>
+                    <div style={styles.liveRow}><span>Metalness</span><span>{currentValues.metalness.toFixed(2)}</span></div>
+                    <div style={styles.liveRow}><span>Bloom</span><span>{currentValues.bloomIntensity.toFixed(1)}</span></div>
                   </div>
                 </>
               )}
@@ -511,8 +841,8 @@ export function AnimationConsole() {
             )
           })}
 
-          <button style={{ ...styles.effectBtn, marginLeft: 4 }} onClick={() => setShowAdvanced(true)}>
-            <Settings size={14} /><span>+Altro</span>
+          <button style={{ ...styles.effectBtn, marginLeft: 4 }} onClick={() => { setShowAdvanced(true); setAdvancedTab('keyframes') }}>
+            <Diamond size={14} /><span>Keyframes</span>
           </button>
 
           <div style={styles.separator} />
@@ -526,7 +856,10 @@ export function AnimationConsole() {
   )
 }
 
-// Styles
+// ========================
+// STYLES
+// ========================
+
 const gold = '#d4a853'
 const styles: Record<string, CSSProperties> = {
   container: { height: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#0a0a0a', fontFamily: 'Inter, -apple-system, sans-serif', color: '#fff', overflow: 'hidden' },
@@ -558,9 +891,10 @@ const styles: Record<string, CSSProperties> = {
   loading: { position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0a0a', color: '#666' },
   zoomIndicator: { position: 'absolute', bottom: 20, right: 20, display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', borderRadius: 20, color: '#888', fontSize: 11 },
   dragHint: { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', display: 'flex', alignItems: 'center', gap: 8, padding: '12px 20px', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', borderRadius: 12, color: '#fff', fontSize: 13, pointerEvents: 'none' },
+  keyframeModeIndicator: { position: 'absolute', top: 20, left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: `${gold}22`, border: `1px solid ${gold}44`, borderRadius: 20, color: gold, fontSize: 11, fontWeight: 600 },
 
   // Advanced Panel
-  advancedPanel: { position: 'absolute', right: 0, top: 0, bottom: 0, width: 300, background: '#141414', borderLeft: '1px solid #222', display: 'flex', flexDirection: 'column', zIndex: 10 },
+  advancedPanel: { position: 'absolute', right: 0, top: 0, bottom: 0, width: 320, background: '#141414', borderLeft: '1px solid #222', display: 'flex', flexDirection: 'column', zIndex: 10 },
   panelHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid #222' },
   panelTitle: { fontSize: 13, fontWeight: 600 },
   closeBtn: { width: 28, height: 28, borderRadius: 6, border: 'none', background: 'transparent', color: '#666', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
@@ -568,6 +902,36 @@ const styles: Record<string, CSSProperties> = {
   tab: { flex: 1, padding: '10px', border: 'none', background: 'transparent', color: '#666', fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 },
   tabActive: { background: '#1a1a1a', color: '#fff', borderBottom: `2px solid ${gold}` },
   panelContent: { flex: 1, overflow: 'auto', padding: 16 },
+
+  // Keyframes Tab
+  keyframeHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  kfCount: { fontSize: 12, color: '#888' },
+  kfInterpolating: { fontSize: 10, color: gold },
+  recordBtn: { display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 6, border: '1px solid #ff4444', background: 'rgba(255,68,68,0.1)', color: '#ff6666', fontSize: 11, fontWeight: 600, cursor: 'pointer' },
+  keyframeList: { display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 16 },
+  keyframeItem: { display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 6, background: '#1a1a1a', cursor: 'pointer', border: '1px solid transparent' },
+  keyframeItemActive: { background: `${gold}15`, borderColor: `${gold}44` },
+  kfLeft: { display: 'flex', alignItems: 'center', gap: 8, flex: 1 },
+  kfIndex: { fontSize: 10, color: '#666' },
+  kfScroll: { fontSize: 12, fontFamily: 'monospace', color: '#fff' },
+  easingSelect: { padding: '4px 8px', borderRadius: 4, border: '1px solid #333', background: '#0a0a0a', color: '#888', fontSize: 10, cursor: 'pointer' },
+  deleteKfBtn: { width: 24, height: 24, borderRadius: 4, border: 'none', background: 'transparent', color: '#666', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+
+  // Keyframe Editor
+  keyframeEditor: { padding: 12, background: '#1a1a1a', borderRadius: 8, marginTop: 8 },
+  editorTitle: { fontSize: 11, fontWeight: 600, color: gold, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' },
+  propertyGroup: { marginBottom: 12 },
+  groupTitle: { fontSize: 10, color: '#666', marginBottom: 6, textTransform: 'uppercase' },
+  propRow: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 },
+  propLabel: { width: 50, fontSize: 10, color: '#888', fontFamily: 'monospace' },
+  propSlider: { flex: 1, accentColor: gold, height: 4 },
+  propValue: { width: 45, fontSize: 10, color: '#fff', fontFamily: 'monospace', textAlign: 'right' },
+
+  // Empty state
+  emptyState: { padding: 32, textAlign: 'center', color: '#555' },
+  emptyTitle: { fontSize: 14, fontWeight: 500, marginTop: 12, marginBottom: 8, color: '#888' },
+  emptyText: { fontSize: 12, lineHeight: 1.5, color: '#555' },
+  currentValuesHint: { padding: 16, textAlign: 'center', fontSize: 11, color: '#555', fontStyle: 'italic' },
 
   // Effects
   sectionTitle: { fontSize: 10, fontWeight: 600, textTransform: 'uppercase', color: '#666', marginBottom: 8, marginTop: 16, display: 'flex', alignItems: 'center', gap: 6 },
@@ -580,17 +944,6 @@ const styles: Record<string, CSSProperties> = {
   subOption: { display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, fontSize: 11, color: '#666' },
   miniBtn: { padding: '4px 8px', borderRadius: 4, border: '1px solid #333', background: 'transparent', color: '#666', fontSize: 10, cursor: 'pointer' },
   miniBtnActive: { background: gold, borderColor: gold, color: '#000' },
-
-  // Keyframes
-  keyframeHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  addKfBtn: { display: 'flex', alignItems: 'center', gap: 4, padding: '6px 12px', borderRadius: 6, border: `1px solid ${gold}`, background: 'transparent', color: gold, fontSize: 11, cursor: 'pointer' },
-  keyframeList: { display: 'flex', flexDirection: 'column', gap: 4 },
-  keyframeItem: { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 6, background: '#1a1a1a', cursor: 'pointer' },
-  keyframeItemActive: { background: `${gold}22`, border: `1px solid ${gold}44` },
-  keyframeLabel: { flex: 1, fontSize: 12, fontFamily: 'monospace' },
-  deleteKfBtn: { width: 24, height: 24, borderRadius: 4, border: 'none', background: 'transparent', color: '#666', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  emptyState: { padding: 20, textAlign: 'center', color: '#555', fontSize: 12, lineHeight: 1.6 },
-  keyframeTip: { marginTop: 16, padding: 12, background: '#1a1a1a', borderRadius: 6, fontSize: 11, color: '#666', display: 'flex', alignItems: 'center', gap: 6 },
 
   // Live
   liveGrid: { display: 'flex', flexDirection: 'column', gap: 4 },
