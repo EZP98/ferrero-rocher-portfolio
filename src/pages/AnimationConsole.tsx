@@ -1,17 +1,16 @@
 import { useState, useRef, CSSProperties, useEffect, useCallback } from 'react'
 import {
   Play, Pause, RotateCcw, Maximize2, ZoomIn, ZoomOut, Sun, Sparkles, Move, RotateCw,
-  Home, Download, Settings, X, Eye, Zap, Camera, Layers, Diamond, Trash2, Circle
+  Home, Download, Settings, X, Eye, Diamond, Trash2, Circle,
+  Bookmark, SkipBack, SkipForward, Repeat
 } from 'lucide-react'
 
 // ========================
 // TYPES
 // ========================
 
-// Easing types
 type EasingType = 'linear' | 'easeIn' | 'easeOut' | 'easeInOut'
 
-// All animatable properties
 interface AnimatableValues {
   rotX: number
   rotY: number
@@ -26,13 +25,26 @@ interface AnimatableValues {
   bloomIntensity: number
 }
 
-// Keyframe with values
 interface AnimationKeyframe {
   id: string
   scroll: number
   easing: EasingType
   values: AnimatableValues
   label?: string
+}
+
+// User-created bookmark (like Theatre.js focus markers)
+interface Bookmark {
+  id: string
+  scroll: number
+  label: string
+  color: string
+}
+
+// Focus range for looping a section
+interface FocusRange {
+  start: number
+  end: number
 }
 
 // ========================
@@ -46,12 +58,10 @@ const easings: Record<EasingType, (t: number) => number> = {
   easeInOut: (t) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t,
 }
 
-// Interpolate single value
 function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t
 }
 
-// Interpolate all values between two keyframes
 function interpolateValues(
   from: AnimatableValues,
   to: AnimatableValues,
@@ -74,80 +84,32 @@ function interpolateValues(
   }
 }
 
-// Get interpolated values at scroll position
 function getValuesAtScroll(keyframes: AnimationKeyframe[], scroll: number): AnimatableValues | null {
   if (keyframes.length === 0) return null
-
-  // Sort by scroll
   const sorted = [...keyframes].sort((a, b) => a.scroll - b.scroll)
-
-  // Before first keyframe
   if (scroll <= sorted[0].scroll) return sorted[0].values
-
-  // After last keyframe
   if (scroll >= sorted[sorted.length - 1].scroll) return sorted[sorted.length - 1].values
-
-  // Find surrounding keyframes
   for (let i = 0; i < sorted.length - 1; i++) {
     const from = sorted[i]
     const to = sorted[i + 1]
-
     if (scroll >= from.scroll && scroll <= to.scroll) {
       const t = (scroll - from.scroll) / (to.scroll - from.scroll)
       return interpolateValues(from.values, to.values, t, to.easing)
     }
   }
-
   return null
 }
 
-// Default values
 const defaultValues: AnimatableValues = {
-  rotX: 0,
-  rotY: 0,
-  rotZ: 0,
-  posX: 0,
-  posY: 0,
-  posZ: 0,
+  rotX: 0, rotY: 0, rotZ: 0,
+  posX: 0, posY: 0, posZ: 0,
   scale: 2.2,
-  metalness: 0.8,
-  roughness: 0.2,
-  fov: 35,
-  bloomIntensity: 1.5,
+  metalness: 0.8, roughness: 0.2,
+  fov: 35, bloomIntensity: 1.5,
 }
 
-// ========================
-// PRESETS & EFFECTS
-// ========================
-
-const presets = [
-  { name: 'Hero', scroll: 0.05, emoji: '🏠' },
-  { name: 'Copertura', scroll: 0.22, emoji: '🍫' },
-  { name: 'Cuore', scroll: 0.37, emoji: '❤️' },
-  { name: 'Eleganza', scroll: 0.52, emoji: '✨' },
-  { name: 'Transition', scroll: 0.70, emoji: '🌙' },
-  { name: 'End', scroll: 0.98, emoji: '🎬' },
-]
-
-const quickEffects = [
-  { id: 'rotate', name: 'Ruota', icon: RotateCw },
-  { id: 'float', name: 'Float', icon: Move },
-  { id: 'glow', name: 'Glow', icon: Sun },
-  { id: 'bloom', name: 'Bloom', icon: Sparkles },
-]
-
-const advancedEffects = [
-  { id: 'bounce', name: 'Bounce', category: 'ferrero' },
-  { id: 'explode', name: 'Explode', category: 'ferrero' },
-  { id: 'wireframe', name: 'Wireframe', category: 'ferrero' },
-  { id: 'vignette', name: 'Vignette', category: 'fx' },
-  { id: 'chromatic', name: 'Chromatic', category: 'fx' },
-  { id: 'noise', name: 'Noise', category: 'fx' },
-  { id: 'particles', name: 'Particles', category: 'scene' },
-  { id: 'stars', name: 'Stars BG', category: 'scene' },
-  { id: 'gradient', name: 'Gradient BG', category: 'scene' },
-  { id: 'orbit', name: 'Camera Orbit', category: 'camera' },
-]
+// Bookmark colors
+const bookmarkColors = ['#d4a853', '#4a9eff', '#ff6b6b', '#51cf66', '#cc5de8', '#ff922b']
 
 // ========================
 // COMPONENT
@@ -158,9 +120,6 @@ export function AnimationConsole() {
   const [scroll, setScroll] = useState(0)
   const [playing, setPlaying] = useState(false)
   const [speed, setSpeed] = useState(1)
-  const [activeEffects, setActiveEffects] = useState<Set<string>>(new Set())
-
-  // Current values (editable directly or via keyframes)
   const [currentValues, setCurrentValues] = useState<AnimatableValues>({ ...defaultValues })
 
   // Direct manipulation
@@ -170,12 +129,22 @@ export function AnimationConsole() {
 
   // Panels
   const [showAdvanced, setShowAdvanced] = useState(false)
-  const [advancedTab, setAdvancedTab] = useState<'effects' | 'keyframes' | 'live'>('keyframes')
+  const [advancedTab, setAdvancedTab] = useState<'keyframes' | 'bookmarks' | 'live'>('keyframes')
 
   // Keyframes
   const [keyframes, setKeyframes] = useState<AnimationKeyframe[]>([])
   const [selectedKeyframe, setSelectedKeyframe] = useState<string | null>(null)
-  const [keyframeMode, setKeyframeMode] = useState(false) // When true, scroll interpolates
+  const [keyframeMode, setKeyframeMode] = useState(false)
+
+  // Bookmarks (user-created markers)
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([])
+
+  // Focus range (Theatre.js style loop section)
+  const [focusRange, setFocusRange] = useState<FocusRange | null>(null)
+  const [loopFocusRange, setLoopFocusRange] = useState(false)
+
+  // Effects (dynamic, not hardcoded)
+  const [activeEffects, setActiveEffects] = useState<Set<string>>(new Set())
 
   // Live data from iframe
   const [liveData, setLiveData] = useState<{
@@ -187,9 +156,6 @@ export function AnimationConsole() {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const timelineRef = useRef<HTMLDivElement>(null)
   const [iframeReady, setIframeReady] = useState(false)
-
-  // Particle type
-  const [particleType, setParticleType] = useState<'sparkles' | 'snow' | 'stars'>('sparkles')
 
   // Listen for messages from iframe
   useEffect(() => {
@@ -214,25 +180,13 @@ export function AnimationConsole() {
       component: 'ferrero',
       values: {
         enabled: true,
-        rotX: values.rotX,
-        rotY: values.rotY,
-        rotZ: values.rotZ,
-        posX: values.posX,
-        posY: values.posY,
-        posZ: values.posZ,
-        scale: values.scale,
-        metalness: values.metalness,
-        roughness: values.roughness,
+        rotX: values.rotX, rotY: values.rotY, rotZ: values.rotZ,
+        posX: values.posX, posY: values.posY, posZ: values.posZ,
+        scale: values.scale, metalness: values.metalness, roughness: values.roughness,
       }
     })
-    sendToIframe('DEBUG_UPDATE', {
-      component: 'camera',
-      values: { enabled: true, fov: values.fov }
-    })
-    sendToIframe('DEBUG_UPDATE', {
-      component: 'postProcessing',
-      values: { enabled: true, bloomIntensity: values.bloomIntensity }
-    })
+    sendToIframe('DEBUG_UPDATE', { component: 'camera', values: { enabled: true, fov: values.fov } })
+    sendToIframe('DEBUG_UPDATE', { component: 'postProcessing', values: { enabled: true, bloomIntensity: values.bloomIntensity } })
   }, [sendToIframe])
 
   // Sync scroll
@@ -243,11 +197,9 @@ export function AnimationConsole() {
     iframeRef.current.contentWindow.scrollTo(0, value * max)
   }, [])
 
-  // When scroll changes, interpolate if keyframe mode is active
+  // When scroll changes
   useEffect(() => {
     if (iframeReady) syncScroll(scroll)
-
-    // Interpolate keyframe values
     if (keyframeMode && keyframes.length >= 2) {
       const interpolated = getValuesAtScroll(keyframes, scroll)
       if (interpolated) {
@@ -257,48 +209,41 @@ export function AnimationConsole() {
     }
   }, [scroll, iframeReady, syncScroll, keyframeMode, keyframes, applyValues])
 
-  // Playback
+  // Playback with focus range support
   useEffect(() => {
     if (!playing) return
     const interval = setInterval(() => {
       setScroll(prev => {
-        if (prev >= 1) { setPlaying(false); return 0 }
-        return prev + (0.0002 * speed)
+        const rangeStart = focusRange?.start ?? 0
+        const rangeEnd = focusRange?.end ?? 1
+
+        let next = prev + (0.0002 * speed)
+
+        // If using focus range and looping
+        if (loopFocusRange && focusRange) {
+          if (next >= rangeEnd) {
+            return rangeStart
+          }
+        } else {
+          if (next >= rangeEnd) {
+            setPlaying(false)
+            return rangeEnd
+          }
+        }
+        return next
       })
     }, 16)
     return () => clearInterval(interval)
-  }, [playing, speed])
+  }, [playing, speed, focusRange, loopFocusRange])
 
   // Toggle effect
-  const toggleEffect = (id: string) => {
+  const toggleEffect = (id: string, config: { component: string, values: Record<string, unknown> }) => {
     setActiveEffects(prev => {
       const next = new Set(prev)
       const isActive = next.has(id)
       if (isActive) next.delete(id)
       else next.add(id)
-
-      const effectMap: Record<string, { component: string, values: Record<string, unknown> }> = {
-        rotate: { component: 'ferrero', values: { autoRotate: !isActive, autoRotateSpeed: 1.5 } },
-        float: { component: 'ferrero', values: { floatEnabled: !isActive, floatAmplitude: 0.3 } },
-        bounce: { component: 'ferrero', values: { bounceEnabled: !isActive, bounceAmplitude: 0.15 } },
-        explode: { component: 'ferrero', values: { explodeEnabled: !isActive, explodeAmount: isActive ? 0 : 0.5 } },
-        wireframe: { component: 'ferrero', values: { wireframe: !isActive } },
-        glow: { component: 'title', values: { glowEnabled: !isActive, glowIntensity: 15 } },
-        bloom: { component: 'postProcessing', values: { bloomEnabled: !isActive, bloomIntensity: 1.5 } },
-        vignette: { component: 'postProcessing', values: { vignetteEnabled: !isActive, vignetteIntensity: 0.5 } },
-        chromatic: { component: 'postProcessing', values: { chromaticAberrationEnabled: !isActive, chromaticAberrationOffset: 0.003 } },
-        noise: { component: 'postProcessing', values: { noiseEnabled: !isActive, noiseIntensity: 0.15 } },
-        particles: { component: 'particles', values: { enabled: !isActive, type: particleType, count: 150 } },
-        stars: { component: 'background', values: { starsEnabled: !isActive, starsCount: 200 } },
-        gradient: { component: 'background', values: { gradientEnabled: !isActive } },
-        orbit: { component: 'camera', values: { autoOrbit: !isActive, orbitSpeed: 0.5 } },
-      }
-
-      const effect = effectMap[id]
-      if (effect) {
-        sendToIframe('DEBUG_UPDATE', { component: effect.component, values: { enabled: true, ...effect.values } })
-      }
-
+      sendToIframe('DEBUG_UPDATE', { component: config.component, values: { enabled: true, ...config.values } })
       return next
     })
   }
@@ -314,11 +259,7 @@ export function AnimationConsole() {
     if (!isDragging) return
     const dx = e.clientX - dragStart.x
     const dy = e.clientY - dragStart.y
-    const newValues = {
-      ...currentValues,
-      rotX: currentValues.rotX + dy * 0.01,
-      rotY: currentValues.rotY + dx * 0.01,
-    }
+    const newValues = { ...currentValues, rotX: currentValues.rotX + dy * 0.01, rotY: currentValues.rotY + dx * 0.01 }
     setCurrentValues(newValues)
     setDragStart({ x: e.clientX, y: e.clientY })
     applyValues(newValues)
@@ -357,9 +298,7 @@ export function AnimationConsole() {
   const addKeyframe = () => {
     const id = `kf-${Date.now()}`
     const newKf: AnimationKeyframe = {
-      id,
-      scroll,
-      easing: 'easeInOut',
+      id, scroll, easing: 'easeInOut',
       values: { ...currentValues },
       label: `${(scroll * 100).toFixed(0)}%`
     }
@@ -382,16 +321,64 @@ export function AnimationConsole() {
     ))
   }
 
-  // Update current value and apply
-  const updateCurrentValue = (prop: keyof AnimatableValues, value: number) => {
-    const newValues = { ...currentValues, [prop]: value }
-    setCurrentValues(newValues)
-    applyValues(newValues)
+  // Bookmark functions
+  const addBookmark = () => {
+    const id = `bm-${Date.now()}`
+    const colorIndex = bookmarks.length % bookmarkColors.length
+    setBookmarks(prev => [...prev, {
+      id, scroll,
+      label: `Marker ${prev.length + 1}`,
+      color: bookmarkColors[colorIndex]
+    }].sort((a, b) => a.scroll - b.scroll))
+  }
+
+  const removeBookmark = (id: string) => {
+    setBookmarks(prev => prev.filter(b => b.id !== id))
+  }
+
+  const updateBookmarkLabel = (id: string, label: string) => {
+    setBookmarks(prev => prev.map(b => b.id === id ? { ...b, label } : b))
+  }
+
+  // Focus range (shift+drag on timeline)
+  const handleTimelineShiftDrag = (e: React.MouseEvent) => {
+    if (!e.shiftKey || !timelineRef.current) return
+    e.preventDefault()
+    const rect = timelineRef.current.getBoundingClientRect()
+    const startPos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
+
+    const onMove = (ev: MouseEvent) => {
+      if (!timelineRef.current) return
+      const endPos = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width))
+      setFocusRange({
+        start: Math.min(startPos, endPos),
+        end: Math.max(startPos, endPos)
+      })
+    }
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
+
+  // Jump to prev/next keyframe or bookmark
+  const jumpToPrev = () => {
+    const markers = [...keyframes.map(k => k.scroll), ...bookmarks.map(b => b.scroll)].sort((a, b) => a - b)
+    const prev = markers.reverse().find(m => m < scroll - 0.01)
+    if (prev !== undefined) setScroll(prev)
+  }
+
+  const jumpToNext = () => {
+    const markers = [...keyframes.map(k => k.scroll), ...bookmarks.map(b => b.scroll)].sort((a, b) => a - b)
+    const next = markers.find(m => m > scroll + 0.01)
+    if (next !== undefined) setScroll(next)
   }
 
   // Reset
   const handleReset = () => {
-    setScroll(0)
+    setScroll(focusRange?.start ?? 0)
     setPlaying(false)
     setActiveEffects(new Set())
     setCurrentValues({ ...defaultValues })
@@ -401,12 +388,7 @@ export function AnimationConsole() {
 
   // Export
   const handleExport = () => {
-    const data = {
-      keyframes,
-      activeEffects: Array.from(activeEffects),
-      currentValues,
-      timestamp: new Date().toISOString(),
-    }
+    const data = { keyframes, bookmarks, focusRange, currentValues, timestamp: new Date().toISOString() }
     navigator.clipboard.writeText(JSON.stringify(data, null, 2))
     alert('Animation exported to clipboard!')
   }
@@ -420,9 +402,11 @@ export function AnimationConsole() {
         <a href="/" style={styles.homeBtn}><Home size={18} /></a>
 
         <div style={styles.controls}>
+          <button style={styles.iconBtn} onClick={jumpToPrev} title="Previous marker"><SkipBack size={16} /></button>
           <button style={styles.playBtn} onClick={() => setPlaying(!playing)}>
             {playing ? <Pause size={20} /> : <Play size={20} />}
           </button>
+          <button style={styles.iconBtn} onClick={jumpToNext} title="Next marker"><SkipForward size={16} /></button>
           <button style={styles.iconBtn} onClick={handleReset}><RotateCcw size={16} /></button>
 
           <div style={styles.speedControl}>
@@ -434,25 +418,41 @@ export function AnimationConsole() {
         </div>
 
         {/* Timeline */}
-        <div style={styles.timeline} ref={timelineRef} onClick={handleTimelineClick}
+        <div style={styles.timeline} ref={timelineRef}
+          onClick={handleTimelineClick}
           onMouseDown={e => {
-            handleTimelineClick(e)
-            const onMove = (ev: MouseEvent) => {
-              if (!timelineRef.current) return
-              const rect = timelineRef.current.getBoundingClientRect()
-              setScroll(Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width)))
+            if (e.shiftKey) {
+              handleTimelineShiftDrag(e)
+            } else {
+              handleTimelineClick(e)
+              const onMove = (ev: MouseEvent) => {
+                if (!timelineRef.current) return
+                const rect = timelineRef.current.getBoundingClientRect()
+                setScroll(Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width)))
+              }
+              const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
+              window.addEventListener('mousemove', onMove)
+              window.addEventListener('mouseup', onUp)
             }
-            const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
-            window.addEventListener('mousemove', onMove)
-            window.addEventListener('mouseup', onUp)
           }}>
+
+          {/* Focus range background */}
+          {focusRange && (
+            <div style={{
+              ...styles.focusRange,
+              left: `${focusRange.start * 100}%`,
+              width: `${(focusRange.end - focusRange.start) * 100}%`
+            }} />
+          )}
+
           <div style={{ ...styles.timelineProgress, width: `${scroll * 100}%` }} />
 
-          {/* Preset markers */}
-          {presets.map(p => (
-            <div key={p.name} style={{ ...styles.marker, left: `${p.scroll * 100}%` }}
-              onClick={e => { e.stopPropagation(); setScroll(p.scroll) }}>
-              <span style={styles.markerLabel}>{p.emoji}</span>
+          {/* Bookmark markers */}
+          {bookmarks.map(bm => (
+            <div key={bm.id} style={{ ...styles.bookmarkMarker, left: `${bm.scroll * 100}%`, borderColor: bm.color }}
+              onClick={e => { e.stopPropagation(); setScroll(bm.scroll) }}
+              title={bm.label}>
+              <Bookmark size={10} fill={bm.color} stroke={bm.color} />
             </div>
           ))}
 
@@ -469,43 +469,54 @@ export function AnimationConsole() {
 
         <div style={styles.scrollValue}>{(scroll * 100).toFixed(0)}%</div>
 
-        {/* Keyframe Mode Toggle */}
-        <button
-          style={{ ...styles.iconBtn, ...(keyframeMode ? styles.iconBtnActive : {}), marginRight: 4 }}
-          onClick={() => setKeyframeMode(!keyframeMode)}
-          title={keyframeMode ? 'Keyframe Mode: ON' : 'Keyframe Mode: OFF'}>
+        {/* Focus range controls */}
+        {focusRange && (
+          <>
+            <button style={{ ...styles.iconBtn, ...(loopFocusRange ? styles.iconBtnActive : {}) }}
+              onClick={() => setLoopFocusRange(!loopFocusRange)} title="Loop focus range">
+              <Repeat size={14} />
+            </button>
+            <button style={styles.iconBtn} onClick={() => setFocusRange(null)} title="Clear focus range">
+              <X size={14} />
+            </button>
+          </>
+        )}
+
+        <button style={{ ...styles.iconBtn, ...(keyframeMode ? styles.iconBtnActive : {}) }}
+          onClick={() => setKeyframeMode(!keyframeMode)} title="Interpolation mode">
           <Circle size={14} fill={keyframeMode ? '#d4a853' : 'transparent'} />
         </button>
 
         <button style={styles.iconBtn} onClick={handleExport} title="Export"><Download size={16} /></button>
         <button style={{ ...styles.iconBtn, ...(showAdvanced ? styles.iconBtnActive : {}) }}
-          onClick={() => setShowAdvanced(!showAdvanced)} title="Advanced">
+          onClick={() => setShowAdvanced(!showAdvanced)} title="Panel">
           <Settings size={16} />
         </button>
       </div>
 
       {/* Main Area */}
       <div style={styles.mainArea}>
-        {/* Preview */}
         <div style={{ ...styles.preview, marginRight: showAdvanced ? 320 : 0 }}
           onMouseDown={handleMouseDown} onWheel={handleWheel}>
           <iframe ref={iframeRef} src="/?debug=true" style={styles.iframe}
             onLoad={() => { setIframeReady(true); syncScroll(scroll) }} />
 
-          {!iframeReady && <div style={styles.loading}>Caricamento...</div>}
+          {!iframeReady && <div style={styles.loading}>Loading...</div>}
 
           <div style={styles.zoomIndicator}>
             <ZoomOut size={12} /><span>{(zoom * 100).toFixed(0)}%</span><ZoomIn size={12} />
           </div>
 
-          {isDragging && (
-            <div style={styles.dragHint}><Move size={16} /> Trascina per ruotare</div>
+          {isDragging && <div style={styles.dragHint}><Move size={16} /> Drag to rotate</div>}
+
+          {keyframeMode && keyframes.length >= 2 && (
+            <div style={styles.keyframeModeIndicator}><Diamond size={12} /> INTERPOLATING</div>
           )}
 
-          {/* Keyframe mode indicator */}
-          {keyframeMode && keyframes.length >= 2 && (
-            <div style={styles.keyframeModeIndicator}>
-              <Diamond size={12} /> INTERPOLATION MODE
+          {focusRange && (
+            <div style={styles.focusRangeIndicator}>
+              {(focusRange.start * 100).toFixed(0)}% - {(focusRange.end * 100).toFixed(0)}%
+              {loopFocusRange && <Repeat size={10} />}
             </div>
           )}
         </div>
@@ -514,17 +525,16 @@ export function AnimationConsole() {
         {showAdvanced && (
           <div style={styles.advancedPanel} className="no-drag">
             <div style={styles.panelHeader}>
-              <span style={styles.panelTitle}>Controlli</span>
+              <span style={styles.panelTitle}>Controls</span>
               <button style={styles.closeBtn} onClick={() => setShowAdvanced(false)}><X size={16} /></button>
             </div>
 
-            {/* Tabs */}
             <div style={styles.tabs}>
-              {(['keyframes', 'effects', 'live'] as const).map(tab => (
+              {(['keyframes', 'bookmarks', 'live'] as const).map(tab => (
                 <button key={tab} style={{ ...styles.tab, ...(advancedTab === tab ? styles.tabActive : {}) }}
                   onClick={() => setAdvancedTab(tab)}>
-                  {tab === 'effects' && <Zap size={12} />}
                   {tab === 'keyframes' && <Diamond size={12} />}
+                  {tab === 'bookmarks' && <Bookmark size={12} />}
                   {tab === 'live' && <Eye size={12} />}
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
                 </button>
@@ -532,39 +542,27 @@ export function AnimationConsole() {
             </div>
 
             <div style={styles.panelContent}>
-              {/* Keyframes Tab - Now Primary */}
+              {/* Keyframes Tab */}
               {advancedTab === 'keyframes' && (
                 <>
                   <div style={styles.keyframeHeader}>
-                    <div>
-                      <span style={styles.kfCount}>{keyframes.length} keyframes</span>
-                      {keyframeMode && keyframes.length >= 2 && (
-                        <span style={styles.kfInterpolating}> - Interpolating</span>
-                      )}
-                    </div>
+                    <span style={styles.kfCount}>{keyframes.length} keyframes</span>
                     <button style={styles.recordBtn} onClick={addKeyframe}>
                       <Circle size={10} fill="#ff4444" /> REC
                     </button>
                   </div>
 
-                  {/* Keyframe List */}
                   <div style={styles.keyframeList}>
                     {keyframes.map((kf, i) => (
-                      <div
-                        key={kf.id}
-                        style={{
-                          ...styles.keyframeItem,
-                          ...(selectedKeyframe === kf.id ? styles.keyframeItemActive : {})
-                        }}
+                      <div key={kf.id}
+                        style={{ ...styles.keyframeItem, ...(selectedKeyframe === kf.id ? styles.keyframeItemActive : {}) }}
                         onClick={() => { setScroll(kf.scroll); setSelectedKeyframe(kf.id) }}>
                         <div style={styles.kfLeft}>
                           <Diamond size={12} fill="#d4a853" />
                           <span style={styles.kfIndex}>#{i + 1}</span>
                           <span style={styles.kfScroll}>{(kf.scroll * 100).toFixed(0)}%</span>
                         </div>
-                        <select
-                          style={styles.easingSelect}
-                          value={kf.easing}
+                        <select style={styles.easingSelect} value={kf.easing}
                           onClick={e => e.stopPropagation()}
                           onChange={e => updateKeyframeEasing(kf.id, e.target.value as EasingType)}>
                           <option value="linear">Linear</option>
@@ -572,212 +570,87 @@ export function AnimationConsole() {
                           <option value="easeOut">Ease Out</option>
                           <option value="easeInOut">Ease InOut</option>
                         </select>
-                        <button
-                          style={styles.deleteKfBtn}
-                          onClick={e => { e.stopPropagation(); removeKeyframe(kf.id) }}>
+                        <button style={styles.deleteKfBtn} onClick={e => { e.stopPropagation(); removeKeyframe(kf.id) }}>
                           <Trash2 size={12} />
                         </button>
                       </div>
                     ))}
                   </div>
 
-                  {/* Selected Keyframe Editor */}
                   {selectedKf && (
                     <div style={styles.keyframeEditor}>
-                      <div style={styles.editorTitle}>
-                        Keyframe @ {(selectedKf.scroll * 100).toFixed(0)}%
-                      </div>
+                      <div style={styles.editorTitle}>Keyframe @ {(selectedKf.scroll * 100).toFixed(0)}%</div>
 
-                      <div style={styles.propertyGroup}>
-                        <div style={styles.groupTitle}>Rotation</div>
-                        {(['rotX', 'rotY', 'rotZ'] as const).map(prop => (
-                          <div key={prop} style={styles.propRow}>
-                            <span style={styles.propLabel}>{prop}</span>
-                            <input
-                              type="range"
-                              min={-Math.PI}
-                              max={Math.PI}
-                              step={0.01}
-                              value={selectedKf.values[prop]}
-                              onChange={e => updateKeyframeValue(selectedKf.id, prop, parseFloat(e.target.value))}
-                              style={styles.propSlider}
-                            />
-                            <span style={styles.propValue}>{selectedKf.values[prop].toFixed(2)}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div style={styles.propertyGroup}>
-                        <div style={styles.groupTitle}>Position</div>
-                        {(['posX', 'posY', 'posZ'] as const).map(prop => (
-                          <div key={prop} style={styles.propRow}>
-                            <span style={styles.propLabel}>{prop}</span>
-                            <input
-                              type="range"
-                              min={-5}
-                              max={5}
-                              step={0.1}
-                              value={selectedKf.values[prop]}
-                              onChange={e => updateKeyframeValue(selectedKf.id, prop, parseFloat(e.target.value))}
-                              style={styles.propSlider}
-                            />
-                            <span style={styles.propValue}>{selectedKf.values[prop].toFixed(2)}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div style={styles.propertyGroup}>
-                        <div style={styles.groupTitle}>Transform</div>
-                        <div style={styles.propRow}>
-                          <span style={styles.propLabel}>scale</span>
-                          <input
-                            type="range"
-                            min={0.5}
-                            max={5}
-                            step={0.1}
-                            value={selectedKf.values.scale}
-                            onChange={e => updateKeyframeValue(selectedKf.id, 'scale', parseFloat(e.target.value))}
-                            style={styles.propSlider}
-                          />
-                          <span style={styles.propValue}>{selectedKf.values.scale.toFixed(2)}</span>
+                      {[
+                        { group: 'Rotation', props: ['rotX', 'rotY', 'rotZ'] as const, min: -Math.PI, max: Math.PI, step: 0.01 },
+                        { group: 'Position', props: ['posX', 'posY', 'posZ'] as const, min: -5, max: 5, step: 0.1 },
+                        { group: 'Transform', props: ['scale'] as const, min: 0.5, max: 5, step: 0.1 },
+                        { group: 'Material', props: ['metalness', 'roughness'] as const, min: 0, max: 1, step: 0.05 },
+                        { group: 'Camera', props: ['fov'] as const, min: 15, max: 90, step: 1 },
+                        { group: 'FX', props: ['bloomIntensity'] as const, min: 0, max: 5, step: 0.1 },
+                      ].map(({ group, props, min, max, step }) => (
+                        <div key={group} style={styles.propertyGroup}>
+                          <div style={styles.groupTitle}>{group}</div>
+                          {props.map(prop => (
+                            <div key={prop} style={styles.propRow}>
+                              <span style={styles.propLabel}>{prop}</span>
+                              <input type="range" min={min} max={max} step={step}
+                                value={selectedKf.values[prop]}
+                                onChange={e => updateKeyframeValue(selectedKf.id, prop, parseFloat(e.target.value))}
+                                style={styles.propSlider} />
+                              <span style={styles.propValue}>{selectedKf.values[prop].toFixed(2)}</span>
+                            </div>
+                          ))}
                         </div>
-                      </div>
-
-                      <div style={styles.propertyGroup}>
-                        <div style={styles.groupTitle}>Material</div>
-                        {(['metalness', 'roughness'] as const).map(prop => (
-                          <div key={prop} style={styles.propRow}>
-                            <span style={styles.propLabel}>{prop}</span>
-                            <input
-                              type="range"
-                              min={0}
-                              max={1}
-                              step={0.05}
-                              value={selectedKf.values[prop]}
-                              onChange={e => updateKeyframeValue(selectedKf.id, prop, parseFloat(e.target.value))}
-                              style={styles.propSlider}
-                            />
-                            <span style={styles.propValue}>{selectedKf.values[prop].toFixed(2)}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div style={styles.propertyGroup}>
-                        <div style={styles.groupTitle}>Camera & FX</div>
-                        <div style={styles.propRow}>
-                          <span style={styles.propLabel}>fov</span>
-                          <input
-                            type="range"
-                            min={15}
-                            max={90}
-                            step={1}
-                            value={selectedKf.values.fov}
-                            onChange={e => updateKeyframeValue(selectedKf.id, 'fov', parseFloat(e.target.value))}
-                            style={styles.propSlider}
-                          />
-                          <span style={styles.propValue}>{selectedKf.values.fov.toFixed(0)}°</span>
-                        </div>
-                        <div style={styles.propRow}>
-                          <span style={styles.propLabel}>bloom</span>
-                          <input
-                            type="range"
-                            min={0}
-                            max={5}
-                            step={0.1}
-                            value={selectedKf.values.bloomIntensity}
-                            onChange={e => updateKeyframeValue(selectedKf.id, 'bloomIntensity', parseFloat(e.target.value))}
-                            style={styles.propSlider}
-                          />
-                          <span style={styles.propValue}>{selectedKf.values.bloomIntensity.toFixed(1)}</span>
-                        </div>
-                      </div>
+                      ))}
                     </div>
                   )}
 
-                  {/* No keyframes state */}
                   {keyframes.length === 0 && (
                     <div style={styles.emptyState}>
                       <Diamond size={24} stroke="#444" />
-                      <div style={styles.emptyTitle}>Nessun keyframe</div>
-                      <div style={styles.emptyText}>
-                        Premi REC per salvare la posizione e i valori correnti come keyframe.
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Quick current values editor */}
-                  {!selectedKf && keyframes.length > 0 && (
-                    <div style={styles.currentValuesHint}>
-                      Seleziona un keyframe per modificarne i valori
+                      <div style={styles.emptyTitle}>No keyframes</div>
+                      <div style={styles.emptyText}>Press REC to save current state as keyframe</div>
                     </div>
                   )}
                 </>
               )}
 
-              {/* Effects Tab */}
-              {advancedTab === 'effects' && (
+              {/* Bookmarks Tab */}
+              {advancedTab === 'bookmarks' && (
                 <>
-                  <div style={styles.sectionTitle}><Layers size={12} /> Ferrero</div>
-                  <div style={styles.effectGrid}>
-                    {advancedEffects.filter(e => e.category === 'ferrero').map(fx => (
-                      <button key={fx.id} style={{ ...styles.effectChip, ...(activeEffects.has(fx.id) ? styles.effectChipActive : {}) }}
-                        onClick={() => toggleEffect(fx.id)}>{fx.name}</button>
-                    ))}
+                  <div style={styles.keyframeHeader}>
+                    <span style={styles.kfCount}>{bookmarks.length} bookmarks</span>
+                    <button style={styles.addBtn} onClick={addBookmark}>
+                      <Bookmark size={12} /> Add
+                    </button>
                   </div>
 
-                  <div style={styles.sliderRow}>
-                    <span>Metalness</span>
-                    <input type="range" min={0} max={1} step={0.05} value={currentValues.metalness}
-                      onChange={e => updateCurrentValue('metalness', parseFloat(e.target.value))} style={styles.slider} />
-                    <span style={styles.sliderValue}>{currentValues.metalness.toFixed(2)}</span>
-                  </div>
-                  <div style={styles.sliderRow}>
-                    <span>Roughness</span>
-                    <input type="range" min={0} max={1} step={0.05} value={currentValues.roughness}
-                      onChange={e => updateCurrentValue('roughness', parseFloat(e.target.value))} style={styles.slider} />
-                    <span style={styles.sliderValue}>{currentValues.roughness.toFixed(2)}</span>
-                  </div>
-
-                  <div style={styles.sectionTitle}><Sparkles size={12} /> Post FX</div>
-                  <div style={styles.effectGrid}>
-                    {advancedEffects.filter(e => e.category === 'fx').map(fx => (
-                      <button key={fx.id} style={{ ...styles.effectChip, ...(activeEffects.has(fx.id) ? styles.effectChipActive : {}) }}
-                        onClick={() => toggleEffect(fx.id)}>{fx.name}</button>
-                    ))}
-                  </div>
-
-                  <div style={styles.sectionTitle}><Eye size={12} /> Scene</div>
-                  <div style={styles.effectGrid}>
-                    {advancedEffects.filter(e => e.category === 'scene').map(fx => (
-                      <button key={fx.id} style={{ ...styles.effectChip, ...(activeEffects.has(fx.id) ? styles.effectChipActive : {}) }}
-                        onClick={() => toggleEffect(fx.id)}>{fx.name}</button>
-                    ))}
-                  </div>
-
-                  {activeEffects.has('particles') && (
-                    <div style={styles.subOption}>
-                      <span>Tipo:</span>
-                      {(['sparkles', 'snow', 'stars'] as const).map(t => (
-                        <button key={t} style={{ ...styles.miniBtn, ...(particleType === t ? styles.miniBtnActive : {}) }}
-                          onClick={() => { setParticleType(t); sendToIframe('DEBUG_UPDATE', { component: 'particles', values: { enabled: true, type: t } }) }}>
-                          {t}
+                  <div style={styles.keyframeList}>
+                    {bookmarks.map(bm => (
+                      <div key={bm.id} style={styles.bookmarkItem} onClick={() => setScroll(bm.scroll)}>
+                        <Bookmark size={12} fill={bm.color} stroke={bm.color} />
+                        <input type="text" value={bm.label} style={styles.bookmarkInput}
+                          onClick={e => e.stopPropagation()}
+                          onChange={e => updateBookmarkLabel(bm.id, e.target.value)} />
+                        <span style={styles.kfScroll}>{(bm.scroll * 100).toFixed(0)}%</span>
+                        <button style={styles.deleteKfBtn} onClick={e => { e.stopPropagation(); removeBookmark(bm.id) }}>
+                          <Trash2 size={12} />
                         </button>
-                      ))}
+                      </div>
+                    ))}
+                  </div>
+
+                  {bookmarks.length === 0 && (
+                    <div style={styles.emptyState}>
+                      <Bookmark size={24} stroke="#444" />
+                      <div style={styles.emptyTitle}>No bookmarks</div>
+                      <div style={styles.emptyText}>Add bookmarks to mark important positions</div>
                     </div>
                   )}
 
-                  <div style={styles.sectionTitle}><Camera size={12} /> Camera</div>
-                  <div style={styles.effectGrid}>
-                    {advancedEffects.filter(e => e.category === 'camera').map(fx => (
-                      <button key={fx.id} style={{ ...styles.effectChip, ...(activeEffects.has(fx.id) ? styles.effectChipActive : {}) }}
-                        onClick={() => toggleEffect(fx.id)}>{fx.name}</button>
-                    ))}
-                  </div>
-                  <div style={styles.sliderRow}>
-                    <span>FOV</span>
-                    <input type="range" min={15} max={90} step={5} value={currentValues.fov}
-                      onChange={e => updateCurrentValue('fov', parseInt(e.target.value))} style={styles.slider} />
-                    <span style={styles.sliderValue}>{currentValues.fov}°</span>
+                  <div style={styles.tip}>
+                    <strong>Tip:</strong> Hold Shift + drag on timeline to create a focus range for looping
                   </div>
                 </>
               )}
@@ -785,30 +658,28 @@ export function AnimationConsole() {
               {/* Live Tab */}
               {advancedTab === 'live' && (
                 <>
-                  <div style={styles.sectionTitle}><Eye size={12} /> Iframe Data</div>
+                  <div style={styles.sectionTitle}><Eye size={12} /> Iframe State</div>
                   {liveData ? (
                     <div style={styles.liveGrid}>
-                      <div style={styles.liveRow}><span>Rot X</span><span>{liveData.rotX.toFixed(2)}</span></div>
-                      <div style={styles.liveRow}><span>Rot Y</span><span>{liveData.rotY.toFixed(2)}</span></div>
-                      <div style={styles.liveRow}><span>Rot Z</span><span>{liveData.rotZ.toFixed(2)}</span></div>
-                      <div style={styles.liveRow}><span>Pos X</span><span>{liveData.posX.toFixed(2)}</span></div>
-                      <div style={styles.liveRow}><span>Pos Y</span><span>{liveData.posY.toFixed(2)}</span></div>
-                      <div style={styles.liveRow}><span>Pos Z</span><span>{liveData.posZ.toFixed(2)}</span></div>
-                      <div style={styles.liveRow}><span>Scale</span><span>{liveData.scale.toFixed(2)}</span></div>
-                      <div style={styles.liveRow}><span>Scroll</span><span>{(liveData.scrollProgress * 100).toFixed(1)}%</span></div>
+                      {Object.entries(liveData).map(([key, val]) => (
+                        <div key={key} style={styles.liveRow}>
+                          <span>{key}</span>
+                          <span>{typeof val === 'number' ? val.toFixed(2) : val}</span>
+                        </div>
+                      ))}
                     </div>
                   ) : (
-                    <div style={styles.emptyState}>In attesa di dati dall'iframe...</div>
+                    <div style={styles.emptyState}>Waiting for iframe data...</div>
                   )}
 
-                  <div style={{ ...styles.sectionTitle, marginTop: 16 }}>Current Values</div>
+                  <div style={{ ...styles.sectionTitle, marginTop: 16 }}>Console State</div>
                   <div style={styles.liveGrid}>
-                    <div style={styles.liveRow}><span>Rot X</span><span>{currentValues.rotX.toFixed(2)}</span></div>
-                    <div style={styles.liveRow}><span>Rot Y</span><span>{currentValues.rotY.toFixed(2)}</span></div>
-                    <div style={styles.liveRow}><span>Scale</span><span>{currentValues.scale.toFixed(2)}</span></div>
-                    <div style={styles.liveRow}><span>FOV</span><span>{currentValues.fov}°</span></div>
-                    <div style={styles.liveRow}><span>Metalness</span><span>{currentValues.metalness.toFixed(2)}</span></div>
-                    <div style={styles.liveRow}><span>Bloom</span><span>{currentValues.bloomIntensity.toFixed(1)}</span></div>
+                    {Object.entries(currentValues).slice(0, 6).map(([key, val]) => (
+                      <div key={key} style={styles.liveRow}>
+                        <span>{key}</span>
+                        <span>{val.toFixed(2)}</span>
+                      </div>
+                    ))}
                   </div>
                 </>
               )}
@@ -817,35 +688,28 @@ export function AnimationConsole() {
         )}
       </div>
 
-      {/* Bottom Bar */}
+      {/* Bottom Bar - Minimal, no hardcoded presets */}
       <div style={styles.bottomBar}>
-        <div style={styles.presetsRow}>
-          <span style={styles.label}>Vai a:</span>
-          {presets.map(p => (
-            <button key={p.name} style={{ ...styles.presetBtn, ...(Math.abs(scroll - p.scroll) < 0.05 ? styles.presetBtnActive : {}) }}
-              onClick={() => setScroll(p.scroll)}>
-              <span>{p.emoji}</span><span>{p.name}</span>
-            </button>
-          ))}
-        </div>
-
-        <div style={styles.effectsRow}>
-          <span style={styles.label}>Effetti:</span>
-          {quickEffects.map(fx => {
-            const Icon = fx.icon
-            return (
-              <button key={fx.id} style={{ ...styles.effectBtn, ...(activeEffects.has(fx.id) ? styles.effectBtnActive : {}) }}
-                onClick={() => toggleEffect(fx.id)}>
-                <Icon size={14} /><span>{fx.name}</span>
-              </button>
-            )
-          })}
-
-          <button style={{ ...styles.effectBtn, marginLeft: 4 }} onClick={() => { setShowAdvanced(true); setAdvancedTab('keyframes') }}>
-            <Diamond size={14} /><span>Keyframes</span>
+        <div style={styles.bottomRow}>
+          <span style={styles.label}>Quick:</span>
+          <button style={styles.quickBtn} onClick={() => toggleEffect('rotate', { component: 'ferrero', values: { autoRotate: !activeEffects.has('rotate') } })}>
+            <RotateCw size={14} /> {activeEffects.has('rotate') ? 'Stop' : 'Rotate'}
+          </button>
+          <button style={styles.quickBtn} onClick={() => toggleEffect('glow', { component: 'title', values: { glowEnabled: !activeEffects.has('glow'), glowIntensity: 15 } })}>
+            <Sun size={14} /> Glow
+          </button>
+          <button style={styles.quickBtn} onClick={() => toggleEffect('bloom', { component: 'postProcessing', values: { bloomEnabled: !activeEffects.has('bloom'), bloomIntensity: 1.5 } })}>
+            <Sparkles size={14} /> Bloom
           </button>
 
           <div style={styles.separator} />
+
+          <button style={styles.quickBtn} onClick={addBookmark}>
+            <Bookmark size={14} /> Bookmark
+          </button>
+          <button style={styles.quickBtn} onClick={addKeyframe}>
+            <Diamond size={14} /> Keyframe
+          </button>
 
           <button style={styles.fullscreenBtn} onClick={() => iframeRef.current?.requestFullscreen?.()}>
             <Maximize2 size={14} />
@@ -864,36 +728,33 @@ const gold = '#d4a853'
 const styles: Record<string, CSSProperties> = {
   container: { height: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#0a0a0a', fontFamily: 'Inter, -apple-system, sans-serif', color: '#fff', overflow: 'hidden' },
 
-  // Top Bar
-  topBar: { display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', backgroundColor: '#141414', borderBottom: '1px solid #222' },
+  topBar: { display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', backgroundColor: '#141414', borderBottom: '1px solid #222' },
   homeBtn: { width: 36, height: 36, borderRadius: 8, border: '1px solid #333', background: 'transparent', color: '#888', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' },
-  controls: { display: 'flex', alignItems: 'center', gap: 8 },
+  controls: { display: 'flex', alignItems: 'center', gap: 4 },
   playBtn: { width: 44, height: 44, borderRadius: '50%', border: 'none', background: `linear-gradient(135deg, ${gold} 0%, #b8942f 100%)`, color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: `0 4px 20px ${gold}44` },
-  iconBtn: { width: 36, height: 36, borderRadius: 8, border: '1px solid #333', background: 'transparent', color: '#888', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' },
+  iconBtn: { width: 32, height: 32, borderRadius: 6, border: '1px solid #333', background: 'transparent', color: '#888', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' },
   iconBtnActive: { background: '#333', color: '#fff', borderColor: gold },
-  speedControl: { display: 'flex', gap: 2, padding: 2, background: '#1a1a1a', borderRadius: 6 },
-  speedBtn: { padding: '5px 8px', border: 'none', background: 'transparent', color: '#555', borderRadius: 4, cursor: 'pointer', fontSize: 10, fontWeight: 600 },
+  speedControl: { display: 'flex', gap: 2, padding: 2, background: '#1a1a1a', borderRadius: 6, marginLeft: 8 },
+  speedBtn: { padding: '4px 6px', border: 'none', background: 'transparent', color: '#555', borderRadius: 4, cursor: 'pointer', fontSize: 10, fontWeight: 600 },
   speedBtnActive: { background: '#333', color: '#fff' },
 
-  // Timeline
-  timeline: { flex: 1, height: 36, background: '#1a1a1a', borderRadius: 18, position: 'relative', cursor: 'pointer', overflow: 'visible', margin: '0 8px' },
-  timelineProgress: { position: 'absolute', left: 0, top: 0, bottom: 0, background: `linear-gradient(90deg, ${gold} 0%, #f0d78c 100%)`, borderRadius: 18, opacity: 0.25 },
-  marker: { position: 'absolute', top: '50%', transform: 'translate(-50%, -50%)', cursor: 'pointer', zIndex: 2 },
-  markerLabel: { fontSize: 14 },
+  timeline: { flex: 1, height: 32, background: '#1a1a1a', borderRadius: 16, position: 'relative', cursor: 'pointer', overflow: 'visible', margin: '0 8px' },
+  timelineProgress: { position: 'absolute', left: 0, top: 0, bottom: 0, background: `linear-gradient(90deg, ${gold} 0%, #f0d78c 100%)`, borderRadius: 16, opacity: 0.25 },
+  focusRange: { position: 'absolute', top: 0, bottom: 0, background: `${gold}22`, borderLeft: `2px solid ${gold}`, borderRight: `2px solid ${gold}` },
+  bookmarkMarker: { position: 'absolute', top: '50%', transform: 'translate(-50%, -50%)', cursor: 'pointer', zIndex: 2 },
   keyframeMarker: { position: 'absolute', top: '50%', transform: 'translate(-50%, -50%)', cursor: 'pointer', zIndex: 3 },
-  playhead: { position: 'absolute', top: 3, bottom: 3, width: 4, background: gold, borderRadius: 2, transform: 'translateX(-50%)', boxShadow: `0 0 10px ${gold}`, zIndex: 4 },
-  scrollValue: { minWidth: 45, fontFamily: 'JetBrains Mono, monospace', fontSize: 13, fontWeight: 600, color: gold },
+  playhead: { position: 'absolute', top: 2, bottom: 2, width: 3, background: gold, borderRadius: 2, transform: 'translateX(-50%)', boxShadow: `0 0 8px ${gold}`, zIndex: 4 },
+  scrollValue: { minWidth: 40, fontFamily: 'JetBrains Mono, monospace', fontSize: 12, fontWeight: 600, color: gold },
 
-  // Main Area
   mainArea: { flex: 1, display: 'flex', position: 'relative', overflow: 'hidden' },
   preview: { flex: 1, position: 'relative', cursor: 'grab', transition: 'margin 0.3s ease' },
   iframe: { width: '100%', height: '100%', border: 'none', pointerEvents: 'none' },
   loading: { position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0a0a', color: '#666' },
-  zoomIndicator: { position: 'absolute', bottom: 20, right: 20, display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', borderRadius: 20, color: '#888', fontSize: 11 },
-  dragHint: { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', display: 'flex', alignItems: 'center', gap: 8, padding: '12px 20px', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', borderRadius: 12, color: '#fff', fontSize: 13, pointerEvents: 'none' },
-  keyframeModeIndicator: { position: 'absolute', top: 20, left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: `${gold}22`, border: `1px solid ${gold}44`, borderRadius: 20, color: gold, fontSize: 11, fontWeight: 600 },
+  zoomIndicator: { position: 'absolute', bottom: 16, right: 16, display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', borderRadius: 16, color: '#888', fontSize: 10 },
+  dragHint: { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', borderRadius: 10, color: '#fff', fontSize: 12, pointerEvents: 'none' },
+  keyframeModeIndicator: { position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: `${gold}22`, border: `1px solid ${gold}44`, borderRadius: 16, color: gold, fontSize: 10, fontWeight: 600 },
+  focusRangeIndicator: { position: 'absolute', top: 16, right: 16, display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: 'rgba(0,0,0,0.7)', borderRadius: 16, color: '#888', fontSize: 10 },
 
-  // Advanced Panel
   advancedPanel: { position: 'absolute', right: 0, top: 0, bottom: 0, width: 320, background: '#141414', borderLeft: '1px solid #222', display: 'flex', flexDirection: 'column', zIndex: 10 },
   panelHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid #222' },
   panelTitle: { fontSize: 13, fontWeight: 600 },
@@ -903,61 +764,45 @@ const styles: Record<string, CSSProperties> = {
   tabActive: { background: '#1a1a1a', color: '#fff', borderBottom: `2px solid ${gold}` },
   panelContent: { flex: 1, overflow: 'auto', padding: 16 },
 
-  // Keyframes Tab
   keyframeHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   kfCount: { fontSize: 12, color: '#888' },
-  kfInterpolating: { fontSize: 10, color: gold },
-  recordBtn: { display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 6, border: '1px solid #ff4444', background: 'rgba(255,68,68,0.1)', color: '#ff6666', fontSize: 11, fontWeight: 600, cursor: 'pointer' },
+  recordBtn: { display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 6, border: '1px solid #ff4444', background: 'rgba(255,68,68,0.1)', color: '#ff6666', fontSize: 11, fontWeight: 600, cursor: 'pointer' },
+  addBtn: { display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 6, border: `1px solid ${gold}`, background: 'transparent', color: gold, fontSize: 11, cursor: 'pointer' },
   keyframeList: { display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 16 },
-  keyframeItem: { display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 6, background: '#1a1a1a', cursor: 'pointer', border: '1px solid transparent' },
+  keyframeItem: { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 6, background: '#1a1a1a', cursor: 'pointer', border: '1px solid transparent' },
   keyframeItemActive: { background: `${gold}15`, borderColor: `${gold}44` },
-  kfLeft: { display: 'flex', alignItems: 'center', gap: 8, flex: 1 },
+  kfLeft: { display: 'flex', alignItems: 'center', gap: 6, flex: 1 },
   kfIndex: { fontSize: 10, color: '#666' },
-  kfScroll: { fontSize: 12, fontFamily: 'monospace', color: '#fff' },
-  easingSelect: { padding: '4px 8px', borderRadius: 4, border: '1px solid #333', background: '#0a0a0a', color: '#888', fontSize: 10, cursor: 'pointer' },
-  deleteKfBtn: { width: 24, height: 24, borderRadius: 4, border: 'none', background: 'transparent', color: '#666', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  kfScroll: { fontSize: 11, fontFamily: 'monospace', color: '#aaa' },
+  easingSelect: { padding: '3px 6px', borderRadius: 4, border: '1px solid #333', background: '#0a0a0a', color: '#888', fontSize: 9, cursor: 'pointer' },
+  deleteKfBtn: { width: 22, height: 22, borderRadius: 4, border: 'none', background: 'transparent', color: '#666', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
 
-  // Keyframe Editor
+  bookmarkItem: { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 6, background: '#1a1a1a', cursor: 'pointer' },
+  bookmarkInput: { flex: 1, background: 'transparent', border: 'none', color: '#fff', fontSize: 12, outline: 'none' },
+
   keyframeEditor: { padding: 12, background: '#1a1a1a', borderRadius: 8, marginTop: 8 },
   editorTitle: { fontSize: 11, fontWeight: 600, color: gold, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' },
-  propertyGroup: { marginBottom: 12 },
-  groupTitle: { fontSize: 10, color: '#666', marginBottom: 6, textTransform: 'uppercase' },
-  propRow: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 },
-  propLabel: { width: 50, fontSize: 10, color: '#888', fontFamily: 'monospace' },
-  propSlider: { flex: 1, accentColor: gold, height: 4 },
-  propValue: { width: 45, fontSize: 10, color: '#fff', fontFamily: 'monospace', textAlign: 'right' },
+  propertyGroup: { marginBottom: 10 },
+  groupTitle: { fontSize: 9, color: '#666', marginBottom: 4, textTransform: 'uppercase' },
+  propRow: { display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 },
+  propLabel: { width: 55, fontSize: 9, color: '#888', fontFamily: 'monospace' },
+  propSlider: { flex: 1, accentColor: gold, height: 3 },
+  propValue: { width: 40, fontSize: 9, color: '#fff', fontFamily: 'monospace', textAlign: 'right' },
 
-  // Empty state
-  emptyState: { padding: 32, textAlign: 'center', color: '#555' },
-  emptyTitle: { fontSize: 14, fontWeight: 500, marginTop: 12, marginBottom: 8, color: '#888' },
-  emptyText: { fontSize: 12, lineHeight: 1.5, color: '#555' },
-  currentValuesHint: { padding: 16, textAlign: 'center', fontSize: 11, color: '#555', fontStyle: 'italic' },
+  emptyState: { padding: 24, textAlign: 'center', color: '#555' },
+  emptyTitle: { fontSize: 13, fontWeight: 500, marginTop: 10, marginBottom: 6, color: '#888' },
+  emptyText: { fontSize: 11, lineHeight: 1.4, color: '#555' },
 
-  // Effects
-  sectionTitle: { fontSize: 10, fontWeight: 600, textTransform: 'uppercase', color: '#666', marginBottom: 8, marginTop: 16, display: 'flex', alignItems: 'center', gap: 6 },
-  effectGrid: { display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 },
-  effectChip: { padding: '6px 12px', borderRadius: 16, border: '1px solid #333', background: 'transparent', color: '#888', fontSize: 11, cursor: 'pointer' },
-  effectChipActive: { background: `${gold}22`, borderColor: gold, color: gold },
-  sliderRow: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontSize: 11, color: '#888' },
-  slider: { flex: 1, accentColor: gold },
-  sliderValue: { width: 40, textAlign: 'right', fontFamily: 'monospace', color: '#fff' },
-  subOption: { display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, fontSize: 11, color: '#666' },
-  miniBtn: { padding: '4px 8px', borderRadius: 4, border: '1px solid #333', background: 'transparent', color: '#666', fontSize: 10, cursor: 'pointer' },
-  miniBtnActive: { background: gold, borderColor: gold, color: '#000' },
+  tip: { marginTop: 16, padding: 10, background: '#1a1a1a', borderRadius: 6, fontSize: 10, color: '#666', lineHeight: 1.4 },
 
-  // Live
-  liveGrid: { display: 'flex', flexDirection: 'column', gap: 4 },
-  liveRow: { display: 'flex', justifyContent: 'space-between', padding: '6px 8px', background: '#1a1a1a', borderRadius: 4, fontSize: 11 },
+  sectionTitle: { fontSize: 10, fontWeight: 600, textTransform: 'uppercase', color: '#666', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 },
+  liveGrid: { display: 'flex', flexDirection: 'column', gap: 3 },
+  liveRow: { display: 'flex', justifyContent: 'space-between', padding: '5px 8px', background: '#1a1a1a', borderRadius: 4, fontSize: 10 },
 
-  // Bottom Bar
-  bottomBar: { padding: '12px 16px', background: '#141414', borderTop: '1px solid #222', display: 'flex', flexDirection: 'column', gap: 10 },
-  presetsRow: { display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
-  label: { fontSize: 10, color: '#555', textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: 4 },
-  presetBtn: { display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', border: '1px solid #333', borderRadius: 16, background: 'transparent', color: '#aaa', fontSize: 11, cursor: 'pointer' },
-  presetBtnActive: { background: gold, borderColor: gold, color: '#000' },
-  effectsRow: { display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
-  effectBtn: { display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', border: '1px solid #333', borderRadius: 6, background: 'transparent', color: '#777', fontSize: 11, cursor: 'pointer' },
-  effectBtnActive: { background: `${gold}22`, borderColor: gold, color: gold },
+  bottomBar: { padding: '10px 16px', background: '#141414', borderTop: '1px solid #222' },
+  bottomRow: { display: 'flex', alignItems: 'center', gap: 8 },
+  label: { fontSize: 10, color: '#555', textTransform: 'uppercase', letterSpacing: '0.05em' },
+  quickBtn: { display: 'flex', alignItems: 'center', gap: 5, padding: '6px 10px', border: '1px solid #333', borderRadius: 6, background: 'transparent', color: '#777', fontSize: 11, cursor: 'pointer' },
   separator: { width: 1, height: 20, background: '#333', margin: '0 4px' },
   fullscreenBtn: { width: 32, height: 32, borderRadius: 6, border: '1px solid #333', background: 'transparent', color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', marginLeft: 'auto' },
 }
