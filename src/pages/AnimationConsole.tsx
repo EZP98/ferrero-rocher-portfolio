@@ -7,12 +7,28 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import {
   Play, Pause, Plus, Trash2, Eye, EyeOff, Copy,
-  Download, Upload, Home, Sparkles, Scan, RefreshCw
+  Download, Upload, Home, Sparkles, Scan, RefreshCw,
+  Send, MessageCircle, Bot, User
 } from 'lucide-react'
 
 // ========================
 // TYPES
 // ========================
+
+interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+  action?: AnimationAction
+}
+
+interface AnimationAction {
+  type: 'update_scene' | 'create_scene' | 'delete_scene' | 'play' | 'info' | 'error'
+  sceneId?: string
+  scrollPercent?: number
+  label?: string
+  changes?: Partial<SceneState>
+  message: string
+}
 
 interface SceneState {
   visible: boolean
@@ -170,6 +186,15 @@ export default function AnimationConsole() {
   // Scanning state
   const [isScanning, setIsScanning] = useState(false)
 
+  // Chat state
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+    { role: 'assistant', content: 'Ciao! Dimmi cosa vuoi fare con le animazioni. Esempi:\n- "ruota il Ferrero di 45 gradi"\n- "a 30% nascondilo"\n- "fallo brillare di più"' }
+  ])
+  const [chatInput, setChatInput] = useState('')
+  const [isChatLoading, setIsChatLoading] = useState(false)
+  const [showChat, setShowChat] = useState(true)
+  const chatEndRef = useRef<HTMLDivElement>(null)
+
   // ========================
   // EFFECTS
   // ========================
@@ -280,6 +305,94 @@ export default function AnimationConsole() {
     setIsScanning(false)
     setScroll(0)
   }
+
+  // ========================
+  // AI CHAT
+  // ========================
+
+  const sendChatMessage = async () => {
+    if (!chatInput.trim() || isChatLoading) return
+
+    const userMessage = chatInput.trim()
+    setChatInput('')
+    setChatMessages(prev => [...prev, { role: 'user', content: userMessage }])
+    setIsChatLoading(true)
+
+    try {
+      const response = await fetch('/api/animation-ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMessage,
+          currentScenes: scenes.map(s => ({ scrollPercent: s.scrollPercent, label: s.label }))
+        }),
+      })
+
+      const action: AnimationAction = await response.json()
+
+      // Add assistant message
+      setChatMessages(prev => [...prev, {
+        role: 'assistant',
+        content: action.message,
+        action
+      }])
+
+      // Apply the action
+      if (action.type === 'create_scene' && action.scrollPercent !== undefined) {
+        const newScene: Scene = {
+          id: `scene-${Date.now()}`,
+          scrollPercent: action.scrollPercent,
+          label: action.label || `Scena @ ${action.scrollPercent}%`,
+          state: { ...defaultState, ...action.changes },
+        }
+        setScenes(prev => [...prev, newScene].sort((a, b) => a.scrollPercent - b.scrollPercent))
+        setScroll(action.scrollPercent / 100)
+      }
+
+      if (action.type === 'update_scene' && action.changes) {
+        // Find closest scene to current scroll or specified scrollPercent
+        const targetScroll = action.scrollPercent ?? Math.round(scroll * 100)
+        const closestScene = scenes.reduce((prev, curr) =>
+          Math.abs(curr.scrollPercent - targetScroll) < Math.abs(prev.scrollPercent - targetScroll) ? curr : prev
+        , scenes[0])
+
+        if (closestScene) {
+          setScenes(prev => prev.map(s =>
+            s.id === closestScene.id
+              ? { ...s, state: { ...s.state, ...action.changes }, label: action.label || s.label }
+              : s
+          ))
+        } else if (scenes.length === 0) {
+          // Create a new scene if none exist
+          const newScene: Scene = {
+            id: `scene-${Date.now()}`,
+            scrollPercent: targetScroll,
+            label: action.label || `Scena @ ${targetScroll}%`,
+            state: { ...defaultState, ...action.changes },
+          }
+          setScenes([newScene])
+        }
+      }
+
+      if (action.type === 'play') {
+        setPlaying(true)
+      }
+
+    } catch (error) {
+      console.error('Chat error:', error)
+      setChatMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'Errore di connessione. Riprova.'
+      }])
+    }
+
+    setIsChatLoading(false)
+  }
+
+  // Scroll chat to bottom
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [chatMessages])
 
   // ========================
   // SCENE MANAGEMENT
@@ -717,6 +830,79 @@ export default function AnimationConsole() {
       fontSize: 14,
       marginBottom: 20,
     },
+
+    // Chat styles
+    chatSection: {
+      borderTop: '1px solid #222',
+      display: 'flex',
+      flexDirection: 'column',
+      height: 300,
+      background: '#0d0d0d',
+    },
+    chatHeader: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '12px 16px',
+      borderBottom: '1px solid #222',
+    },
+    chatTitle: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      fontSize: 13,
+      fontWeight: 600,
+      color: '#d4a853',
+    },
+    chatMessages: {
+      flex: 1,
+      overflow: 'auto',
+      padding: 12,
+    },
+    chatMessage: {
+      marginBottom: 12,
+      padding: '10px 14px',
+      borderRadius: 12,
+      fontSize: 13,
+      lineHeight: 1.5,
+    },
+    chatMessageUser: {
+      background: '#1a1a1a',
+      marginLeft: 20,
+    },
+    chatMessageAssistant: {
+      background: '#1f1a10',
+      marginRight: 20,
+      borderLeft: '2px solid #d4a853',
+    },
+    chatInputArea: {
+      display: 'flex',
+      gap: 8,
+      padding: 12,
+      borderTop: '1px solid #222',
+    },
+    chatInput: {
+      flex: 1,
+      padding: '10px 14px',
+      background: '#1a1a1a',
+      border: '1px solid #333',
+      borderRadius: 8,
+      color: 'white',
+      fontSize: 13,
+      outline: 'none',
+    },
+    chatSendBtn: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: 40,
+      height: 40,
+      background: '#d4a853',
+      border: 'none',
+      borderRadius: 8,
+      color: '#000',
+      cursor: 'pointer',
+    },
   }
 
   // ========================
@@ -1018,6 +1204,90 @@ export default function AnimationConsole() {
               ))
             )}
           </div>
+
+          {/* AI Chat Section */}
+          {showChat && (
+            <div style={styles.chatSection}>
+              <div style={styles.chatHeader}>
+                <div style={styles.chatTitle}>
+                  <Bot size={16} />
+                  AI Assistant
+                </div>
+                <button
+                  style={{ ...styles.smallBtn, background: 'transparent' }}
+                  onClick={() => setShowChat(false)}
+                >
+                  <MessageCircle size={14} />
+                </button>
+              </div>
+
+              <div style={styles.chatMessages}>
+                {chatMessages.map((msg, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      ...styles.chatMessage,
+                      ...(msg.role === 'user' ? styles.chatMessageUser : styles.chatMessageAssistant),
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, opacity: 0.6, fontSize: 11 }}>
+                      {msg.role === 'user' ? <User size={12} /> : <Bot size={12} />}
+                      {msg.role === 'user' ? 'Tu' : 'AI'}
+                    </div>
+                    <div style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</div>
+                  </div>
+                ))}
+                {isChatLoading && (
+                  <div style={{ ...styles.chatMessage, ...styles.chatMessageAssistant, opacity: 0.6 }}>
+                    <Bot size={12} /> Sto pensando...
+                  </div>
+                )}
+                <div ref={chatEndRef} />
+              </div>
+
+              <div style={styles.chatInputArea}>
+                <input
+                  type="text"
+                  style={styles.chatInput}
+                  placeholder="Es: ruota di 45 gradi..."
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && sendChatMessage()}
+                  disabled={isChatLoading}
+                />
+                <button
+                  style={{ ...styles.chatSendBtn, opacity: isChatLoading ? 0.5 : 1 }}
+                  onClick={sendChatMessage}
+                  disabled={isChatLoading}
+                >
+                  <Send size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Chat toggle when hidden */}
+          {!showChat && (
+            <button
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                padding: '12px 16px',
+                background: '#1a1a1a',
+                border: 'none',
+                borderTop: '1px solid #222',
+                color: '#d4a853',
+                fontSize: 13,
+                cursor: 'pointer',
+              }}
+              onClick={() => setShowChat(true)}
+            >
+              <Bot size={16} />
+              Mostra AI Chat
+            </button>
+          )}
         </div>
       </div>
     </div>
