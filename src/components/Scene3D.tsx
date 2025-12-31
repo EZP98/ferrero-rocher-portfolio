@@ -206,6 +206,20 @@ function FerreroModel({ scrollProgress }: { scrollProgress: number }) {
     const targetScale = fadeInProgress > 0 ? baseScale : 0
     meshRef.current.scale.setScalar(targetScale)
 
+    // Fade-in effect via material opacity
+    scene.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        const mesh = child as THREE.Mesh
+        if (mesh.material) {
+          const mat = mesh.material as THREE.MeshStandardMaterial
+          if (mat.isMeshStandardMaterial) {
+            mat.transparent = true
+            mat.opacity = fadeInProgress
+          }
+        }
+      }
+    })
+
     // Send state to debug console
     let activeCard: string | null = null
     if (scrollProgress >= 0.15 && scrollProgress < 0.28) activeCard = 'La Copertura'
