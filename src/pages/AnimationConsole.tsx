@@ -7,7 +7,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import {
   Play, Pause, Plus, Trash2, Eye, EyeOff, Copy,
-  Download, Upload, Home, Sparkles
+  Download, Upload, Home, Sparkles, Scan, RefreshCw
 } from 'lucide-react'
 
 // ========================
@@ -158,9 +158,58 @@ export default function AnimationConsole() {
     }
   }, [])
 
+  // Project structure from iframe
+  const [projectStructure, setProjectStructure] = useState<{
+    ferreroStages?: Array<{ name: string; range: string }>
+    components?: Array<{ id: string; name: string; controls: string[] }>
+  } | null>(null)
+
+  // Live state from iframe
+  const [liveState, setLiveState] = useState<Record<string, number> | null>(null)
+
+  // Scanning state
+  const [isScanning, setIsScanning] = useState(false)
+
   // ========================
   // EFFECTS
   // ========================
+
+  // Listen for messages from iframe
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      // Receive project structure (animation stages, components)
+      if (event.data?.type === 'CODE_STRUCTURE') {
+        console.log('Received CODE_STRUCTURE:', event.data.data)
+        setProjectStructure(event.data.data)
+
+        // Auto-create scenes from ferreroStages
+        if (event.data.data?.ferreroStages && scenes.length === 0) {
+          const stages = event.data.data.ferreroStages
+          const newScenes: Scene[] = stages.map((stage: { name: string; range: string }, index: number) => {
+            // Parse range like "15-30%" to get start percentage
+            const match = stage.range.match(/(\d+)/)
+            const scrollPercent = match ? parseInt(match[1]) : index * 15
+
+            return {
+              id: `scene-${Date.now()}-${index}`,
+              scrollPercent,
+              label: stage.name,
+              state: { ...defaultState },
+            }
+          })
+          setScenes(newScenes)
+        }
+      }
+
+      // Receive live Ferrero state
+      if (event.data?.type === 'FERRERO_STATE') {
+        setLiveState(event.data.state)
+      }
+    }
+
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
+  }, [scenes.length])
 
   // Sync scroll and interpolate
   useEffect(() => {
@@ -186,6 +235,51 @@ export default function AnimationConsole() {
     }, 16)
     return () => clearInterval(interval)
   }, [playing, speed])
+
+  // Scan function - captures state at multiple scroll positions
+  const scanAnimations = async () => {
+    if (!iframeRef.current?.contentWindow) return
+
+    setIsScanning(true)
+    const capturedScenes: Scene[] = []
+    const positions = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+
+    for (const pos of positions) {
+      // Scroll to position
+      setScroll(pos / 100)
+      syncScroll(pos / 100)
+
+      // Wait for state update
+      await new Promise(resolve => setTimeout(resolve, 300))
+
+      // Capture current state from liveState if available
+      if (liveState) {
+        capturedScenes.push({
+          id: `scan-${Date.now()}-${pos}`,
+          scrollPercent: pos,
+          label: `${pos}%`,
+          state: {
+            visible: true,
+            opacity: 1,
+            rotationX: liveState.rotX || 0,
+            rotationY: liveState.rotY || 0,
+            rotationZ: liveState.rotZ || 0,
+            positionX: liveState.posX || 0,
+            positionY: liveState.posY || 0,
+            scale: liveState.scale || 1,
+            glow: 0,
+          },
+        })
+      }
+    }
+
+    if (capturedScenes.length > 0) {
+      setScenes(capturedScenes)
+    }
+
+    setIsScanning(false)
+    setScroll(0)
+  }
 
   // ========================
   // SCENE MANAGEMENT
@@ -733,21 +827,52 @@ export default function AnimationConsole() {
         <div style={styles.sidebar}>
           <div style={styles.sidebarHeader}>
             <span style={styles.sidebarTitle}>Scene ({scenes.length})</span>
-            <button style={styles.addBtn} onClick={addScene}>
-              <Plus size={16} /> Aggiungi
-            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                style={{ ...styles.addBtn, background: '#333', color: '#fff' }}
+                onClick={scanAnimations}
+                disabled={isScanning}
+              >
+                {isScanning ? <RefreshCw size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Scan size={16} />}
+                {isScanning ? 'Scanning...' : 'Scan'}
+              </button>
+              <button style={styles.addBtn} onClick={addScene}>
+                <Plus size={16} /> Aggiungi
+              </button>
+            </div>
           </div>
+
+          {/* Show detected project info */}
+          {projectStructure?.ferreroStages && (
+            <div style={{ padding: '12px 16px', background: '#1a1a1a', borderBottom: '1px solid #222', fontSize: 12, color: '#888' }}>
+              <strong style={{ color: '#d4a853' }}>Animazioni rilevate:</strong>
+              <div style={{ marginTop: 8 }}>
+                {projectStructure.ferreroStages.map((stage, i) => (
+                  <div key={i} style={{ padding: '2px 0' }}>
+                    • {stage.name} ({stage.range})
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div style={styles.sceneList}>
             {scenes.length === 0 ? (
               <div style={styles.emptyState}>
-                <Sparkles size={40} style={styles.emptyIcon} />
+                <Scan size={40} style={styles.emptyIcon} />
                 <div style={styles.emptyText}>
                   Nessuna scena<br />
-                  Clicca "Aggiungi" per creare la prima
+                  Clicca "Scan" per rilevare le animazioni
                 </div>
+                <button
+                  style={{ ...styles.addBtn, background: '#333', color: '#fff', marginBottom: 12 }}
+                  onClick={scanAnimations}
+                  disabled={isScanning}
+                >
+                  <Scan size={16} /> Scan animazioni
+                </button>
                 <button style={styles.addBtn} onClick={addScene}>
-                  <Plus size={16} /> Prima scena
+                  <Plus size={16} /> Crea manualmente
                 </button>
               </div>
             ) : (
