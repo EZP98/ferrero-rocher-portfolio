@@ -579,10 +579,14 @@ export function Scene3D() {
   const { debugState } = useDebug()
   const pp = debugState.postProcessing
 
+  // Check if in debug mode (iframe from console)
+  const isDebugMode = debugState.enabled || debugState.ferrero.enabled
+
   return (
     <div className="canvas-container">
-      <TitleOverlay scrollProgress={scrollProgress} />
-      <InfoCards scrollProgress={scrollProgress} />
+      {/* Hide overlays in debug mode - only show 3D model */}
+      {!isDebugMode && <TitleOverlay scrollProgress={scrollProgress} />}
+      {!isDebugMode && <InfoCards scrollProgress={scrollProgress} />}
 
       {/* CSS Gradient Background when enabled */}
       {debugState.background.enabled && debugState.background.gradientEnabled && (

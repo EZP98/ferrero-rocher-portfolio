@@ -34,7 +34,25 @@ export default function App() {
     }
   }, [])
 
-  const content = (
+  // DEBUG MODE: Show only 3D scene without Hero/Transition sections
+  if (isDebugMode) {
+    return (
+      <DebugProvider>
+        <ScrollProvider>
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            background: '#0a0a0a',
+          }}>
+            <Scene3D />
+          </div>
+        </ScrollProvider>
+      </DebugProvider>
+    )
+  }
+
+  // NORMAL MODE: Full page with all sections
+  return (
     <ScrollProvider>
       {/* Custom cursor (desktop only) */}
       <div className="hidden md:block">
@@ -63,11 +81,4 @@ export default function App() {
       <div className="noise-overlay" />
     </ScrollProvider>
   )
-
-  // Wrap with DebugProvider when in debug mode
-  if (isDebugMode) {
-    return <DebugProvider>{content}</DebugProvider>
-  }
-
-  return content
 }
