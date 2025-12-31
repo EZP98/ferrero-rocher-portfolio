@@ -3,10 +3,7 @@
  * Best practices: extracted components, custom slider, consistent design system
  */
 
-import { useState, useEffect, memo } from 'react'
-import { Canvas } from '@react-three/fiber'
-import { Environment } from '@react-three/drei'
-import { FerreroBall } from '../components/FerreroBall'
+import { useState, useEffect, memo, useRef } from 'react'
 
 // ========================
 // DESIGN TOKENS
@@ -318,8 +315,19 @@ export default function AnimationConsole() {
   const [selectedScene, setSelectedScene] = useState<Scene | null>(scenes[0])
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
 
   const currentState = interpolateState(scenes, currentTime)
+
+  // Send scroll position to iframe
+  useEffect(() => {
+    if (iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.postMessage(
+        { type: 'SET_SCROLL', scrollPercent: currentTime / 100 },
+        '*'
+      )
+    }
+  }, [currentTime])
 
   useEffect(() => {
     if (isPlaying) {
@@ -480,24 +488,12 @@ export default function AnimationConsole() {
         <main className="flex-1 flex flex-col min-w-0">
           <div className="flex-1 p-4 min-h-0">
             <div className="h-full rounded-2xl overflow-hidden border border-white/10 relative bg-neutral-900 shadow-2xl">
-              <Canvas
-                camera={{ position: [0, 0, 6], fov: 45 }}
-                style={{ background: 'linear-gradient(180deg, #0a0a0a 0%, #050505 100%)' }}
-              >
-                <ambientLight intensity={0.3} />
-                <directionalLight position={[10, 10, 5]} intensity={1} />
-                <pointLight
-                  position={[currentState.positionX, 0, 2]}
-                  intensity={currentState.glow * 2}
-                  color="#d4a853"
-                />
-                <Environment preset="studio" />
-                <FerreroBall
-                  position={[currentState.positionX, 0, 0]}
-                  rotation={[0, currentState.rotationY, 0]}
-                  scale={currentState.scale}
-                />
-              </Canvas>
+              <iframe
+                ref={iframeRef}
+                src="/"
+                className="w-full h-full border-0"
+                title="Preview"
+              />
 
               {/* Time indicator */}
               <div className="absolute bottom-5 right-5 bg-black/80 backdrop-blur-md rounded-xl px-5 py-3 border border-white/10 shadow-lg">
