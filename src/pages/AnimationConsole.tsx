@@ -426,7 +426,10 @@ export default function AnimationConsole() {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - Scenes */}
-        <aside className="w-80 border-r border-white/10 flex flex-col flex-shrink-0 bg-black/40 pl-6 pr-4">
+        <aside
+          className="w-80 border-r border-white/10 flex flex-col flex-shrink-0 bg-black/40"
+          style={{ paddingLeft: '24px', paddingRight: '16px' }}
+        >
           <div className="py-5 border-b border-white/10">
             <div className="flex items-center justify-between">
               <h2 className="text-xs font-medium text-white/50 uppercase tracking-wider">
@@ -604,7 +607,10 @@ export default function AnimationConsole() {
 
         {/* Properties panel */}
         {selectedScene && (
-          <aside className="w-96 border-l border-white/10 overflow-auto flex-shrink-0 bg-black/40 pl-6 pr-8">
+          <aside
+            className="w-96 border-l border-white/10 overflow-auto flex-shrink-0 bg-black/40"
+            style={{ paddingLeft: '24px', paddingRight: '32px' }}
+          >
             <div className="py-6 border-b border-white/10 bg-gradient-to-br from-amber-500/15 to-transparent">
               <p className="text-xs text-white/40 uppercase tracking-wider mb-2">Properties</p>
               <h3 className="text-xl font-semibold text-amber-400">{selectedScene.name}</h3>
