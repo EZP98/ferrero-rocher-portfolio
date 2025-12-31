@@ -394,7 +394,7 @@ export default function AnimationConsole() {
       `}</style>
 
       {/* Header */}
-      <header className="border-b border-white/10 px-6 py-4 flex-shrink-0 bg-black/60 backdrop-blur-md">
+      <header className="border-b border-white/10 px-8 py-5 flex-shrink-0 bg-black/60 backdrop-blur-md">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="text-amber-400">
@@ -426,9 +426,9 @@ export default function AnimationConsole() {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - Scenes */}
-        <aside className="w-72 border-r border-white/10 flex flex-col flex-shrink-0 bg-black/40">
-          <div className="px-4 py-4 border-b border-white/10">
-            <div className="flex items-center justify-between mb-4">
+        <aside className="w-80 border-r border-white/10 flex flex-col flex-shrink-0 bg-black/40">
+          <div className="px-6 py-5 border-b border-white/10">
+            <div className="flex items-center justify-between">
               <h2 className="text-xs font-medium text-white/50 uppercase tracking-wider">
                 Scene ({scenes.length})
               </h2>
@@ -438,7 +438,7 @@ export default function AnimationConsole() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-auto p-3 space-y-2">
+          <div className="flex-1 overflow-auto px-4 py-4 space-y-3">
             {scenes.map(scene => (
               <div
                 key={scene.id}
@@ -446,7 +446,7 @@ export default function AnimationConsole() {
                   setSelectedScene(scene)
                   setCurrentTime(scene.scrollPercent)
                 }}
-                className={`p-4 rounded-xl cursor-pointer transition-all duration-200 ${
+                className={`px-5 py-4 rounded-xl cursor-pointer transition-all duration-200 ${
                   selectedScene?.id === scene.id
                     ? 'bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/40 gold-glow'
                     : 'bg-white/5 border border-transparent hover:bg-white/10 hover:border-white/10'
@@ -505,8 +505,8 @@ export default function AnimationConsole() {
           </div>
 
           {/* Timeline */}
-          <div className="h-48 border-t border-white/10 flex flex-col flex-shrink-0 bg-black/40">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-white/10">
+          <div className="h-52 border-t border-white/10 flex flex-col flex-shrink-0 bg-black/40">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
               <div className="flex items-center gap-4">
                 <IconButton onClick={() => setCurrentTime(0)} size="sm" title="Reset">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
@@ -554,7 +554,7 @@ export default function AnimationConsole() {
             {/* Timeline tracks */}
             <div className="flex-1 overflow-auto relative">
               <div className="sticky top-0 h-8 bg-neutral-900/95 backdrop-blur border-b border-white/10 flex items-end z-10">
-                <div className="w-32 flex-shrink-0" />
+                <div className="w-36 flex-shrink-0" />
                 <div className="flex-1 relative pb-1">
                   {[0, 20, 40, 60, 80, 100].map(t => (
                     <span
@@ -571,7 +571,7 @@ export default function AnimationConsole() {
               {/* Playhead */}
               <div
                 className="absolute top-0 bottom-0 w-0.5 bg-amber-500 z-20 pointer-events-none shadow-lg shadow-amber-500/50"
-                style={{ left: `calc(128px + ${currentTime}% * 0.82)` }}
+                style={{ left: `calc(144px + ${currentTime}% * 0.80)` }}
               >
                 <div className="absolute top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-amber-500 rounded-full shadow-lg shadow-amber-500/50" />
               </div>
@@ -579,8 +579,8 @@ export default function AnimationConsole() {
               {/* Tracks */}
               <div className="py-2">
                 {keyframes.map(kf => (
-                  <div key={kf.id} className="flex items-center h-10 px-3 hover:bg-white/5 group transition-colors">
-                    <div className="w-28 text-xs text-white/50 font-medium truncate pr-3 group-hover:text-white/70 transition-colors">
+                  <div key={kf.id} className="flex items-center h-10 px-4 hover:bg-white/5 group transition-colors">
+                    <div className="w-32 text-xs text-white/50 font-medium truncate pr-4 group-hover:text-white/70 transition-colors">
                       {kf.name}
                     </div>
                     <div className="flex-1 relative h-7 bg-white/5 rounded-lg mx-2 overflow-hidden">
@@ -604,18 +604,18 @@ export default function AnimationConsole() {
 
         {/* Properties panel */}
         {selectedScene && (
-          <aside className="w-80 border-l border-white/10 overflow-auto flex-shrink-0 bg-black/40">
-            <div className="px-5 py-5 border-b border-white/10 bg-gradient-to-br from-amber-500/15 to-transparent">
-              <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Properties</p>
+          <aside className="w-96 border-l border-white/10 overflow-auto flex-shrink-0 bg-black/40">
+            <div className="px-8 py-6 border-b border-white/10 bg-gradient-to-br from-amber-500/15 to-transparent">
+              <p className="text-xs text-white/40 uppercase tracking-wider mb-2">Properties</p>
               <h3 className="text-xl font-semibold text-amber-400">{selectedScene.name}</h3>
-              <div className="flex gap-2 mt-3">
+              <div className="flex gap-2 mt-4">
                 <span className="text-xs px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono">
                   {selectedScene.scrollPercent}%
                 </span>
               </div>
             </div>
 
-            <div className="p-5 space-y-6">
+            <div className="px-8 py-6 space-y-8">
               <Slider
                 label="Opacity"
                 value={selectedScene.state.opacity}
@@ -663,7 +663,7 @@ export default function AnimationConsole() {
               />
             </div>
 
-            <div className="p-5 border-t border-white/10 space-y-3">
+            <div className="px-8 py-6 border-t border-white/10 space-y-4">
               <LumaButton active className="w-full">
                 <span className="flex items-center justify-center gap-2">
                   <SparkleIcon size={14} />
