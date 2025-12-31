@@ -466,6 +466,20 @@ export default function AnimationConsole() {
     return () => window.removeEventListener('message', handleMessage)
   }, [])
 
+  // Force dark background (override Tailwind global styles)
+  useEffect(() => {
+    const originalBodyBg = document.body.style.background
+    const originalHtmlBg = document.documentElement.style.background
+
+    document.body.style.background = colors.bgMain
+    document.documentElement.style.background = colors.bgMain
+
+    return () => {
+      document.body.style.background = originalBodyBg
+      document.documentElement.style.background = originalHtmlBg
+    }
+  }, [])
+
   // Toggle selector mode
   const toggleSelector = useCallback(() => {
     const newMode = !selectorMode
