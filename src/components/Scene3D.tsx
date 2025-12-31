@@ -4,7 +4,6 @@ import { useGLTF, Environment, Stars, Sparkles } from '@react-three/drei'
 import * as THREE from 'three'
 import { useScrollProgress } from '../contexts/ScrollContext'
 import { useDebug } from '../contexts/DebugContext'
-import { useAnimation } from '../contexts/AnimationContext'
 
 // Send component selection to parent (for debug console)
 function sendComponentSelection(componentId: string) {
@@ -82,7 +81,6 @@ function FerreroModel({ scrollProgress }: { scrollProgress: number }) {
   const { viewport, clock } = useThree()
   const { scene } = useGLTF('/models/ferrero.glb')
   const { debugState } = useDebug()
-  const { getFerreroState, config } = useAnimation()
   const timeRef = useRef(0)
 
   // Apply material properties to all meshes in the model
@@ -165,26 +163,44 @@ function FerreroModel({ scrollProgress }: { scrollProgress: number }) {
       return
     }
 
-    // NORMAL MODE: Config-based animation (interpolates keyframes)
-    const animState = getFerreroState(scrollProgress)
+    // NORMAL MODE: Scroll-based animation (original hardcoded logic)
+    const fadeInProgress = Math.min(scrollProgress * 10, 1)
 
-    const targetRotationX = animState.rotX ?? 0
-    const targetRotationY = animState.rotY ?? 0
-    const targetRotationZ = animState.rotZ ?? 0
-    const targetPosX = animState.posX ?? 0
-    const targetPosY = animState.posY ?? 0
-    const targetPosZ = animState.posZ ?? 0
-    const targetScaleMultiplier = animState.scale ?? 1
+    let targetRotationX = 0
+    let targetRotationY = 0
+    let targetPosX = 0
+
+    if (scrollProgress < 0.15) {
+      targetRotationX = 0
+      targetRotationY = 0
+      targetPosX = 0
+    } else if (scrollProgress < 0.30) {
+      const t = (scrollProgress - 0.15) / 0.15
+      targetRotationX = -0.6 * t
+      targetRotationY = Math.PI * 0.5 * t
+      targetPosX = -2 * t
+    } else if (scrollProgress < 0.45) {
+      const t = (scrollProgress - 0.30) / 0.15
+      targetRotationX = -0.6 + 0.3 * t
+      targetRotationY = Math.PI * 0.5 + Math.PI * 0.5 * t
+      targetPosX = -2 + 4 * t
+    } else if (scrollProgress < 0.60) {
+      const t = (scrollProgress - 0.45) / 0.15
+      targetRotationX = -0.3 + 0.3 * t
+      targetRotationY = Math.PI + Math.PI * 0.3 * t
+      targetPosX = 2 - 2 * t
+    } else {
+      targetRotationX = 0
+      targetRotationY = Math.PI * 1.3 + (scrollProgress - 0.60) * Math.PI * 2
+      targetPosX = 0
+    }
 
     meshRef.current.rotation.x = THREE.MathUtils.lerp(meshRef.current.rotation.x, targetRotationX, 0.08)
     meshRef.current.rotation.y = THREE.MathUtils.lerp(meshRef.current.rotation.y, targetRotationY, 0.08)
-    meshRef.current.rotation.z = THREE.MathUtils.lerp(meshRef.current.rotation.z, targetRotationZ, 0.08)
     meshRef.current.position.x = THREE.MathUtils.lerp(meshRef.current.position.x, targetPosX, 0.08)
-    meshRef.current.position.y = THREE.MathUtils.lerp(meshRef.current.position.y, targetPosY, 0.08)
-    meshRef.current.position.z = THREE.MathUtils.lerp(meshRef.current.position.z, targetPosZ, 0.08)
 
-    const baseScale = viewport.width > 10 ? config.ferrero.baseScale : 1.6
-    const targetScale = baseScale * targetScaleMultiplier
+    const baseScale = viewport.width > 10 ? 2.2 : 1.6
+    const targetScale = baseScale * fadeInProgress
     meshRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.08)
 
     // Send state to debug console
