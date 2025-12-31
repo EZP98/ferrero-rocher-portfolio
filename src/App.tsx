@@ -11,6 +11,7 @@ import { Transition } from './sections/Transition'
 import { DraggableFooter } from './components/DraggableFooter'
 import { ScrollProvider } from './contexts/ScrollContext'
 import { DebugProvider } from './contexts/DebugContext'
+import { AnimationProvider } from './contexts/AnimationContext'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -37,23 +38,26 @@ export default function App() {
   // DEBUG MODE: Show only 3D scene without Hero/Transition sections
   if (isDebugMode) {
     return (
-      <DebugProvider>
-        <ScrollProvider>
-          <div style={{
-            position: 'fixed',
-            inset: 0,
-            background: '#0a0a0a',
-          }}>
-            <Scene3D />
-          </div>
-        </ScrollProvider>
-      </DebugProvider>
+      <AnimationProvider>
+        <DebugProvider>
+          <ScrollProvider>
+            <div style={{
+              position: 'fixed',
+              inset: 0,
+              background: '#0a0a0a',
+            }}>
+              <Scene3D />
+            </div>
+          </ScrollProvider>
+        </DebugProvider>
+      </AnimationProvider>
     )
   }
 
   // NORMAL MODE: Full page with all sections
   return (
-    <ScrollProvider>
+    <AnimationProvider>
+      <ScrollProvider>
       {/* Custom cursor (desktop only) */}
       <div className="hidden md:block">
         <CustomCursor />
@@ -79,6 +83,7 @@ export default function App() {
 
       {/* Noise overlay */}
       <div className="noise-overlay" />
-    </ScrollProvider>
+      </ScrollProvider>
+    </AnimationProvider>
   )
 }
