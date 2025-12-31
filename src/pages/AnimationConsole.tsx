@@ -118,29 +118,30 @@ export default function AnimationConsole() {
   const sendToIframe = useCallback((state: SceneState) => {
     if (!iframeRef.current?.contentWindow) return
 
-    // Send visibility
+    // Send ferrero state (use correct property names from DebugContext)
     iframeRef.current.contentWindow.postMessage({
       type: 'DEBUG_UPDATE',
       component: 'ferrero',
       values: {
         enabled: true,
-        visible: state.visible,
-        opacity: state.opacity,
-        rotationX: state.rotationX,
-        rotationY: state.rotationY,
-        rotationZ: state.rotationZ,
-        positionX: state.positionX,
-        positionY: state.positionY,
+        rotX: state.rotationX,
+        rotY: state.rotationY,
+        rotZ: state.rotationZ,
+        posX: state.positionX,
+        posY: state.positionY,
         scale: state.scale,
+        // Use emissive for "glow" effect on the model
+        emissiveIntensity: state.visible ? state.opacity : 0,
       }
     }, '*')
 
-    // Send glow/bloom
+    // Send bloom/post-processing
     iframeRef.current.contentWindow.postMessage({
       type: 'DEBUG_UPDATE',
       component: 'postProcessing',
       values: {
         enabled: true,
+        bloomEnabled: state.glow > 0,
         bloomIntensity: state.glow,
       }
     }, '*')
@@ -191,6 +192,7 @@ export default function AnimationConsole() {
   // ========================
 
   const addScene = () => {
+    console.log('addScene called, current scroll:', scroll)
     const newScene: Scene = {
       id: `scene-${Date.now()}`,
       scrollPercent: Math.round(scroll * 100),
@@ -199,7 +201,12 @@ export default function AnimationConsole() {
         ? { ...interpolateStates(scenes, scroll * 100) }
         : { ...defaultState },
     }
-    setScenes(prev => [...prev, newScene].sort((a, b) => a.scrollPercent - b.scrollPercent))
+    console.log('newScene:', newScene)
+    setScenes(prev => {
+      const updated = [...prev, newScene].sort((a, b) => a.scrollPercent - b.scrollPercent)
+      console.log('updated scenes:', updated)
+      return updated
+    })
     setSelectedSceneId(newScene.id)
   }
 
