@@ -1,9 +1,29 @@
 /**
  * Animation Console - Bolt DIY Style
  * AI Chat + Visual Element Selector
+ * Using 100% inline styles (no Tailwind for colors/bg/spacing)
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, CSSProperties } from 'react'
+
+// ========================
+// COLORS (Bolt DIY palette)
+// ========================
+
+const colors = {
+  bgMain: '#0D0D0D',
+  bgChat: '#141414',
+  bgInput: '#1A1A1A',
+  bgHover: '#1F1F1F',
+  border: '#262626',
+  borderLight: '#333333',
+  purple: '#9E75F0',
+  purpleDark: '#8A2BE2',
+  purpleGlow: 'rgba(158, 117, 240, 0.15)',
+  text: '#FFFFFF',
+  textSecondary: '#AAAAAA',
+  textMuted: '#666666',
+}
 
 // ========================
 // TYPES
@@ -29,13 +49,13 @@ interface SelectedElement {
 // ========================
 
 const SendIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z" />
   </svg>
 )
 
 const SelectorIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M3 3L10.07 19.97L12.58 12.58L19.97 10.07L3 3Z" />
     <path d="M13 13L19 19" />
   </svg>
@@ -48,10 +68,363 @@ const SparkleIcon = () => (
 )
 
 const XIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M18 6L6 18M6 6L18 18" />
   </svg>
 )
+
+const HomeIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+  </svg>
+)
+
+// ========================
+// STYLES
+// ========================
+
+const styles: Record<string, CSSProperties> = {
+  container: {
+    display: 'flex',
+    height: '100vh',
+    width: '100vw',
+    backgroundColor: colors.bgMain,
+    color: colors.text,
+    fontFamily: 'Inter, -apple-system, sans-serif',
+    overflow: 'hidden',
+  },
+
+  // Chat Panel (LEFT)
+  chatPanel: {
+    width: 400,
+    minWidth: 400,
+    display: 'flex',
+    flexDirection: 'column',
+    backgroundColor: colors.bgChat,
+    borderRight: `1px solid ${colors.border}`,
+  },
+
+  chatHeader: {
+    height: 56,
+    padding: '0 20px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    borderBottom: `1px solid ${colors.border}`,
+  },
+
+  chatAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: '50%',
+    background: `linear-gradient(135deg, ${colors.purple} 0%, ${colors.purpleDark} 100%)`,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: colors.text,
+  },
+
+  chatTitle: {
+    fontSize: 14,
+    fontWeight: 600,
+    color: colors.text,
+    margin: 0,
+  },
+
+  chatSubtitle: {
+    fontSize: 11,
+    color: colors.textMuted,
+    margin: 0,
+  },
+
+  messagesArea: {
+    flex: 1,
+    overflowY: 'auto',
+    padding: 20,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 16,
+  },
+
+  messageRow: {
+    display: 'flex',
+  },
+
+  messageRowUser: {
+    justifyContent: 'flex-end',
+  },
+
+  messageRowAssistant: {
+    justifyContent: 'flex-start',
+  },
+
+  messageBubble: {
+    maxWidth: '85%',
+    padding: '12px 16px',
+    borderRadius: 16,
+    fontSize: 14,
+    lineHeight: 1.5,
+  },
+
+  messageBubbleUser: {
+    backgroundColor: colors.purple,
+    color: colors.text,
+    borderBottomRightRadius: 4,
+  },
+
+  messageBubbleAssistant: {
+    backgroundColor: 'transparent',
+    border: `1px solid ${colors.border}`,
+    color: colors.textSecondary,
+    borderBottomLeftRadius: 4,
+  },
+
+  messageTime: {
+    fontSize: 10,
+    color: colors.textMuted,
+    marginTop: 6,
+    display: 'block',
+  },
+
+  inputArea: {
+    padding: 20,
+    borderTop: `1px solid ${colors.border}`,
+  },
+
+  inputWrapper: {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+  },
+
+  textarea: {
+    width: '100%',
+    backgroundColor: colors.bgInput,
+    border: `1px solid ${colors.border}`,
+    borderRadius: 12,
+    padding: '14px 50px 14px 16px',
+    fontSize: 14,
+    color: colors.text,
+    resize: 'none',
+    outline: 'none',
+    fontFamily: 'inherit',
+    lineHeight: 1.4,
+    minHeight: 48,
+    maxHeight: 120,
+  },
+
+  sendButton: {
+    position: 'absolute',
+    right: 8,
+    top: '50%',
+    transform: 'translateY(-50%)',
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: colors.purple,
+    border: 'none',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: colors.text,
+    transition: 'opacity 0.2s',
+  },
+
+  sendButtonDisabled: {
+    opacity: 0.3,
+    cursor: 'not-allowed',
+  },
+
+  inputHint: {
+    fontSize: 10,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: 10,
+  },
+
+  // Preview Panel (RIGHT)
+  previewPanel: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    backgroundColor: colors.bgMain,
+  },
+
+  previewHeader: {
+    height: 56,
+    padding: '0 20px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderBottom: `1px solid ${colors.border}`,
+  },
+
+  previewTitle: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+  },
+
+  previewTitleIcon: {
+    color: colors.purple,
+  },
+
+  previewTitleText: {
+    fontSize: 14,
+    fontWeight: 600,
+  },
+
+  previewActions: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+  },
+
+  button: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '8px 14px',
+    borderRadius: 8,
+    fontSize: 13,
+    fontWeight: 500,
+    border: 'none',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+  },
+
+  buttonDefault: {
+    backgroundColor: colors.bgInput,
+    color: colors.textSecondary,
+  },
+
+  buttonActive: {
+    backgroundColor: colors.purple,
+    color: colors.text,
+  },
+
+  buttonIcon: {
+    width: 36,
+    height: 36,
+    padding: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+    border: 'none',
+    backgroundColor: colors.bgInput,
+    color: colors.textSecondary,
+    cursor: 'pointer',
+  },
+
+  selectedBadge: {
+    padding: '10px 20px',
+    backgroundColor: colors.purpleGlow,
+    borderBottom: `1px solid ${colors.border}`,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  selectedBadgeContent: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+  },
+
+  selectedLabel: {
+    fontSize: 11,
+    color: colors.purple,
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+  },
+
+  selectedCode: {
+    fontSize: 13,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    padding: '4px 10px',
+    borderRadius: 6,
+    fontFamily: 'monospace',
+  },
+
+  closeButton: {
+    width: 28,
+    height: 28,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 6,
+    border: 'none',
+    backgroundColor: 'transparent',
+    color: colors.textMuted,
+    cursor: 'pointer',
+  },
+
+  iframeContainer: {
+    flex: 1,
+    padding: 16,
+  },
+
+  iframeWrapper: {
+    height: '100%',
+    borderRadius: 12,
+    overflow: 'hidden',
+    border: `1px solid ${colors.border}`,
+    position: 'relative',
+  },
+
+  iframeWrapperActive: {
+    border: `2px solid ${colors.purple}`,
+    boxShadow: `0 0 30px ${colors.purpleGlow}`,
+  },
+
+  iframe: {
+    width: '100%',
+    height: '100%',
+    border: 'none',
+    backgroundColor: '#000',
+  },
+
+  selectorOverlay: {
+    position: 'absolute',
+    inset: 0,
+    pointerEvents: 'none',
+    border: `3px solid ${colors.purple}`,
+    borderRadius: 12,
+  },
+
+  selectorBadge: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    backgroundColor: colors.purple,
+    color: '#000',
+    fontSize: 11,
+    fontWeight: 700,
+    padding: '4px 10px',
+    borderRadius: 4,
+    textTransform: 'uppercase',
+  },
+
+  loadingDots: {
+    display: 'flex',
+    gap: 4,
+    padding: '12px 16px',
+    backgroundColor: 'transparent',
+    border: `1px solid ${colors.border}`,
+    borderRadius: 16,
+    borderBottomLeftRadius: 4,
+  },
+
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: '50%',
+    backgroundColor: colors.purple,
+    animation: 'bounce 1s infinite',
+  },
+}
 
 // ========================
 // MAIN COMPONENT
@@ -74,7 +447,7 @@ export default function AnimationConsole() {
 
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLTextAreaElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -88,15 +461,12 @@ export default function AnimationConsole() {
         setSelectedElement(e.data.element)
         setSelectorMode(false)
       }
-      if (e.data.type === 'ELEMENT_HOVER') {
-        // Could show hover preview
-      }
     }
     window.addEventListener('message', handleMessage)
     return () => window.removeEventListener('message', handleMessage)
   }, [])
 
-  // Toggle selector mode in iframe
+  // Toggle selector mode
   const toggleSelector = useCallback(() => {
     const newMode = !selectorMode
     setSelectorMode(newMode)
@@ -137,7 +507,6 @@ export default function AnimationConsole() {
 
       if (!response.ok) throw new Error('API error')
 
-      // Handle streaming
       const reader = response.body?.getReader()
       const decoder = new TextDecoder()
       let fullContent = ''
@@ -162,13 +531,12 @@ export default function AnimationConsole() {
                 setStreamingContent(fullContent)
               }
             } catch {
-              // Skip invalid JSON
+              // Skip
             }
           }
         }
       }
 
-      // Add final message
       if (fullContent) {
         setMessages(prev => [...prev, {
           id: Date.now().toString(),
@@ -192,7 +560,6 @@ export default function AnimationConsole() {
     }
   }
 
-  // Handle Enter key
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
@@ -201,140 +568,76 @@ export default function AnimationConsole() {
   }
 
   return (
-    <div className="h-screen bg-[#0a0a0a] text-white flex overflow-hidden">
+    <div style={styles.container}>
+      {/* Keyframes for animation */}
+      <style>{`
+        @keyframes bounce {
+          0%, 80%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-6px); }
+        }
+      `}</style>
 
-      {/* Left Panel - Preview */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
-        <header className="h-14 border-b border-white/10 flex items-center justify-between bg-[#111]" style={{ paddingLeft: '20px', paddingRight: '20px' }}>
-          <div className="flex items-center gap-3">
-            <div className="text-amber-400">
-              <SparkleIcon />
-            </div>
-            <span className="font-semibold text-white/90">Animation Console</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={toggleSelector}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                selectorMode
-                  ? 'bg-amber-500 text-black'
-                  : 'bg-white/10 hover:bg-white/20 text-white/80'
-              }`}
-            >
-              <SelectorIcon />
-              {selectorMode ? 'Selezionando...' : 'Seleziona'}
-            </button>
-
-            <button
-              onClick={() => window.location.href = '/'}
-              className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-            </button>
-          </div>
-        </header>
-
-        {/* Selected Element Badge */}
-        {selectedElement && (
-          <div className="bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between" style={{ paddingLeft: '20px', paddingRight: '20px', paddingTop: '10px', paddingBottom: '10px' }}>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-amber-400 uppercase tracking-wider">Selezionato:</span>
-              <code className="text-sm text-white/90 bg-black/30 px-2 py-0.5 rounded">
-                {selectedElement.tag}
-                {selectedElement.id && `#${selectedElement.id}`}
-                {selectedElement.classes.length > 0 && `.${selectedElement.classes[0]}`}
-              </code>
-            </div>
-            <button
-              onClick={() => setSelectedElement(null)}
-              className="p-1 hover:bg-white/10 rounded transition-colors text-white/50 hover:text-white"
-            >
-              <XIcon />
-            </button>
-          </div>
-        )}
-
-        {/* Iframe Preview */}
-        <div className="flex-1 min-h-0" style={{ padding: '16px' }}>
-          <div className={`h-full rounded-xl overflow-hidden border relative ${
-            selectorMode ? 'border-amber-500 shadow-lg shadow-amber-500/20' : 'border-white/10'
-          }`}>
-            <iframe
-              ref={iframeRef}
-              src="/"
-              className="w-full h-full border-0 bg-black"
-              title="Preview"
-            />
-
-            {selectorMode && (
-              <div className="absolute inset-0 pointer-events-none border-4 border-amber-500/50 rounded-xl">
-                <div className="absolute top-2 left-2 bg-amber-500 text-black text-xs font-bold px-2 py-1 rounded">
-                  SELECTOR MODE
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Right Panel - Chat (Bolt DIY Style) */}
-      <div className="w-[420px] border-l border-white/10 flex flex-col bg-[#0d0d0d]">
+      {/* CHAT PANEL - LEFT */}
+      <div style={styles.chatPanel}>
         {/* Chat Header */}
-        <div className="h-14 border-b border-white/10 flex items-center gap-3" style={{ paddingLeft: '20px', paddingRight: '20px' }}>
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+        <div style={styles.chatHeader}>
+          <div style={styles.chatAvatar}>
             <SparkleIcon />
           </div>
           <div>
-            <div className="font-medium text-white/90">Claude AI</div>
-            <div className="text-xs text-white/40">Assistente Animazioni</div>
+            <p style={styles.chatTitle}>Claude AI</p>
+            <p style={styles.chatSubtitle}>Assistente Animazioni</p>
           </div>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-auto space-y-4" style={{ padding: '20px' }}>
+        <div style={styles.messagesArea}>
           {messages.map((msg) => (
             <div
               key={msg.id}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              style={{
+                ...styles.messageRow,
+                ...(msg.role === 'user' ? styles.messageRowUser : styles.messageRowAssistant)
+              }}
             >
               <div
-                className={`max-w-[85%] rounded-2xl px-4 py-3 ${
-                  msg.role === 'user'
-                    ? 'bg-violet-600 text-white'
-                    : 'bg-white/5 text-white/90 border border-white/10'
-                }`}
+                style={{
+                  ...styles.messageBubble,
+                  ...(msg.role === 'user' ? styles.messageBubbleUser : styles.messageBubbleAssistant)
+                }}
               >
-                <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                <span className="text-[10px] text-white/30 mt-2 block">
+                <span style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</span>
+                <span style={styles.messageTime}>
                   {msg.timestamp.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
             </div>
           ))}
 
-          {/* Streaming message */}
+          {/* Streaming */}
           {streamingContent && (
-            <div className="flex justify-start">
-              <div className="max-w-[85%] rounded-2xl px-4 py-3 bg-white/5 text-white/90 border border-white/10">
-                <p className="text-sm whitespace-pre-wrap leading-relaxed">{streamingContent}</p>
-                <span className="inline-block w-2 h-4 bg-violet-500 animate-pulse ml-1" />
+            <div style={{ ...styles.messageRow, ...styles.messageRowAssistant }}>
+              <div style={{ ...styles.messageBubble, ...styles.messageBubbleAssistant }}>
+                <span style={{ whiteSpace: 'pre-wrap' }}>{streamingContent}</span>
+                <span style={{
+                  display: 'inline-block',
+                  width: 2,
+                  height: 16,
+                  backgroundColor: colors.purple,
+                  marginLeft: 4,
+                  animation: 'pulse 1s infinite'
+                }} />
               </div>
             </div>
           )}
 
-          {/* Loading indicator */}
+          {/* Loading */}
           {isLoading && !streamingContent && (
-            <div className="flex justify-start">
-              <div className="bg-white/5 rounded-2xl px-4 py-3 border border-white/10">
-                <div className="flex gap-1">
-                  <span className="w-2 h-2 bg-violet-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-2 h-2 bg-violet-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-2 h-2 bg-violet-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                </div>
+            <div style={{ ...styles.messageRow, ...styles.messageRowAssistant }}>
+              <div style={styles.loadingDots}>
+                <span style={{ ...styles.dot, animationDelay: '0ms' }} />
+                <span style={{ ...styles.dot, animationDelay: '150ms' }} />
+                <span style={{ ...styles.dot, animationDelay: '300ms' }} />
               </div>
             </div>
           )}
@@ -343,29 +646,100 @@ export default function AnimationConsole() {
         </div>
 
         {/* Input */}
-        <div className="border-t border-white/10" style={{ padding: '20px' }}>
-          <div className="relative">
+        <div style={styles.inputArea}>
+          <div style={styles.inputWrapper}>
             <textarea
-              ref={inputRef}
+              ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Scrivi un messaggio..."
               rows={1}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 pr-12 text-sm text-white placeholder-white/30 resize-none focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/50 transition-all"
-              style={{ minHeight: '48px', maxHeight: '120px' }}
+              style={styles.textarea}
             />
             <button
               onClick={sendMessage}
               disabled={!input.trim() || isLoading}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              style={{
+                ...styles.sendButton,
+                ...(!input.trim() || isLoading ? styles.sendButtonDisabled : {})
+              }}
             >
               <SendIcon />
             </button>
           </div>
-          <p className="text-[10px] text-white/30 mt-2 text-center">
+          <p style={styles.inputHint as CSSProperties}>
             Premi Enter per inviare, Shift+Enter per nuova riga
           </p>
+        </div>
+      </div>
+
+      {/* PREVIEW PANEL - RIGHT */}
+      <div style={styles.previewPanel}>
+        {/* Preview Header */}
+        <div style={styles.previewHeader}>
+          <div style={styles.previewTitle}>
+            <span style={styles.previewTitleIcon}><SparkleIcon /></span>
+            <span style={styles.previewTitleText}>Animation Console</span>
+          </div>
+          <div style={styles.previewActions}>
+            <button
+              onClick={toggleSelector}
+              style={{
+                ...styles.button,
+                ...(selectorMode ? styles.buttonActive : styles.buttonDefault)
+              }}
+            >
+              <SelectorIcon />
+              {selectorMode ? 'Selezionando...' : 'Seleziona'}
+            </button>
+            <button
+              onClick={() => window.location.href = '/'}
+              style={styles.buttonIcon}
+            >
+              <HomeIcon />
+            </button>
+          </div>
+        </div>
+
+        {/* Selected Element Badge */}
+        {selectedElement && (
+          <div style={styles.selectedBadge}>
+            <div style={styles.selectedBadgeContent}>
+              <span style={styles.selectedLabel}>Selezionato:</span>
+              <code style={styles.selectedCode}>
+                {selectedElement.tag}
+                {selectedElement.id && `#${selectedElement.id}`}
+                {selectedElement.classes.length > 0 && `.${selectedElement.classes[0]}`}
+              </code>
+            </div>
+            <button
+              onClick={() => setSelectedElement(null)}
+              style={styles.closeButton}
+            >
+              <XIcon />
+            </button>
+          </div>
+        )}
+
+        {/* Iframe */}
+        <div style={styles.iframeContainer}>
+          <div style={{
+            ...styles.iframeWrapper,
+            ...(selectorMode ? styles.iframeWrapperActive : {})
+          }}>
+            <iframe
+              ref={iframeRef}
+              src="/"
+              style={styles.iframe}
+              title="Preview"
+            />
+            {selectorMode && (
+              <div style={styles.selectorOverlay}>
+                <div style={styles.selectorBadge}>SELECTOR MODE</div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
