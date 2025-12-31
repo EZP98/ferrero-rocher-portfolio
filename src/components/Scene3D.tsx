@@ -164,7 +164,9 @@ function FerreroModel({ scrollProgress }: { scrollProgress: number }) {
     }
 
     // NORMAL MODE: Scroll-based animation (original hardcoded logic)
-    const fadeInProgress = Math.min(scrollProgress * 10, 1)
+    // Ferrero appears AFTER the title fades out (title fades at speed 7, gone at ~0.14)
+    // Start appearing at 0.08, fully visible at 0.18
+    const fadeInProgress = Math.max(0, Math.min((scrollProgress - 0.08) * 10, 1))
 
     let targetRotationX = 0
     let targetRotationY = 0
