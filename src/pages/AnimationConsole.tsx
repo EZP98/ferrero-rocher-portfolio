@@ -206,7 +206,7 @@ export default function AnimationConsole() {
       {/* Left Panel - Preview */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="h-14 border-b border-white/10 px-4 flex items-center justify-between bg-[#111]">
+        <header className="h-14 border-b border-white/10 flex items-center justify-between bg-[#111]" style={{ paddingLeft: '20px', paddingRight: '20px' }}>
           <div className="flex items-center gap-3">
             <div className="text-amber-400">
               <SparkleIcon />
@@ -240,7 +240,7 @@ export default function AnimationConsole() {
 
         {/* Selected Element Badge */}
         {selectedElement && (
-          <div className="px-4 py-2 bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between">
+          <div className="bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between" style={{ paddingLeft: '20px', paddingRight: '20px', paddingTop: '10px', paddingBottom: '10px' }}>
             <div className="flex items-center gap-2">
               <span className="text-xs text-amber-400 uppercase tracking-wider">Selezionato:</span>
               <code className="text-sm text-white/90 bg-black/30 px-2 py-0.5 rounded">
@@ -259,7 +259,7 @@ export default function AnimationConsole() {
         )}
 
         {/* Iframe Preview */}
-        <div className="flex-1 p-4 min-h-0">
+        <div className="flex-1 min-h-0" style={{ padding: '16px' }}>
           <div className={`h-full rounded-xl overflow-hidden border relative ${
             selectorMode ? 'border-amber-500 shadow-lg shadow-amber-500/20' : 'border-white/10'
           }`}>
@@ -284,7 +284,7 @@ export default function AnimationConsole() {
       {/* Right Panel - Chat (Bolt DIY Style) */}
       <div className="w-[420px] border-l border-white/10 flex flex-col bg-[#0d0d0d]">
         {/* Chat Header */}
-        <div className="h-14 border-b border-white/10 px-4 flex items-center gap-3">
+        <div className="h-14 border-b border-white/10 flex items-center gap-3" style={{ paddingLeft: '20px', paddingRight: '20px' }}>
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
             <SparkleIcon />
           </div>
@@ -295,7 +295,7 @@ export default function AnimationConsole() {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-auto p-4 space-y-4">
+        <div className="flex-1 overflow-auto space-y-4" style={{ padding: '20px' }}>
           {messages.map((msg) => (
             <div
               key={msg.id}
@@ -343,7 +343,7 @@ export default function AnimationConsole() {
         </div>
 
         {/* Input */}
-        <div className="p-4 border-t border-white/10">
+        <div className="border-t border-white/10" style={{ padding: '20px' }}>
           <div className="relative">
             <textarea
               ref={inputRef}
