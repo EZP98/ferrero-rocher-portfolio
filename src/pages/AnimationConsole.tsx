@@ -426,8 +426,8 @@ export default function AnimationConsole() {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - Scenes */}
-        <aside className="w-80 border-r border-white/10 flex flex-col flex-shrink-0 bg-black/40">
-          <div className="px-6 py-5 border-b border-white/10">
+        <aside className="w-80 border-r border-white/10 flex flex-col flex-shrink-0 bg-black/40 pl-6 pr-4">
+          <div className="py-5 border-b border-white/10">
             <div className="flex items-center justify-between">
               <h2 className="text-xs font-medium text-white/50 uppercase tracking-wider">
                 Scene ({scenes.length})
@@ -438,7 +438,7 @@ export default function AnimationConsole() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-auto px-4 py-4 space-y-3">
+          <div className="flex-1 overflow-auto py-4 space-y-3">
             {scenes.map(scene => (
               <div
                 key={scene.id}
@@ -604,8 +604,8 @@ export default function AnimationConsole() {
 
         {/* Properties panel */}
         {selectedScene && (
-          <aside className="w-96 border-l border-white/10 overflow-auto flex-shrink-0 bg-black/40">
-            <div className="px-8 py-6 border-b border-white/10 bg-gradient-to-br from-amber-500/15 to-transparent">
+          <aside className="w-96 border-l border-white/10 overflow-auto flex-shrink-0 bg-black/40 pl-6 pr-8">
+            <div className="py-6 border-b border-white/10 bg-gradient-to-br from-amber-500/15 to-transparent">
               <p className="text-xs text-white/40 uppercase tracking-wider mb-2">Properties</p>
               <h3 className="text-xl font-semibold text-amber-400">{selectedScene.name}</h3>
               <div className="flex gap-2 mt-4">
@@ -615,7 +615,7 @@ export default function AnimationConsole() {
               </div>
             </div>
 
-            <div className="px-8 py-6 space-y-8">
+            <div className="py-6 space-y-8">
               <Slider
                 label="Opacity"
                 value={selectedScene.state.opacity}
@@ -663,7 +663,7 @@ export default function AnimationConsole() {
               />
             </div>
 
-            <div className="px-8 py-6 border-t border-white/10 space-y-4">
+            <div className="py-6 border-t border-white/10 space-y-4">
               <LumaButton active className="w-full">
                 <span className="flex items-center justify-center gap-2">
                   <SparkleIcon size={14} />
