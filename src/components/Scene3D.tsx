@@ -202,8 +202,9 @@ function FerreroModel({ scrollProgress }: { scrollProgress: number }) {
     meshRef.current.position.x = THREE.MathUtils.lerp(meshRef.current.position.x, targetPosX, 0.08)
 
     const baseScale = viewport.width > 10 ? 2.2 : 1.6
-    const targetScale = baseScale * fadeInProgress
-    meshRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.08)
+    // No zoom - appear at full size instantly when fadeInProgress > 0
+    const targetScale = fadeInProgress > 0 ? baseScale : 0
+    meshRef.current.scale.setScalar(targetScale)
 
     // Send state to debug console
     let activeCard: string | null = null
