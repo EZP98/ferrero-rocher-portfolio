@@ -1,6 +1,6 @@
 /**
  * Cloudflare Pages Function - Animation AI Chat
- * Calls Claude API to interpret animation commands
+ * Generic animation assistant for any project
  */
 
 interface Env {
@@ -8,62 +8,53 @@ interface Env {
 }
 
 interface AnimationAction {
-  type: 'update_scene' | 'create_scene' | 'delete_scene' | 'play' | 'info' | 'error'
-  sceneId?: string
-  scrollPercent?: number
-  label?: string
-  changes?: {
-    visible?: boolean
-    opacity?: number
-    rotationX?: number
-    rotationY?: number
-    rotationZ?: number
-    positionX?: number
-    positionY?: number
-    scale?: number
-    glow?: number
-  }
+  type: 'animate' | 'info' | 'error'
+  elementId?: string
+  changes?: Record<string, number | string>
   message: string
 }
 
-const SYSTEM_PROMPT = `Sei un assistente per animazioni 3D di un Ferrero Rocher. L'utente ti chiede di modificare le animazioni.
+const SYSTEM_PROMPT = `Sei un assistente per animazioni. Aiuti a controllare elementi DOM, GSAP, Three.js e CSS.
 
-CONTROLLI DISPONIBILI:
-- visible: true/false (mostra/nasconde il Ferrero)
+PROPRIETA' CSS COMUNI:
 - opacity: 0-1 (trasparenza)
-- rotationX, rotationY, rotationZ: radianti (-3.14 a 3.14), oppure gradi se l'utente dice "gradi"
-- positionX, positionY: -2 a 2 (posizione)
-- scale: 0.1 a 3 (dimensione)
-- glow: 0 a 3 (effetto luminoso)
+- scale: 0.1-3 (dimensione, es: scale(1.5))
+- rotate: gradi (es: rotate(45deg))
+- translateX, translateY: pixel (spostamento)
+- visibility: visible/hidden
 
-SCENE ESISTENTI:
-Le scene sono a diverse percentuali di scroll (0%, 10%, 20%, ... 100%).
-Ogni scena definisce come appare il Ferrero a quel punto dello scroll.
+PROPRIETA' GSAP:
+- x, y: spostamento in pixel
+- rotation: gradi
+- scale: dimensione
+- opacity: 0-1
+- duration: secondi
 
-RISPONDI SEMPRE IN JSON con questo formato:
+PROPRIETA' THREE.JS (se canvas):
+- camera.position.x/y/z
+- camera.rotation.x/y/z
+- mesh.rotation.x/y/z
+
+RISPONDI IN JSON:
 {
-  "type": "update_scene" | "create_scene" | "delete_scene" | "play" | "info",
-  "scrollPercent": numero (0-100),
-  "label": "nome scena" (opzionale),
+  "type": "animate",
+  "elementId": "id dell'elemento da animare",
   "changes": {
-    "visible": boolean,
-    "opacity": numero,
-    "rotationY": numero in radianti,
-    "scale": numero,
-    "glow": numero,
-    "positionX": numero
+    "opacity": 0.5,
+    "scale": 1.2,
+    "rotate": 45
   },
-  "message": "conferma in italiano di cosa hai fatto"
+  "message": "conferma in italiano"
 }
 
 ESEMPI:
-- "ruota di 45 gradi" → rotationY: 0.785 (45 * PI/180)
-- "fallo brillare" → glow: 2
-- "nascondilo" → visible: false
-- "a 30% deve essere piccolo" → scrollPercent: 30, scale: 0.5
-- "ingrandiscilo" → scale: 1.5
+- "fai apparire l'header lentamente" → { elementId: "header", changes: { opacity: 1 } }
+- "ruota il logo di 45 gradi" → { elementId: "logo", changes: { rotate: 45 } }
+- "nascondi la sezione hero" → { elementId: "hero", changes: { opacity: 0 } }
+- "ingrandisci la card" → { elementId: "card", changes: { scale: 1.5 } }
 
-Se non capisci, rispondi con type: "info" e chiedi chiarimenti.`
+Se l'utente non specifica un elemento, chiedi quale elemento vuole animare.
+Rispondi sempre in italiano e sii conciso.`
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { request, env } = context
@@ -77,19 +68,19 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   }
 
   try {
-    const { message, currentScenes } = await request.json() as {
+    const { message, elements } = await request.json() as {
       message: string
-      currentScenes?: Array<{ scrollPercent: number; label: string }>
+      elements?: Array<{ id: string; name: string; type: string; properties: string[] }>
     }
 
     if (!message) {
       return new Response(JSON.stringify({ error: 'Message required' }), { status: 400, headers })
     }
 
-    // Add current scenes context
+    // Add discovered elements context
     let userMessage = message
-    if (currentScenes && currentScenes.length > 0) {
-      userMessage += `\n\nSCENE ATTUALI:\n${currentScenes.map(s => `- ${s.label} @ ${s.scrollPercent}%`).join('\n')}`
+    if (elements && elements.length > 0) {
+      userMessage += `\n\nELEMENTI DISPONIBILI:\n${elements.map(e => `- ${e.name} (${e.type}): ${e.properties.join(', ')}`).join('\n')}`
     }
 
     // Call Claude API
