@@ -274,7 +274,7 @@ export default function AnimationConsole() {
       `}</style>
 
       {/* Header */}
-      <header className="border-b border-white/10 px-4 py-3 flex-shrink-0 bg-black/50 backdrop-blur-sm">
+      <header className="border-b border-white/10 px-6 py-4 flex-shrink-0 bg-black/50 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="text-amber-400"><SparkleIcon size={22} /></div>
@@ -306,15 +306,15 @@ export default function AnimationConsole() {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - Scenes */}
-        <aside className="w-64 border-r border-white/10 flex flex-col flex-shrink-0 bg-black/30">
-          <div className="p-3 border-b border-white/10">
-            <div className="flex items-center justify-between mb-2">
+        <aside className="w-72 border-r border-white/10 flex flex-col flex-shrink-0 bg-black/30">
+          <div className="px-4 py-4 border-b border-white/10">
+            <div className="flex items-center justify-between mb-3">
               <h2 className="text-xs font-medium text-white/50 uppercase tracking-wider">Scene ({scenes.length})</h2>
               <LumaButton small active onClick={addScene}>
                 + Aggiungi
               </LumaButton>
             </div>
-            <div className="flex gap-1.5 flex-wrap">
+            <div className="flex gap-2 flex-wrap">
               {['All', 'CSS', 'THREE'].map(f => (
                 <LumaButton
                   key={f}
@@ -328,7 +328,7 @@ export default function AnimationConsole() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-auto p-2 space-y-1.5">
+          <div className="flex-1 overflow-auto px-3 py-3 space-y-2">
             {scenes.map(scene => (
               <div
                 key={scene.id}
@@ -359,7 +359,7 @@ export default function AnimationConsole() {
 
         {/* Main - 3D Preview */}
         <main className="flex-1 flex flex-col min-w-0">
-          <div className="flex-1 p-3 min-h-0">
+          <div className="flex-1 p-4 min-h-0">
             <div className="h-full rounded-xl overflow-hidden border border-white/10 relative bg-neutral-900">
               {/* 3D Canvas */}
               <Canvas
@@ -390,7 +390,7 @@ export default function AnimationConsole() {
 
           {/* Timeline */}
           <div className="h-48 border-t border-white/10 flex flex-col flex-shrink-0 bg-black/30">
-            <div className="flex items-center justify-between px-4 py-2 border-b border-white/10">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-white/10">
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setCurrentTime(0)}
@@ -442,8 +442,8 @@ export default function AnimationConsole() {
 
             {/* Timeline tracks */}
             <div className="flex-1 overflow-auto relative">
-              <div className="sticky top-0 h-6 bg-neutral-900/90 backdrop-blur border-b border-white/10 flex items-end z-10">
-                <div className="w-28 flex-shrink-0"></div>
+              <div className="sticky top-0 h-7 bg-neutral-900/90 backdrop-blur border-b border-white/10 flex items-end z-10">
+                <div className="w-32 flex-shrink-0"></div>
                 <div className="flex-1 relative">
                   {[0, 20, 40, 60, 80, 100].map(t => (
                     <span
@@ -466,10 +466,10 @@ export default function AnimationConsole() {
               </div>
 
               {/* Tracks */}
-              <div className="py-1">
+              <div className="py-2">
                 {keyframes.map(kf => (
-                  <div key={kf.id} className="flex items-center h-8 px-2 hover:bg-white/5 group">
-                    <div className="w-24 text-xs text-white/50 font-mono truncate pr-2 group-hover:text-white/70">
+                  <div key={kf.id} className="flex items-center h-9 px-3 hover:bg-white/5 group">
+                    <div className="w-28 text-xs text-white/50 font-mono truncate pr-3 group-hover:text-white/70">
                       {kf.name}
                     </div>
                     <div className="flex-1 relative h-6 bg-white/5 rounded mx-2">
@@ -493,21 +493,21 @@ export default function AnimationConsole() {
 
         {/* Properties panel */}
         {selectedScene && (
-          <aside className="w-72 border-l border-white/10 overflow-auto flex-shrink-0 bg-black/30">
-            <div className="p-4 border-b border-white/10 bg-gradient-to-r from-amber-500/10 to-transparent">
-              <h2 className="text-xs font-medium text-white/50 mb-1 uppercase tracking-wider">Properties</h2>
-              <span className="font-mono text-lg text-amber-400">{selectedScene.name}</span>
-              <div className="flex gap-2 mt-2">
-                <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+          <aside className="w-80 border-l border-white/10 overflow-auto flex-shrink-0 bg-black/30">
+            <div className="px-5 py-5 border-b border-white/10 bg-gradient-to-r from-amber-500/10 to-transparent">
+              <h2 className="text-xs font-medium text-white/50 mb-2 uppercase tracking-wider">Properties</h2>
+              <span className="font-mono text-xl text-amber-400">{selectedScene.name}</span>
+              <div className="flex gap-2 mt-3">
+                <span className="text-xs px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
                   {selectedScene.scrollPercent}%
                 </span>
               </div>
             </div>
 
-            <div className="p-4 space-y-4">
+            <div className="px-5 py-5 space-y-5">
               {/* Opacity */}
               <div>
-                <label className="text-xs text-white/40 block mb-1.5 uppercase tracking-wider">Opacity</label>
+                <label className="text-xs text-white/40 block mb-2 uppercase tracking-wider">Opacity</label>
                 <input
                   type="range"
                   min="0"
@@ -522,7 +522,7 @@ export default function AnimationConsole() {
 
               {/* Scale */}
               <div>
-                <label className="text-xs text-white/40 block mb-1.5 uppercase tracking-wider">Scale</label>
+                <label className="text-xs text-white/40 block mb-2 uppercase tracking-wider">Scale</label>
                 <input
                   type="range"
                   min="0.1"
@@ -537,7 +537,7 @@ export default function AnimationConsole() {
 
               {/* Rotation Y */}
               <div>
-                <label className="text-xs text-white/40 block mb-1.5 uppercase tracking-wider">Rotation Y</label>
+                <label className="text-xs text-white/40 block mb-2 uppercase tracking-wider">Rotation Y</label>
                 <input
                   type="range"
                   min="0"
@@ -552,7 +552,7 @@ export default function AnimationConsole() {
 
               {/* Glow */}
               <div>
-                <label className="text-xs text-white/40 block mb-1.5 uppercase tracking-wider">Glow</label>
+                <label className="text-xs text-white/40 block mb-2 uppercase tracking-wider">Glow</label>
                 <input
                   type="range"
                   min="0"
@@ -567,7 +567,7 @@ export default function AnimationConsole() {
 
               {/* Position X */}
               <div>
-                <label className="text-xs text-white/40 block mb-1.5 uppercase tracking-wider">Position X</label>
+                <label className="text-xs text-white/40 block mb-2 uppercase tracking-wider">Position X</label>
                 <input
                   type="range"
                   min="-3"
@@ -581,7 +581,7 @@ export default function AnimationConsole() {
               </div>
             </div>
 
-            <div className="p-4 border-t border-white/10 space-y-2">
+            <div className="px-5 py-4 border-t border-white/10 space-y-3">
               <LumaButton active className="w-full">
                 <span className="flex items-center justify-center gap-2">
                   <SparkleIcon size={14} />
