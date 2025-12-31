@@ -1,50 +1,144 @@
 /**
- * Animation Console - Storyboard Edition
- *
- * Simple scene-based animation editor
+ * Animation Console - Ferrero Storyboard
+ * UI from user with Ferrero 3D model integration
  */
 
-import { useState, useRef, useEffect, useCallback } from 'react'
-import {
-  Play, Pause, Plus, Trash2, Eye, EyeOff, Copy,
-  Download, Upload, Home, Sparkles
-} from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Canvas } from '@react-three/fiber'
+import { Environment } from '@react-three/drei'
+import { FerreroBall } from '../components/FerreroBall'
+
+// ========================
+// UI COMPONENTS
+// ========================
+
+const generateParticles = (count: number) => {
+  return Array.from({ length: count }, (_, i) => ({
+    id: i,
+    left: Math.random() * 100,
+    top: Math.random() * 100,
+    size: 0.5 + Math.random() * 0.5,
+    delay: Math.random() * 2,
+    duration: 2 + Math.random() * 2,
+  }))
+}
+
+interface LumaButtonProps {
+  children: React.ReactNode
+  onClick?: () => void
+  active?: boolean
+  small?: boolean
+  className?: string
+}
+
+const LumaButton = ({ children, onClick, active, small, className = '' }: LumaButtonProps) => {
+  const [isHovered, setIsHovered] = useState(false)
+  const [particles] = useState(() => generateParticles(8))
+
+  return (
+    <button
+      className={`relative cursor-pointer ${small ? 'text-xs' : 'text-sm'} ${className}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={onClick}
+      style={{ background: 'none', border: 'none', padding: 0 }}
+    >
+      <div
+        className="relative overflow-hidden rounded-full p-px transition-all duration-300"
+        style={{
+          background: active
+            ? 'linear-gradient(180deg, rgba(100, 100, 255, 1) 0%, rgba(60, 60, 180, 1) 100%)'
+            : 'linear-gradient(180deg, rgba(60, 60, 60, 1) 0%, rgba(34, 34, 34, 1) 100%)',
+          boxShadow: active
+            ? '0 0 30px rgba(99, 102, 241, 0.3)'
+            : '0 0 20px rgba(255, 255, 255, 0.05)',
+        }}
+      >
+        {active && (
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `conic-gradient(from 0deg, transparent 0deg, transparent 60deg, rgba(255, 255, 255, 0.6) 120deg, white 180deg, rgba(255, 255, 255, 0.6) 240deg, transparent 300deg, transparent 360deg)`,
+              filter: 'blur(6px)',
+              animation: 'rotate 4s linear infinite',
+            }}
+          />
+        )}
+
+        <div
+          className={`relative rounded-full flex items-center justify-center gap-2 transition-all duration-300 ${small ? 'px-3 py-1.5' : 'px-4 py-2'}`}
+          style={{ background: 'rgb(10, 10, 15)' }}
+        >
+          <div className="absolute inset-0 overflow-hidden rounded-full pointer-events-none">
+            {particles.map((particle) => (
+              <div
+                key={particle.id}
+                className="absolute"
+                style={{
+                  left: `${particle.left}%`,
+                  top: `${particle.top}%`,
+                  width: `${particle.size}px`,
+                  height: `${particle.size}px`,
+                  backgroundColor: 'rgba(255, 255, 255, 0.6)',
+                  borderRadius: '50%',
+                  animation: `twinkle ${particle.duration}s ease-in-out infinite`,
+                  animationDelay: `${particle.delay}s`,
+                }}
+              />
+            ))}
+          </div>
+          <span
+            className="text-white font-medium tracking-wide transition-all duration-300 relative z-10"
+            style={{
+              textShadow: isHovered || active ? '0 0 10px rgba(255, 255, 255, 0.5)' : 'none',
+            }}
+          >
+            {children}
+          </span>
+        </div>
+      </div>
+    </button>
+  )
+}
+
+const SparkleIcon = ({ size = 16 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <path d="M12 2L13.09 8.26L19 9L13.09 9.74L12 16L10.91 9.74L5 9L10.91 8.26L12 2Z" fill="currentColor"/>
+    <path d="M18 14L18.54 16.46L21 17L18.54 17.54L18 20L17.46 17.54L15 17L17.46 16.46L18 14Z" fill="currentColor" opacity="0.7"/>
+  </svg>
+)
 
 // ========================
 // TYPES
 // ========================
 
 interface SceneState {
-  visible: boolean
   opacity: number
-  rotationX: number
-  rotationY: number
-  rotationZ: number
-  positionX: number
-  positionY: number
   scale: number
+  rotationY: number
   glow: number
+  positionX: number
 }
 
 interface Scene {
-  id: string
+  id: number
+  name: string
   scrollPercent: number
-  label: string
   state: SceneState
-  thumbnail?: string
 }
 
-const defaultState: SceneState = {
-  visible: true,
-  opacity: 1,
-  rotationX: 0,
-  rotationY: 0,
-  rotationZ: 0,
-  positionX: 0,
-  positionY: 0,
-  scale: 1,
-  glow: 0,
-}
+// ========================
+// DEFAULT SCENES (Ferrero Animation)
+// ========================
+
+const defaultScenes: Scene[] = [
+  { id: 1, name: 'Fade-in', scrollPercent: 0, state: { opacity: 1, scale: 1, rotationY: 0, glow: 0, positionX: 0 } },
+  { id: 2, name: 'Idle', scrollPercent: 10, state: { opacity: 1, scale: 1, rotationY: 0, glow: 0, positionX: 0 } },
+  { id: 3, name: 'Copertura', scrollPercent: 15, state: { opacity: 1, scale: 1, rotationY: 1.57, glow: 0.5, positionX: -2 } },
+  { id: 4, name: 'Cuore', scrollPercent: 30, state: { opacity: 1, scale: 1, rotationY: 3.14, glow: 1, positionX: -2 } },
+  { id: 5, name: 'Eleganza', scrollPercent: 45, state: { opacity: 1, scale: 1, rotationY: 4.71, glow: 0.5, positionX: 2 } },
+  { id: 6, name: 'Spin', scrollPercent: 60, state: { opacity: 1, scale: 1, rotationY: 6.28, glow: 0, positionX: 0 } },
+]
 
 // ========================
 // INTERPOLATION
@@ -54,13 +148,12 @@ function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t
 }
 
-function interpolateStates(scenes: Scene[], scrollPercent: number): SceneState {
-  if (scenes.length === 0) return defaultState
+function interpolateState(scenes: Scene[], scrollPercent: number): SceneState {
+  if (scenes.length === 0) return { opacity: 1, scale: 1, rotationY: 0, glow: 0, positionX: 0 }
   if (scenes.length === 1) return scenes[0].state
 
   const sorted = [...scenes].sort((a, b) => a.scrollPercent - b.scrollPercent)
 
-  // Find surrounding scenes
   let before = sorted[0]
   let after = sorted[sorted.length - 1]
 
@@ -75,179 +168,77 @@ function interpolateStates(scenes: Scene[], scrollPercent: number): SceneState {
   if (scrollPercent <= before.scrollPercent) return before.state
   if (scrollPercent >= after.scrollPercent) return after.state
 
-  // Interpolate
   const range = after.scrollPercent - before.scrollPercent
   const t = range > 0 ? (scrollPercent - before.scrollPercent) / range : 0
 
   return {
-    visible: t < 0.5 ? before.state.visible : after.state.visible,
     opacity: lerp(before.state.opacity, after.state.opacity, t),
-    rotationX: lerp(before.state.rotationX, after.state.rotationX, t),
-    rotationY: lerp(before.state.rotationY, after.state.rotationY, t),
-    rotationZ: lerp(before.state.rotationZ, after.state.rotationZ, t),
-    positionX: lerp(before.state.positionX, after.state.positionX, t),
-    positionY: lerp(before.state.positionY, after.state.positionY, t),
     scale: lerp(before.state.scale, after.state.scale, t),
+    rotationY: lerp(before.state.rotationY, after.state.rotationY, t),
     glow: lerp(before.state.glow, after.state.glow, t),
+    positionX: lerp(before.state.positionX, after.state.positionX, t),
   }
 }
 
 // ========================
-// COMPONENT
+// MAIN COMPONENT
 // ========================
 
 export default function AnimationConsole() {
-  const iframeRef = useRef<HTMLIFrameElement>(null)
-  const [iframeReady, setIframeReady] = useState(false)
+  const [scenes, setScenes] = useState<Scene[]>(defaultScenes)
+  const [selectedScene, setSelectedScene] = useState<Scene | null>(scenes[0])
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [filter, setFilter] = useState('All')
 
-  // Scroll & playback
-  const [scroll, setScroll] = useState(0)
-  const [playing, setPlaying] = useState(false)
-  const [speed, setSpeed] = useState(1)
+  // Current interpolated state for 3D model
+  const currentState = interpolateState(scenes, currentTime)
 
-  // Scenes
-  const [scenes, setScenes] = useState<Scene[]>([])
-  const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null)
-
-  // const selectedScene = scenes.find(s => s.id === selectedSceneId)
-
-  // ========================
-  // IFRAME COMMUNICATION
-  // ========================
-
-  const sendToIframe = useCallback((state: SceneState) => {
-    if (!iframeRef.current?.contentWindow) return
-
-    // Send visibility
-    iframeRef.current.contentWindow.postMessage({
-      type: 'DEBUG_UPDATE',
-      component: 'ferrero',
-      values: {
-        enabled: true,
-        visible: state.visible,
-        opacity: state.opacity,
-        rotationX: state.rotationX,
-        rotationY: state.rotationY,
-        rotationZ: state.rotationZ,
-        positionX: state.positionX,
-        positionY: state.positionY,
-        scale: state.scale,
-      }
-    }, '*')
-
-    // Send glow/bloom
-    iframeRef.current.contentWindow.postMessage({
-      type: 'DEBUG_UPDATE',
-      component: 'postProcessing',
-      values: {
-        enabled: true,
-        bloomIntensity: state.glow,
-      }
-    }, '*')
-  }, [])
-
-  const syncScroll = useCallback((value: number) => {
-    if (!iframeRef.current?.contentWindow) return
-    try {
-      const doc = iframeRef.current.contentWindow.document
-      const max = doc.documentElement.scrollHeight - iframeRef.current.contentWindow.innerHeight
-      iframeRef.current.contentWindow.scrollTo(0, value * max)
-    } catch (e) {
-      // Cross-origin, ignore
-    }
-  }, [])
-
-  // ========================
-  // EFFECTS
-  // ========================
-
-  // Sync scroll and interpolate
+  // Timeline playback
   useEffect(() => {
-    if (iframeReady) {
-      syncScroll(scroll)
-      const state = interpolateStates(scenes, scroll * 100)
-      sendToIframe(state)
+    if (isPlaying) {
+      const interval = setInterval(() => {
+        setCurrentTime(t => (t >= 100 ? 0 : t + 0.5))
+      }, 50)
+      return () => clearInterval(interval)
     }
-  }, [scroll, iframeReady, scenes, syncScroll, sendToIframe])
+  }, [isPlaying])
 
-  // Playback
-  useEffect(() => {
-    if (!playing) return
-    const interval = setInterval(() => {
-      setScroll(prev => {
-        const next = prev + 0.002 * speed
-        if (next >= 1) {
-          setPlaying(false)
-          return 1
-        }
-        return next
-      })
-    }, 16)
-    return () => clearInterval(interval)
-  }, [playing, speed])
-
-  // ========================
-  // SCENE MANAGEMENT
-  // ========================
-
-  const addScene = () => {
-    const newScene: Scene = {
-      id: `scene-${Date.now()}`,
-      scrollPercent: Math.round(scroll * 100),
-      label: `Scena ${scenes.length + 1}`,
-      state: scenes.length > 0
-        ? { ...interpolateStates(scenes, scroll * 100) }
-        : { ...defaultState },
-    }
-    setScenes(prev => [...prev, newScene].sort((a, b) => a.scrollPercent - b.scrollPercent))
-    setSelectedSceneId(newScene.id)
-  }
-
-  const deleteScene = (id: string) => {
-    setScenes(prev => prev.filter(s => s.id !== id))
-    if (selectedSceneId === id) setSelectedSceneId(null)
-  }
-
-  const duplicateScene = (id: string) => {
-    const scene = scenes.find(s => s.id === id)
-    if (!scene) return
-    const newScene: Scene = {
-      ...scene,
-      id: `scene-${Date.now()}`,
-      scrollPercent: Math.min(100, scene.scrollPercent + 5),
-      label: `${scene.label} (copia)`,
-    }
-    setScenes(prev => [...prev, newScene].sort((a, b) => a.scrollPercent - b.scrollPercent))
-  }
-
-  const updateSceneState = (id: string, key: keyof SceneState, value: number | boolean) => {
+  // Update scene
+  const updateScene = (id: number, updates: Partial<SceneState>) => {
     setScenes(prev => prev.map(s =>
-      s.id === id ? { ...s, state: { ...s.state, [key]: value } } : s
+      s.id === id ? { ...s, state: { ...s.state, ...updates } } : s
     ))
+    if (selectedScene?.id === id) {
+      setSelectedScene(prev => prev ? { ...prev, state: { ...prev.state, ...updates } } : null)
+    }
   }
 
-  const updateSceneScroll = (id: string, percent: number) => {
-    setScenes(prev => prev.map(s =>
-      s.id === id ? { ...s, scrollPercent: Math.max(0, Math.min(100, percent)) } : s
-    ).sort((a, b) => a.scrollPercent - b.scrollPercent))
+  // Add scene
+  const addScene = () => {
+    const newId = Math.max(...scenes.map(s => s.id), 0) + 1
+    const newScene: Scene = {
+      id: newId,
+      name: `Scene ${newId}`,
+      scrollPercent: currentTime,
+      state: { ...currentState }
+    }
+    setScenes([...scenes, newScene])
+    setSelectedScene(newScene)
   }
 
-  const updateSceneLabel = (id: string, label: string) => {
-    setScenes(prev => prev.map(s => s.id === id ? { ...s, label } : s))
+  // Delete scene
+  const deleteScene = (id: number) => {
+    setScenes(prev => prev.filter(s => s.id !== id))
+    if (selectedScene?.id === id) {
+      setSelectedScene(scenes[0] || null)
+    }
   }
 
-  const goToScene = (scene: Scene) => {
-    setScroll(scene.scrollPercent / 100)
-    setSelectedSceneId(scene.id)
-  }
-
-  // ========================
-  // IMPORT/EXPORT
-  // ========================
-
-  const exportData = () => {
-    const data = JSON.stringify({ scenes }, null, 2)
-    const blob = new Blob([data], { type: 'application/json' })
+  // Export
+  const exportConfig = () => {
+    const config = { scenes, exportedAt: new Date().toISOString() }
+    const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -255,638 +246,357 @@ export default function AnimationConsole() {
     a.click()
   }
 
-  const importData = () => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = '.json'
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0]
-      if (!file) return
-      const reader = new FileReader()
-      reader.onload = (ev) => {
-        try {
-          const data = JSON.parse(ev.target?.result as string)
-          if (data.scenes) setScenes(data.scenes)
-        } catch (err) {
-          alert('File non valido')
-        }
-      }
-      reader.readAsText(file)
-    }
-    input.click()
-  }
-
-  // ========================
-  // STYLES
-  // ========================
-
-  const styles: Record<string, React.CSSProperties> = {
-    container: {
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100vh',
-      background: '#0a0a0a',
-      color: 'white',
-      fontFamily: 'Inter, system-ui, sans-serif',
-    },
-
-    // Top bar
-    topBar: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 12,
-      padding: '12px 20px',
-      borderBottom: '1px solid #222',
-      background: '#111',
-    },
-    logo: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 8,
-      fontSize: 14,
-      fontWeight: 600,
-      color: '#d4a853',
-    },
-    topActions: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 8,
-      marginLeft: 'auto',
-    },
-    iconBtn: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      width: 36,
-      height: 36,
-      background: 'transparent',
-      border: '1px solid #333',
-      borderRadius: 8,
-      color: '#888',
-      cursor: 'pointer',
-      transition: 'all 0.2s',
-    },
-
-    // Main content
-    main: {
-      display: 'flex',
-      flex: 1,
-      overflow: 'hidden',
-    },
-
-    // Preview area
-    previewArea: {
-      flex: 1,
-      display: 'flex',
-      flexDirection: 'column',
-      borderRight: '1px solid #222',
-    },
-    preview: {
-      flex: 1,
-      position: 'relative',
-      background: '#000',
-    },
-    iframe: {
-      width: '100%',
-      height: '100%',
-      border: 'none',
-    },
-    scrollIndicator: {
-      position: 'absolute',
-      bottom: 20,
-      right: 20,
-      padding: '8px 16px',
-      background: 'rgba(0,0,0,0.8)',
-      borderRadius: 8,
-      fontSize: 24,
-      fontWeight: 700,
-      color: '#d4a853',
-    },
-
-    // Timeline
-    timeline: {
-      padding: '16px 20px',
-      borderTop: '1px solid #222',
-      background: '#111',
-    },
-    timelineTrack: {
-      position: 'relative',
-      height: 40,
-      background: '#1a1a1a',
-      borderRadius: 8,
-      cursor: 'pointer',
-      marginBottom: 12,
-    },
-    timelineFill: {
-      position: 'absolute',
-      left: 0,
-      top: 0,
-      height: '100%',
-      background: 'linear-gradient(90deg, #d4a853 0%, #8b6914 100%)',
-      borderRadius: 8,
-      transition: 'width 0.05s',
-    },
-    timelineMarker: {
-      position: 'absolute',
-      top: -4,
-      width: 4,
-      height: 48,
-      background: '#d4a853',
-      borderRadius: 2,
-      transform: 'translateX(-50%)',
-      boxShadow: '0 0 10px rgba(212, 168, 83, 0.5)',
-    },
-    sceneMarker: {
-      position: 'absolute',
-      top: 8,
-      width: 24,
-      height: 24,
-      background: '#333',
-      border: '2px solid #555',
-      borderRadius: '50%',
-      transform: 'translateX(-50%)',
-      cursor: 'pointer',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: 10,
-      fontWeight: 700,
-      transition: 'all 0.2s',
-    },
-    sceneMarkerSelected: {
-      background: '#d4a853',
-      borderColor: '#d4a853',
-      color: '#000',
-    },
-    playbackControls: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 12,
-    },
-    playBtn: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      width: 48,
-      height: 48,
-      background: '#d4a853',
-      border: 'none',
-      borderRadius: '50%',
-      color: '#000',
-      cursor: 'pointer',
-      transition: 'all 0.2s',
-    },
-    speedBtns: {
-      display: 'flex',
-      gap: 4,
-    },
-    speedBtn: {
-      padding: '6px 10px',
-      background: 'transparent',
-      border: '1px solid #333',
-      borderRadius: 6,
-      color: '#666',
-      fontSize: 12,
-      cursor: 'pointer',
-    },
-    speedBtnActive: {
-      background: '#d4a853',
-      borderColor: '#d4a853',
-      color: '#000',
-    },
-
-    // Sidebar
-    sidebar: {
-      width: 360,
-      display: 'flex',
-      flexDirection: 'column',
-      background: '#111',
-    },
-    sidebarHeader: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: '16px 20px',
-      borderBottom: '1px solid #222',
-    },
-    sidebarTitle: {
-      fontSize: 14,
-      fontWeight: 600,
-    },
-    addBtn: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 6,
-      padding: '8px 14px',
-      background: '#d4a853',
-      border: 'none',
-      borderRadius: 8,
-      color: '#000',
-      fontSize: 13,
-      fontWeight: 600,
-      cursor: 'pointer',
-    },
-
-    // Scene list
-    sceneList: {
-      flex: 1,
-      overflow: 'auto',
-      padding: 12,
-    },
-    sceneCard: {
-      padding: 16,
-      background: '#1a1a1a',
-      borderRadius: 12,
-      marginBottom: 12,
-      cursor: 'pointer',
-      border: '2px solid transparent',
-      transition: 'all 0.2s',
-    },
-    sceneCardSelected: {
-      borderColor: '#d4a853',
-      background: '#1f1a10',
-    },
-    sceneHeader: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: 12,
-    },
-    sceneLabel: {
-      background: 'transparent',
-      border: 'none',
-      color: 'white',
-      fontSize: 14,
-      fontWeight: 600,
-      width: 120,
-    },
-    scenePercent: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 4,
-    },
-    percentInput: {
-      width: 50,
-      padding: '4px 8px',
-      background: '#0a0a0a',
-      border: '1px solid #333',
-      borderRadius: 6,
-      color: 'white',
-      fontSize: 13,
-      textAlign: 'right' as const,
-    },
-    sceneActions: {
-      display: 'flex',
-      gap: 4,
-    },
-    smallBtn: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      width: 28,
-      height: 28,
-      background: 'transparent',
-      border: '1px solid #333',
-      borderRadius: 6,
-      color: '#666',
-      cursor: 'pointer',
-    },
-
-    // Controls
-    controlsGrid: {
-      display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
-      gap: 8,
-    },
-    controlItem: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 4,
-    },
-    controlLabel: {
-      fontSize: 11,
-      color: '#666',
-      textTransform: 'uppercase' as const,
-    },
-    controlRow: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 8,
-    },
-    slider: {
-      flex: 1,
-      height: 4,
-      WebkitAppearance: 'none' as const,
-      background: '#333',
-      borderRadius: 2,
-      cursor: 'pointer',
-    },
-    controlValue: {
-      fontSize: 12,
-      color: '#888',
-      minWidth: 36,
-      textAlign: 'right' as const,
-    },
-    visibilityToggle: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 8,
-      padding: '10px 12px',
-      background: '#0a0a0a',
-      borderRadius: 8,
-      cursor: 'pointer',
-      gridColumn: 'span 2',
-    },
-
-    // Empty state
-    emptyState: {
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 40,
-      color: '#666',
-      textAlign: 'center' as const,
-    },
-    emptyIcon: {
-      marginBottom: 16,
-      opacity: 0.5,
-    },
-    emptyText: {
-      fontSize: 14,
-      marginBottom: 20,
-    },
-  }
-
-  // ========================
-  // RENDER
-  // ========================
+  // Keyframes for timeline
+  const keyframes = scenes.map(s => ({
+    id: s.id,
+    name: s.name,
+    start: s.scrollPercent,
+    end: Math.min(s.scrollPercent + 15, 100),
+    color: '#d4af37'
+  }))
 
   return (
-    <div style={styles.container}>
-      {/* Top Bar */}
-      <div style={styles.topBar}>
-        <div style={styles.logo}>
-          <Sparkles size={18} />
-          Ferrero Storyboard
-        </div>
+    <div className="h-screen bg-neutral-950 text-white flex flex-col overflow-hidden">
+      <style>{`
+        @keyframes rotate {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes twinkle {
+          0%, 100% { opacity: 0.3; transform: scale(0.8); }
+          50% { opacity: 1; transform: scale(1.2); }
+        }
+        @keyframes pulse-gold {
+          0%, 100% { box-shadow: 0 0 20px rgba(212, 175, 55, 0.3); }
+          50% { box-shadow: 0 0 40px rgba(212, 175, 55, 0.6); }
+        }
+        .gold-glow { animation: pulse-gold 2s ease-in-out infinite; }
+      `}</style>
 
-        <div style={styles.topActions}>
-          <button style={styles.iconBtn} onClick={() => setScroll(0)} title="Home">
-            <Home size={16} />
-          </button>
-          <button style={styles.iconBtn} onClick={importData} title="Import">
-            <Upload size={16} />
-          </button>
-          <button style={styles.iconBtn} onClick={exportData} title="Export">
-            <Download size={16} />
-          </button>
-        </div>
-      </div>
+      {/* Header */}
+      <header className="border-b border-white/10 px-4 py-3 flex-shrink-0 bg-black/50 backdrop-blur-sm">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="text-amber-400"><SparkleIcon size={22} /></div>
+            <h1 className="text-lg font-semibold bg-gradient-to-r from-amber-200 to-amber-400 bg-clip-text text-transparent">
+              Ferrero Storyboard
+            </h1>
+            <span className="text-xs text-white/40 bg-white/5 px-2 py-0.5 rounded-full">v1.0</span>
+          </div>
 
-      {/* Main */}
-      <div style={styles.main}>
-        {/* Preview Area */}
-        <div style={styles.previewArea}>
-          <div style={styles.preview}>
-            <iframe
-              ref={iframeRef}
-              src="/?debug=true"
-              style={styles.iframe}
-              onLoad={() => setIframeReady(true)}
-            />
-            <div style={styles.scrollIndicator}>
-              {Math.round(scroll * 100)}%
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => window.location.href = '/'}
+              className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+              title="Home"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+            </button>
+            <LumaButton small onClick={exportConfig}>
+              <span className="flex items-center gap-1.5">
+                <SparkleIcon size={12} />
+                Export JSON
+              </span>
+            </LumaButton>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar - Scenes */}
+        <aside className="w-64 border-r border-white/10 flex flex-col flex-shrink-0 bg-black/30">
+          <div className="p-3 border-b border-white/10">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-xs font-medium text-white/50 uppercase tracking-wider">Scene ({scenes.length})</h2>
+              <LumaButton small active onClick={addScene}>
+                + Aggiungi
+              </LumaButton>
+            </div>
+            <div className="flex gap-1.5 flex-wrap">
+              {['All', 'CSS', 'THREE'].map(f => (
+                <LumaButton
+                  key={f}
+                  small
+                  active={filter === f}
+                  onClick={() => setFilter(f)}
+                >
+                  {f}
+                </LumaButton>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-auto p-2 space-y-1.5">
+            {scenes.map(scene => (
+              <div
+                key={scene.id}
+                onClick={() => {
+                  setSelectedScene(scene)
+                  setCurrentTime(scene.scrollPercent)
+                }}
+                className={`p-3 rounded-lg cursor-pointer transition-all duration-200 ${
+                  selectedScene?.id === scene.id
+                    ? 'bg-amber-500/20 border border-amber-500/50 gold-glow'
+                    : 'bg-white/5 border border-transparent hover:bg-white/10 hover:border-white/20'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="font-mono text-sm text-white/90">{scene.name}</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                    {scene.scrollPercent}%
+                  </span>
+                </div>
+                <div className="flex gap-3 text-xs text-white/40">
+                  <span>Scale: {scene.state.scale.toFixed(1)}</span>
+                  <span>Rot: {(scene.state.rotationY * 57.3).toFixed(0)}°</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </aside>
+
+        {/* Main - 3D Preview */}
+        <main className="flex-1 flex flex-col min-w-0">
+          <div className="flex-1 p-3 min-h-0">
+            <div className="h-full rounded-xl overflow-hidden border border-white/10 relative bg-neutral-900">
+              {/* 3D Canvas */}
+              <Canvas
+                camera={{ position: [0, 0, 6], fov: 45 }}
+                style={{ background: 'linear-gradient(180deg, #0a0a0a 0%, #050505 100%)' }}
+              >
+                <ambientLight intensity={0.3} />
+                <directionalLight position={[10, 10, 5]} intensity={1} />
+                <pointLight
+                  position={[currentState.positionX, 0, 2]}
+                  intensity={currentState.glow * 2}
+                  color="#d4a853"
+                />
+                <Environment preset="studio" />
+                <FerreroBall
+                  position={[currentState.positionX, 0, 0]}
+                  rotation={[0, currentState.rotationY, 0]}
+                  scale={currentState.scale}
+                />
+              </Canvas>
+
+              {/* Scroll indicator */}
+              <div className="absolute bottom-4 right-4 bg-black/70 backdrop-blur-sm rounded-full px-4 py-2 border border-white/10">
+                <span className="font-mono text-2xl text-white/80">{currentTime.toFixed(0)}%</span>
+              </div>
             </div>
           </div>
 
           {/* Timeline */}
-          <div style={styles.timeline}>
-            <div
-              style={styles.timelineTrack}
-              onClick={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect()
-                setScroll((e.clientX - rect.left) / rect.width)
-              }}
-            >
-              <div style={{ ...styles.timelineFill, width: `${scroll * 100}%` }} />
-              <div style={{ ...styles.timelineMarker, left: `${scroll * 100}%` }} />
-
-              {/* Scene markers on timeline */}
-              {scenes.map((scene, i) => (
-                <div
-                  key={scene.id}
-                  style={{
-                    ...styles.sceneMarker,
-                    ...(selectedSceneId === scene.id ? styles.sceneMarkerSelected : {}),
-                    left: `${scene.scrollPercent}%`,
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    goToScene(scene)
-                  }}
-                  title={scene.label}
+          <div className="h-48 border-t border-white/10 flex flex-col flex-shrink-0 bg-black/30">
+            <div className="flex items-center justify-between px-4 py-2 border-b border-white/10">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setCurrentTime(0)}
+                  className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors border border-white/10"
                 >
-                  {i + 1}
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
+                    <rect x="4" y="4" width="6" height="16" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setIsPlaying(!isPlaying)}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                    isPlaying
+                      ? 'bg-amber-500 hover:bg-amber-400 shadow-lg shadow-amber-500/30'
+                      : 'bg-white/10 hover:bg-white/20'
+                  }`}
+                >
+                  {isPlaying ? (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
+                      <rect x="6" y="4" width="4" height="16" rx="1" />
+                      <rect x="14" y="4" width="4" height="16" rx="1" />
+                    </svg>
+                  ) : (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
+                      <polygon points="5,3 19,12 5,21" />
+                    </svg>
+                  )}
+                </button>
+                <div className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-1.5 border border-white/10">
+                  <span className="font-mono text-sm text-amber-400">
+                    {(currentTime / 100 * 5).toFixed(2)}s
+                  </span>
+                  <span className="text-white/30">/</span>
+                  <span className="font-mono text-sm text-white/50">5.00s</span>
                 </div>
-              ))}
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-white/40">Speed</span>
+                  <select className="bg-white/5 border border-white/10 rounded px-2 py-1 text-xs focus:outline-none focus:border-amber-500">
+                    <option>0.5x</option>
+                    <option>1x</option>
+                    <option>2x</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
-            <div style={styles.playbackControls}>
-              <button
-                style={styles.playBtn}
-                onClick={() => setPlaying(!playing)}
-              >
-                {playing ? <Pause size={20} /> : <Play size={20} />}
-              </button>
+            {/* Timeline tracks */}
+            <div className="flex-1 overflow-auto relative">
+              <div className="sticky top-0 h-6 bg-neutral-900/90 backdrop-blur border-b border-white/10 flex items-end z-10">
+                <div className="w-28 flex-shrink-0"></div>
+                <div className="flex-1 relative">
+                  {[0, 20, 40, 60, 80, 100].map(t => (
+                    <span
+                      key={t}
+                      className="absolute text-xs text-white/30 -translate-x-1/2"
+                      style={{ left: `${t}%` }}
+                    >
+                      {t}%
+                    </span>
+                  ))}
+                </div>
+              </div>
 
-              <div style={styles.speedBtns}>
-                {[0.5, 1, 2].map(s => (
-                  <button
-                    key={s}
-                    style={{ ...styles.speedBtn, ...(speed === s ? styles.speedBtnActive : {}) }}
-                    onClick={() => setSpeed(s)}
-                  >
-                    {s}x
-                  </button>
+              {/* Playhead */}
+              <div
+                className="absolute top-0 bottom-0 w-0.5 bg-amber-500 z-20 pointer-events-none"
+                style={{ left: `calc(112px + ${currentTime}% * 0.85)` }}
+              >
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-6 border-l-transparent border-r-transparent border-t-amber-500"></div>
+              </div>
+
+              {/* Tracks */}
+              <div className="py-1">
+                {keyframes.map(kf => (
+                  <div key={kf.id} className="flex items-center h-8 px-2 hover:bg-white/5 group">
+                    <div className="w-24 text-xs text-white/50 font-mono truncate pr-2 group-hover:text-white/70">
+                      {kf.name}
+                    </div>
+                    <div className="flex-1 relative h-6 bg-white/5 rounded mx-2">
+                      <div
+                        className="absolute h-full rounded cursor-pointer hover:brightness-125 transition-all"
+                        style={{
+                          left: `${kf.start}%`,
+                          width: `${kf.end - kf.start}%`,
+                          background: `linear-gradient(90deg, ${kf.color}30, ${kf.color}60)`,
+                          border: `1px solid ${kf.color}`,
+                          boxShadow: `0 0 10px ${kf.color}20`,
+                        }}
+                      />
+                    </div>
+                  </div>
                 ))}
               </div>
-
-              <button
-                style={{ ...styles.iconBtn, marginLeft: 'auto' }}
-                onClick={() => { setScroll(0); setPlaying(false) }}
-              >
-                <Home size={16} />
-              </button>
             </div>
           </div>
-        </div>
+        </main>
 
-        {/* Sidebar */}
-        <div style={styles.sidebar}>
-          <div style={styles.sidebarHeader}>
-            <span style={styles.sidebarTitle}>Scene ({scenes.length})</span>
-            <button style={styles.addBtn} onClick={addScene}>
-              <Plus size={16} /> Aggiungi
-            </button>
-          </div>
-
-          <div style={styles.sceneList}>
-            {scenes.length === 0 ? (
-              <div style={styles.emptyState}>
-                <Sparkles size={40} style={styles.emptyIcon} />
-                <div style={styles.emptyText}>
-                  Nessuna scena<br />
-                  Clicca "Aggiungi" per creare la prima
-                </div>
-                <button style={styles.addBtn} onClick={addScene}>
-                  <Plus size={16} /> Prima scena
-                </button>
+        {/* Properties panel */}
+        {selectedScene && (
+          <aside className="w-72 border-l border-white/10 overflow-auto flex-shrink-0 bg-black/30">
+            <div className="p-4 border-b border-white/10 bg-gradient-to-r from-amber-500/10 to-transparent">
+              <h2 className="text-xs font-medium text-white/50 mb-1 uppercase tracking-wider">Properties</h2>
+              <span className="font-mono text-lg text-amber-400">{selectedScene.name}</span>
+              <div className="flex gap-2 mt-2">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                  {selectedScene.scrollPercent}%
+                </span>
               </div>
-            ) : (
-              scenes.map((scene) => (
-                <div
-                  key={scene.id}
-                  style={{
-                    ...styles.sceneCard,
-                    ...(selectedSceneId === scene.id ? styles.sceneCardSelected : {}),
-                  }}
-                  onClick={() => goToScene(scene)}
-                >
-                  <div style={styles.sceneHeader}>
-                    <input
-                      style={styles.sceneLabel}
-                      value={scene.label}
-                      onChange={(e) => updateSceneLabel(scene.id, e.target.value)}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                    <div style={styles.scenePercent}>
-                      <input
-                        type="number"
-                        style={styles.percentInput}
-                        value={scene.scrollPercent}
-                        onChange={(e) => updateSceneScroll(scene.id, parseInt(e.target.value) || 0)}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      <span style={{ color: '#666' }}>%</span>
-                    </div>
-                    <div style={styles.sceneActions}>
-                      <button
-                        style={styles.smallBtn}
-                        onClick={(e) => { e.stopPropagation(); duplicateScene(scene.id) }}
-                        title="Duplica"
-                      >
-                        <Copy size={12} />
-                      </button>
-                      <button
-                        style={styles.smallBtn}
-                        onClick={(e) => { e.stopPropagation(); deleteScene(scene.id) }}
-                        title="Elimina"
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    </div>
-                  </div>
+            </div>
 
-                  {/* Controls */}
-                  <div style={styles.controlsGrid}>
-                    {/* Visibility toggle */}
-                    <div
-                      style={styles.visibilityToggle}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        updateSceneState(scene.id, 'visible', !scene.state.visible)
-                      }}
-                    >
-                      {scene.state.visible ? <Eye size={16} /> : <EyeOff size={16} />}
-                      <span>{scene.state.visible ? 'Visibile' : 'Nascosto'}</span>
-                    </div>
+            <div className="p-4 space-y-4">
+              {/* Opacity */}
+              <div>
+                <label className="text-xs text-white/40 block mb-1.5 uppercase tracking-wider">Opacity</label>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value={selectedScene.state.opacity}
+                  onChange={(e) => updateScene(selectedScene.id, { opacity: parseFloat(e.target.value) })}
+                  className="w-full accent-amber-500"
+                />
+                <span className="text-xs text-white/50">{selectedScene.state.opacity.toFixed(1)}</span>
+              </div>
 
-                    {/* Opacity */}
-                    <div style={styles.controlItem}>
-                      <span style={styles.controlLabel}>Opacita</span>
-                      <div style={styles.controlRow}>
-                        <input
-                          type="range"
-                          style={styles.slider}
-                          min={0} max={1} step={0.1}
-                          value={scene.state.opacity}
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => updateSceneState(scene.id, 'opacity', parseFloat(e.target.value))}
-                        />
-                        <span style={styles.controlValue}>{scene.state.opacity.toFixed(1)}</span>
-                      </div>
-                    </div>
+              {/* Scale */}
+              <div>
+                <label className="text-xs text-white/40 block mb-1.5 uppercase tracking-wider">Scale</label>
+                <input
+                  type="range"
+                  min="0.1"
+                  max="2"
+                  step="0.1"
+                  value={selectedScene.state.scale}
+                  onChange={(e) => updateScene(selectedScene.id, { scale: parseFloat(e.target.value) })}
+                  className="w-full accent-amber-500"
+                />
+                <span className="text-xs text-white/50">{selectedScene.state.scale.toFixed(1)}</span>
+              </div>
 
-                    {/* Scale */}
-                    <div style={styles.controlItem}>
-                      <span style={styles.controlLabel}>Scala</span>
-                      <div style={styles.controlRow}>
-                        <input
-                          type="range"
-                          style={styles.slider}
-                          min={0.1} max={3} step={0.1}
-                          value={scene.state.scale}
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => updateSceneState(scene.id, 'scale', parseFloat(e.target.value))}
-                        />
-                        <span style={styles.controlValue}>{scene.state.scale.toFixed(1)}</span>
-                      </div>
-                    </div>
+              {/* Rotation Y */}
+              <div>
+                <label className="text-xs text-white/40 block mb-1.5 uppercase tracking-wider">Rotation Y</label>
+                <input
+                  type="range"
+                  min="0"
+                  max="6.28"
+                  step="0.1"
+                  value={selectedScene.state.rotationY}
+                  onChange={(e) => updateScene(selectedScene.id, { rotationY: parseFloat(e.target.value) })}
+                  className="w-full accent-amber-500"
+                />
+                <span className="text-xs text-white/50">{(selectedScene.state.rotationY * 57.3).toFixed(0)}°</span>
+              </div>
 
-                    {/* Rotation Y */}
-                    <div style={styles.controlItem}>
-                      <span style={styles.controlLabel}>Rotazione</span>
-                      <div style={styles.controlRow}>
-                        <input
-                          type="range"
-                          style={styles.slider}
-                          min={-180} max={180} step={5}
-                          value={scene.state.rotationY * (180 / Math.PI)}
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => updateSceneState(scene.id, 'rotationY', parseFloat(e.target.value) * (Math.PI / 180))}
-                        />
-                        <span style={styles.controlValue}>{Math.round(scene.state.rotationY * (180 / Math.PI))}°</span>
-                      </div>
-                    </div>
+              {/* Glow */}
+              <div>
+                <label className="text-xs text-white/40 block mb-1.5 uppercase tracking-wider">Glow</label>
+                <input
+                  type="range"
+                  min="0"
+                  max="2"
+                  step="0.1"
+                  value={selectedScene.state.glow}
+                  onChange={(e) => updateScene(selectedScene.id, { glow: parseFloat(e.target.value) })}
+                  className="w-full accent-amber-500"
+                />
+                <span className="text-xs text-white/50">{selectedScene.state.glow.toFixed(1)}</span>
+              </div>
 
-                    {/* Glow */}
-                    <div style={styles.controlItem}>
-                      <span style={styles.controlLabel}>Glow</span>
-                      <div style={styles.controlRow}>
-                        <input
-                          type="range"
-                          style={styles.slider}
-                          min={0} max={3} step={0.1}
-                          value={scene.state.glow}
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => updateSceneState(scene.id, 'glow', parseFloat(e.target.value))}
-                        />
-                        <span style={styles.controlValue}>{scene.state.glow.toFixed(1)}</span>
-                      </div>
-                    </div>
+              {/* Position X */}
+              <div>
+                <label className="text-xs text-white/40 block mb-1.5 uppercase tracking-wider">Position X</label>
+                <input
+                  type="range"
+                  min="-3"
+                  max="3"
+                  step="0.1"
+                  value={selectedScene.state.positionX}
+                  onChange={(e) => updateScene(selectedScene.id, { positionX: parseFloat(e.target.value) })}
+                  className="w-full accent-amber-500"
+                />
+                <span className="text-xs text-white/50">{selectedScene.state.positionX.toFixed(1)}</span>
+              </div>
+            </div>
 
-                    {/* Position X */}
-                    <div style={styles.controlItem}>
-                      <span style={styles.controlLabel}>Pos. X</span>
-                      <div style={styles.controlRow}>
-                        <input
-                          type="range"
-                          style={styles.slider}
-                          min={-2} max={2} step={0.1}
-                          value={scene.state.positionX}
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => updateSceneState(scene.id, 'positionX', parseFloat(e.target.value))}
-                        />
-                        <span style={styles.controlValue}>{scene.state.positionX.toFixed(1)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
+            <div className="p-4 border-t border-white/10 space-y-2">
+              <LumaButton active className="w-full">
+                <span className="flex items-center justify-center gap-2">
+                  <SparkleIcon size={14} />
+                  Applica a Timeline
+                </span>
+              </LumaButton>
+              <button
+                onClick={() => deleteScene(selectedScene.id)}
+                className="w-full text-xs text-red-400/60 hover:text-red-400 py-2 transition-colors"
+              >
+                Elimina Scena
+              </button>
+            </div>
+          </aside>
+        )}
       </div>
     </div>
   )
