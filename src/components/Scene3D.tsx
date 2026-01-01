@@ -211,7 +211,7 @@ function FerreroModel({ scrollProgress }: { scrollProgress: number }) {
     meshRef.current.scale.setScalar(dynamicScale)
 
     // Position Ferrero lower on screen (negative Y = down)
-    const baseY = -1.5
+    const baseY = -0.8
     meshRef.current.position.y = baseY
 
     // Fade-in effect via material opacity
