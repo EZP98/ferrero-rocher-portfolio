@@ -164,9 +164,8 @@ function FerreroModel({ scrollProgress }: { scrollProgress: number }) {
     }
 
     // NORMAL MODE: Scroll-based animation (original hardcoded logic)
-    // Title fades at speed 7, completely gone at scroll ~0.14 (1/7)
-    // Start Ferrero fade-in at 0.08, complete at 0.14 (before cards appear at 0.15)
-    const fadeInProgress = Math.max(0, Math.min((scrollProgress - 0.08) / 0.06, 1))
+    // Ferrero visible immediately from the start
+    const fadeInProgress = 1
 
     let targetRotationX = 0
     let targetRotationY = 0
@@ -201,14 +200,16 @@ function FerreroModel({ scrollProgress }: { scrollProgress: number }) {
     meshRef.current.rotation.y = THREE.MathUtils.lerp(meshRef.current.rotation.y, targetRotationY, 0.08)
     meshRef.current.position.x = THREE.MathUtils.lerp(meshRef.current.position.x, targetPosX, 0.08)
 
-    // Scale increases as you scroll down
-    const baseScale = viewport.width > 10 ? 2.2 : 1.6
-    const maxScale = viewport.width > 10 ? 3.5 : 2.8
-    // Grow from baseScale to maxScale as scroll goes from 0.15 to 0.60
-    const scaleProgress = Math.max(0, Math.min((scrollProgress - 0.15) / 0.45, 1))
+    // Big scale from the start, grows slightly as you scroll
+    const baseScale = viewport.width > 10 ? 3.0 : 2.2
+    const maxScale = viewport.width > 10 ? 3.8 : 3.0
+    const scaleProgress = Math.max(0, Math.min(scrollProgress / 0.60, 1))
     const dynamicScale = baseScale + (maxScale - baseScale) * scaleProgress
-    const targetScale = fadeInProgress > 0 ? dynamicScale : 0
-    meshRef.current.scale.setScalar(targetScale)
+    meshRef.current.scale.setScalar(dynamicScale)
+
+    // Position Ferrero lower on screen (negative Y = down)
+    const baseY = -1.5
+    meshRef.current.position.y = baseY
 
     // Fade-in effect via material opacity
     scene.traverse((child) => {
@@ -431,7 +432,7 @@ function TitleOverlay({ scrollProgress }: { scrollProgress: number }) {
 
   return (
     <div
-      className="absolute inset-0 z-30 flex items-start justify-center pt-[15vh]"
+      className="absolute inset-0 z-30 flex items-start justify-center pt-[25vh]"
       style={{ opacity, pointerEvents: opacity > 0 ? 'auto' : 'none' }}
       onClick={handleClick}
     >
