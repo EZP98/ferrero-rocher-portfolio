@@ -435,11 +435,14 @@ function TitleOverlay({ scrollProgress }: { scrollProgress: number }) {
 
   return (
     <div
-      className="absolute inset-0 z-30 flex items-start justify-center pt-[25vh]"
+      className="absolute inset-0 z-30"
       style={{ opacity, pointerEvents: opacity > 0 ? 'auto' : 'none' }}
       onClick={handleClick}
     >
-      <div className="text-center cursor-pointer hover:scale-105 transition-transform">
+      <div
+        className="text-center cursor-pointer hover:scale-105 transition-transform absolute left-1/2 -translate-x-1/2"
+        style={{ top: '30%' }}
+      >
         <span className="block text-[var(--color-gold)] uppercase tracking-[0.3em] text-[10px] mb-4 opacity-60">
           {subtitle}
         </span>
