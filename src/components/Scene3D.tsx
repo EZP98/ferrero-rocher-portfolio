@@ -171,28 +171,31 @@ function FerreroModel({ scrollProgress }: { scrollProgress: number }) {
     let targetRotationY = 0
     let targetPosX = 0
 
+    // Initial rotation so Ferrero is seen from the side (text title in front)
+    const initialRotationY = Math.PI * 0.3  // ~54 degrees
+
     if (scrollProgress < 0.15) {
       targetRotationX = 0
-      targetRotationY = 0
+      targetRotationY = initialRotationY
       targetPosX = 0
     } else if (scrollProgress < 0.30) {
       const t = (scrollProgress - 0.15) / 0.15
       targetRotationX = -0.6 * t
-      targetRotationY = Math.PI * 0.5 * t
+      targetRotationY = initialRotationY + Math.PI * 0.5 * t
       targetPosX = -2 * t
     } else if (scrollProgress < 0.45) {
       const t = (scrollProgress - 0.30) / 0.15
       targetRotationX = -0.6 + 0.3 * t
-      targetRotationY = Math.PI * 0.5 + Math.PI * 0.5 * t
+      targetRotationY = initialRotationY + Math.PI * 0.5 + Math.PI * 0.5 * t
       targetPosX = -2 + 4 * t
     } else if (scrollProgress < 0.60) {
       const t = (scrollProgress - 0.45) / 0.15
       targetRotationX = -0.3 + 0.3 * t
-      targetRotationY = Math.PI + Math.PI * 0.3 * t
+      targetRotationY = initialRotationY + Math.PI + Math.PI * 0.3 * t
       targetPosX = 2 - 2 * t
     } else {
       targetRotationX = 0
-      targetRotationY = Math.PI * 1.3 + (scrollProgress - 0.60) * Math.PI * 2
+      targetRotationY = initialRotationY + Math.PI * 1.3 + (scrollProgress - 0.60) * Math.PI * 2
       targetPosX = 0
     }
 
@@ -432,7 +435,7 @@ function TitleOverlay({ scrollProgress }: { scrollProgress: number }) {
 
   return (
     <div
-      className="absolute inset-0 z-30 flex items-start justify-center pt-[25vh]"
+      className="absolute inset-0 z-30 flex items-start justify-center pt-[38vh]"
       style={{ opacity, pointerEvents: opacity > 0 ? 'auto' : 'none' }}
       onClick={handleClick}
     >
