@@ -172,7 +172,7 @@ function FerreroModel({ scrollProgress }: { scrollProgress: number }) {
     let targetPosX = 0
 
     // Initial rotation to show the logo side
-    const initialRotationY = Math.PI  // 180 degrees - logo side
+    const initialRotationY = Math.PI * 0.5  // 90 degrees
 
     if (scrollProgress < 0.15) {
       targetRotationX = 0
