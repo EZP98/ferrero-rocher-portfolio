@@ -34,6 +34,16 @@ body {
   overflow-x: hidden;
 }
 
+/* Hide scrollbar */
+::-webkit-scrollbar {
+  display: none;
+}
+
+html {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 ::selection {
   background: var(--color-gold);
   color: var(--color-dark);
