@@ -435,7 +435,7 @@ function TitleOverlay({ scrollProgress }: { scrollProgress: number }) {
 
   return (
     <div
-      className="absolute inset-0 z-30 flex items-center justify-center pb-[25vh]"
+      className="absolute inset-0 z-30 flex items-start justify-center pt-[18vh]"
       style={{ opacity, pointerEvents: opacity > 0 ? 'auto' : 'none' }}
       onClick={handleClick}
     >
