@@ -201,9 +201,13 @@ function FerreroModel({ scrollProgress }: { scrollProgress: number }) {
     meshRef.current.rotation.y = THREE.MathUtils.lerp(meshRef.current.rotation.y, targetRotationY, 0.08)
     meshRef.current.position.x = THREE.MathUtils.lerp(meshRef.current.position.x, targetPosX, 0.08)
 
+    // Scale increases as you scroll down
     const baseScale = viewport.width > 10 ? 2.2 : 1.6
-    // No zoom - appear at full size instantly when fadeInProgress > 0
-    const targetScale = fadeInProgress > 0 ? baseScale : 0
+    const maxScale = viewport.width > 10 ? 3.5 : 2.8
+    // Grow from baseScale to maxScale as scroll goes from 0.15 to 0.60
+    const scaleProgress = Math.max(0, Math.min((scrollProgress - 0.15) / 0.45, 1))
+    const dynamicScale = baseScale + (maxScale - baseScale) * scaleProgress
+    const targetScale = fadeInProgress > 0 ? dynamicScale : 0
     meshRef.current.scale.setScalar(targetScale)
 
     // Fade-in effect via material opacity
@@ -427,7 +431,7 @@ function TitleOverlay({ scrollProgress }: { scrollProgress: number }) {
 
   return (
     <div
-      className="absolute inset-0 z-30 flex items-center justify-center"
+      className="absolute inset-0 z-30 flex items-start justify-center pt-[15vh]"
       style={{ opacity, pointerEvents: opacity > 0 ? 'auto' : 'none' }}
       onClick={handleClick}
     >
