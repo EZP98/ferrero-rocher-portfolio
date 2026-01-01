@@ -213,8 +213,10 @@ function FerreroModel({ scrollProgress }: { scrollProgress: number }) {
         if (mesh.material) {
           const mat = mesh.material as THREE.MeshStandardMaterial
           if (mat.isMeshStandardMaterial) {
-            mat.transparent = true
+            // Only use transparency during fade-in, disable when fully visible
+            mat.transparent = fadeInProgress < 1
             mat.opacity = fadeInProgress
+            mat.depthWrite = fadeInProgress >= 1
           }
         }
       }
